@@ -3,6 +3,18 @@
 import re
 from typing import Any
 
+from .validation_common import (
+    check_circular_dependencies,
+    check_design_coverage_with_threshold,
+    check_requirement_coverage,
+    check_requirement_coverage_with_threshold,
+    extract_design_components,
+    extract_req_ids,
+    extract_task_dependencies,
+    extract_task_ids,
+    find_component_references,
+)
+
 # Constants
 DEPENDENCY_SPLIT_PARTS = 2
 
@@ -244,16 +256,17 @@ def validate_design(content: str, requirements_content: str | None = None) -> di
     """Validate design document."""
     errors = validate_design_structure(content)
 
-    # Extract referenced REQ-IDs
-    referenced_reqs = set(re.findall(r"\bREQ-\d{2}\b", content))
+    # Extract referenced REQ-IDs using common logic
+    referenced_reqs = extract_req_ids(content)
 
     # If requirements content provided, check traceability
     missing_refs = []
     if requirements_content:
-        all_reqs = set(re.findall(r"\bREQ-\d{2}\b", requirements_content))
+        # Extract all requirements using common logic
+        all_reqs = extract_req_ids(requirements_content)
+        coverage_errors = check_requirement_coverage(all_reqs, referenced_reqs)
+        errors.extend(coverage_errors)
         missing_refs = list(all_reqs - referenced_reqs)
-        if missing_refs:
-            errors.append(f"Missing references to requirements: {', '.join(sorted(missing_refs))}")
 
     return {
         "isValid": len(errors) == 0,
@@ -265,30 +278,43 @@ def validate_design(content: str, requirements_content: str | None = None) -> di
     }
 
 
-def validate_tasks(content: str) -> dict[str, Any]:
+def validate_tasks(
+    content: str, requirements_content: str | None = None, design_content: str | None = None
+) -> dict[str, Any]:
     """Validate tasks document."""
     errors = validate_tasks_structure(content)
 
-    # Extract task IDs
-    task_ids = set(re.findall(r"\bTASK-\d{2}(?:-\d{2}){0,2}\b", content))
+    # Extract task IDs using common logic
+    task_ids = extract_task_ids(content)
 
-    # Check for circular dependencies (simplified check)
-    dependencies = {}
-    for line in content.split("\n"):
-        if "依存" in line or "Depends on" in line:
-            parts = line.split(":")
-            if len(parts) == DEPENDENCY_SPLIT_PARTS:
-                task_match = re.search(r"\bTASK-\d{2}(?:-\d{2}){0,2}\b", parts[0])
-                if task_match:
-                    task_id = task_match.group(0)
-                    dep_ids = re.findall(r"\bTASK-\d{2}(?:-\d{2}){0,2}\b", parts[1])
-                    dependencies[task_id] = dep_ids
+    # Extract and check task dependencies using common logic
+    dependencies = extract_task_dependencies(content)
+    circular_errors = check_circular_dependencies(dependencies)
+    errors.extend(circular_errors)
 
-    # Simple circular dependency check
-    for task_id, deps in dependencies.items():
-        for dep in deps:
-            if dep in dependencies and task_id in dependencies[dep]:
-                errors.append(f"Circular dependency detected: {task_id} <-> {dep}")
+    # Check traceability using common logic
+    missing_req_refs: list[str] = []
+    missing_design_refs: list[str] = []
+
+    # Check requirement traceability
+    if requirements_content:
+        all_reqs = extract_req_ids(requirements_content)
+        tasks_referencing_reqs = extract_req_ids(content)
+
+        coverage_errors, missing_req_refs = check_requirement_coverage_with_threshold(
+            all_reqs, tasks_referencing_reqs, context="tasks"
+        )
+        errors.extend(coverage_errors)
+
+    # Check design component traceability
+    if design_content:
+        design_components = extract_design_components(design_content)
+        tasks_referencing_design = find_component_references(design_components, content)
+
+        coverage_errors, missing_design_refs = check_design_coverage_with_threshold(
+            design_components, tasks_referencing_design, context="tasks"
+        )
+        errors.extend(coverage_errors)
 
     return {
         "isValid": len(errors) == 0,
@@ -296,5 +322,7 @@ def validate_tasks(content: str) -> dict[str, Any]:
         "stats": {
             "totalTasks": len(task_ids),
             "dependencies": len(dependencies),
+            "missingRequirementReferences": missing_req_refs,
+            "missingDesignReferences": missing_design_refs,
         },
     }

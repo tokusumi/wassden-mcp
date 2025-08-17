@@ -3,37 +3,8 @@
 import re
 from typing import Any
 
-
-def extract_req_ids(content: str) -> set[str]:
-    """Extract REQ-XX IDs from content."""
-    if not content:
-        return set()
-    return set(re.findall(r"\bREQ-\d{2}\b", content))
-
-
-def extract_task_ids(content: str) -> set[str]:
-    """Extract TASK-XX-XX IDs from content."""
-    if not content:
-        return set()
-    return set(re.findall(r"\bTASK-\d{2}(?:-\d{2}){0,2}\b", content))
-
-
-def extract_design_components(content: str) -> set[str]:
-    """Extract design component names from design document."""
-    if not content:
-        return set()
-
-    components = set()
-
-    # Look for component definitions in the form: **component-name**:
-    component_matches = re.findall(r"\*\*([a-zA-Z0-9_-]+)\*\*:", content)
-    components.update(component_matches)
-
-    # Also look for section headers that might be components
-    section_matches = re.findall(r"###\s+([a-zA-Z0-9_-]+)", content)
-    components.update(section_matches)
-
-    return components
+# Import common validation functions
+from .validation_common import extract_design_components, extract_req_ids, extract_task_ids
 
 
 def build_traceability_matrix(
@@ -63,6 +34,7 @@ def _extract_all_ids(
     matrix: dict[str, Any], requirements_content: str | None, design_content: str | None, tasks_content: str | None
 ) -> None:
     """Extract all IDs from the documents."""
+
     if requirements_content:
         matrix["requirements"] = extract_req_ids(requirements_content)
 

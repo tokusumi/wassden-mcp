@@ -45,10 +45,10 @@ async def test_prompt_requirements_handler():
 
 
 @pytest.mark.asyncio
-async def test_validate_requirements_handler(temp_dir, sample_requirements):
-    """Test requirements validation handler."""
+async def test_validate_requirements_handler(temp_dir, correct_requirements):
+    """Test requirements validation handler with valid content."""
     req_path = temp_dir / "requirements.md"
-    req_path.write_text(sample_requirements)
+    req_path.write_text(correct_requirements)
 
     result = await requirements.handle_validate_requirements({"requirementsPath": str(req_path)})
 
@@ -58,10 +58,10 @@ async def test_validate_requirements_handler(temp_dir, sample_requirements):
 
 
 @pytest.mark.asyncio
-async def test_prompt_design_handler(temp_dir, sample_requirements):
+async def test_prompt_design_handler(temp_dir, correct_requirements):
     """Test design prompt handler."""
     req_path = temp_dir / "requirements.md"
-    req_path.write_text(sample_requirements)
+    req_path.write_text(correct_requirements)
 
     result = await design.handle_prompt_design({"requirementsPath": str(req_path)})
 
@@ -72,12 +72,12 @@ async def test_prompt_design_handler(temp_dir, sample_requirements):
 
 
 @pytest.mark.asyncio
-async def test_validate_design_handler(temp_dir, sample_design, sample_requirements):
-    """Test design validation handler."""
+async def test_validate_design_handler(temp_dir, correct_design, correct_requirements):
+    """Test design validation handler with valid content."""
     design_path = temp_dir / "design.md"
-    design_path.write_text(sample_design)
+    design_path.write_text(correct_design)
     req_path = temp_dir / "requirements.md"
-    req_path.write_text(sample_requirements)
+    req_path.write_text(correct_requirements)
 
     result = await design.handle_validate_design(
         {
@@ -92,12 +92,12 @@ async def test_validate_design_handler(temp_dir, sample_design, sample_requireme
 
 
 @pytest.mark.asyncio
-async def test_prompt_tasks_handler(temp_dir, sample_design, sample_requirements):
+async def test_prompt_tasks_handler(temp_dir, correct_design, correct_requirements):
     """Test tasks prompt handler."""
     design_path = temp_dir / "design.md"
-    design_path.write_text(sample_design)
+    design_path.write_text(correct_design)
     req_path = temp_dir / "requirements.md"
-    req_path.write_text(sample_requirements)
+    req_path.write_text(correct_requirements)
 
     result = await tasks.handle_prompt_tasks(
         {
@@ -113,27 +113,59 @@ async def test_prompt_tasks_handler(temp_dir, sample_design, sample_requirements
 
 
 @pytest.mark.asyncio
-async def test_validate_tasks_handler(temp_dir, sample_tasks):
-    """Test tasks validation handler."""
+async def test_validate_tasks_handler_with_traceability_issues(temp_dir, incorrect_tasks):
+    """Test tasks validation handler - should detect missing traceability (failure case)."""
     tasks_path = temp_dir / "tasks.md"
-    tasks_path.write_text(sample_tasks)
+    tasks_path.write_text(incorrect_tasks)
 
     result = await tasks.handle_validate_tasks({"tasksPath": str(tasks_path)})
 
     assert "content" in result
     text = result["content"][0]["text"]
-    assert "✅" in text  # Should pass validation
+
+    # Without requirements/design files, validation should warn about missing references
+    # This tests that the handler correctly identifies traceability issues
+    assert "⚠️" in text  # Should show warnings about missing references
+    assert "修正が必要" in text  # Should indicate fixes are needed
+    assert "Requirements not referenced" in text  # Should detect missing REQ references
 
 
 @pytest.mark.asyncio
-async def test_prompt_code_handler(temp_dir, sample_requirements, sample_design, sample_tasks):
+async def test_validate_tasks_handler_success_case(temp_dir, correct_requirements, correct_design, correct_tasks):
+    """Test tasks validation handler - should pass with complete traceability (success case)."""
+    # Create files using correct fixtures
+    req_path = temp_dir / "requirements.md"
+    design_path = temp_dir / "design.md"
+    tasks_path = temp_dir / "tasks.md"
+
+    req_path.write_text(correct_requirements)
+    design_path.write_text(correct_design)
+    tasks_path.write_text(correct_tasks)
+
+    # Test with all files present for complete traceability validation
+    result = await tasks.handle_validate_tasks(
+        {"tasksPath": str(tasks_path), "requirementsPath": str(req_path), "designPath": str(design_path)}
+    )
+
+    assert "content" in result
+    text = result["content"][0]["text"]
+
+    # Should pass validation with 100% traceability
+    assert "✅" in text  # Should show success
+    assert "検証に成功" in text  # Should indicate success
+    assert "タスク数: 4" in text  # Should detect the 4 tasks in correct_tasks
+    assert "実装フェーズに進むことができます" in text  # Should allow proceeding to implementation
+
+
+@pytest.mark.asyncio
+async def test_prompt_code_handler(temp_dir, correct_requirements, correct_design, correct_tasks):
     """Test code prompt handler."""
     req_path = temp_dir / "requirements.md"
-    req_path.write_text(sample_requirements)
+    req_path.write_text(correct_requirements)
     design_path = temp_dir / "design.md"
-    design_path.write_text(sample_design)
+    design_path.write_text(correct_design)
     tasks_path = temp_dir / "tasks.md"
-    tasks_path.write_text(sample_tasks)
+    tasks_path.write_text(correct_tasks)
 
     result = await code_analysis.handle_prompt_code(
         {
@@ -150,14 +182,14 @@ async def test_prompt_code_handler(temp_dir, sample_requirements, sample_design,
 
 
 @pytest.mark.asyncio
-async def test_get_traceability_handler(temp_dir, sample_requirements, sample_design, sample_tasks):
+async def test_get_traceability_handler(temp_dir, correct_requirements, correct_design, correct_tasks):
     """Test traceability report handler."""
     req_path = temp_dir / "requirements.md"
-    req_path.write_text(sample_requirements)
+    req_path.write_text(correct_requirements)
     design_path = temp_dir / "design.md"
-    design_path.write_text(sample_design)
+    design_path.write_text(correct_design)
     tasks_path = temp_dir / "tasks.md"
-    tasks_path.write_text(sample_tasks)
+    tasks_path.write_text(correct_tasks)
 
     result = await traceability.handle_get_traceability(
         {
@@ -188,3 +220,40 @@ async def test_analyze_changes_handler():
     text = result["content"][0]["text"]
     assert "変更影響分析" in text
     assert "REQ-03" in text
+
+
+@pytest.mark.asyncio
+async def test_validate_requirements_handler_failure_case(temp_dir, incorrect_requirements):
+    """Test requirements validation handler with invalid content (failure case)."""
+    req_path = temp_dir / "requirements.md"
+    req_path.write_text(incorrect_requirements)
+
+    result = await requirements.handle_validate_requirements({"requirementsPath": str(req_path)})
+
+    assert "content" in result
+    text = result["content"][0]["text"]
+    assert "⚠️" in text or "修正が必要" in text  # Should show validation errors
+    assert "REQ-001" in text  # Should detect invalid format
+    assert "REQ-1" in text
+    assert "INVALID-01" in text
+
+
+@pytest.mark.asyncio
+async def test_validate_design_handler_failure_case(temp_dir, incorrect_design, correct_requirements):
+    """Test design validation handler with incomplete traceability (failure case)."""
+    design_path = temp_dir / "design.md"
+    design_path.write_text(incorrect_design)
+    req_path = temp_dir / "requirements.md"
+    req_path.write_text(correct_requirements)
+
+    result = await design.handle_validate_design(
+        {
+            "designPath": str(design_path),
+            "requirementsPath": str(req_path),
+        }
+    )
+
+    assert "content" in result
+    text = result["content"][0]["text"]
+    assert "⚠️" in text or "修正が必要" in text  # Should show validation errors
+    assert "REQ-02" in text  # Should detect missing REQ-02 reference

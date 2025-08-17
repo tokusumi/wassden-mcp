@@ -120,7 +120,7 @@ class TestFullWorkflow:
         tasks_validation_result = await handle_validate_tasks({"tasksPath": str(tasks_file)})
         tasks_validation_text = tasks_validation_result["content"][0]["text"]
         assert "✅" in tasks_validation_text
-        assert "タスク数: 7" in tasks_validation_text
+        assert "タスク数: 8" in tasks_validation_text
 
         return tasks_file
 
@@ -313,11 +313,16 @@ FastAPI タスク管理システムのWBS（Work Breakdown Structure）
   - 関連: [REQ-07], [stats-service]
   - 依存: TASK-03-01
 
+- **TASK-03-03**: API Gateway 設定 (工数: 3h)
+  - 詳細: APIエンドポイント管理・ルーティング設定
+  - 関連: [api-gateway]
+  - 依存: TASK-03-01
+
 ### Phase 4: テスト・品質保証
 - **TASK-04-01**: 単体テスト作成 (工数: 8h)
   - 詳細: 各サービスの単体テスト
   - 関連: [全REQ]
-  - 依存: TASK-03-02
+  - 依存: TASK-03-03
 
 - **TASK-04-02**: 統合テスト作成 (工数: 6h)
   - 詳細: APIエンドポイントの統合テスト

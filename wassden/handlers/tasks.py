@@ -1,5 +1,6 @@
 """Tasks handling functions."""
 
+import contextlib
 from typing import Any
 
 from wassden.lib import fs_utils, validate
@@ -107,13 +108,35 @@ TASK-01-01 → TASK-01-02 → TASK-02-01
 async def handle_validate_tasks(args: dict[str, Any]) -> dict[str, Any]:
     """Validate tasks.md structure and dependencies."""
     tasks_path = args.get("tasksPath", "specs/tasks.md")
+    requirements_path = args.get("requirementsPath", "specs/requirements.md")
+    design_path = args.get("designPath", "specs/design.md")
 
     try:
         tasks_content = await fs_utils.read_file(tasks_path)
-        validation_result = validate.validate_tasks(tasks_content)
+
+        # Try to read requirements and design for traceability check
+        requirements_content = None
+        design_content = None
+
+        with contextlib.suppress(FileNotFoundError):
+            requirements_content = await fs_utils.read_file(requirements_path)
+
+        with contextlib.suppress(FileNotFoundError):
+            design_content = await fs_utils.read_file(design_path)
+
+        validation_result = validate.validate_tasks(tasks_content, requirements_content, design_content)
 
         if validation_result["isValid"]:
             stats = validation_result.get("stats", {})
+            missing_req_refs = stats.get("missingRequirementReferences", [])
+            missing_design_refs = stats.get("missingDesignReferences", [])
+
+            traceability_info = ""
+            if missing_req_refs:
+                traceability_info += f"\n- 未参照要件: {len(missing_req_refs)}件"
+            if missing_design_refs:
+                traceability_info += f"\n- 未参照設計要素: {len(missing_design_refs)}件"
+
             return {
                 "content": [
                     {
@@ -122,7 +145,7 @@ async def handle_validate_tasks(args: dict[str, Any]) -> dict[str, Any]:
 
 ## 検証結果
 - タスク数: {stats.get("totalTasks", 0)}
-- 依存関係数: {stats.get("dependencies", 0)}
+- 依存関係数: {stats.get("dependencies", 0)}{traceability_info}
 
 タスクドキュメントは正しい形式で記載されています。実装フェーズに進むことができます。""",
                     }

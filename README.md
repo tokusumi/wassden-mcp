@@ -22,8 +22,8 @@ The tool acts as your **SDD methodology expert**, ensuring AI agents follow best
 ## ✨ Key Features
 
 - **🎯 Spec-Driven Development**: Complete Requirements → Design → Tasks → Code workflow
-- **🔄 Intelligent Validation**: Automated quality checks with actionable feedback
-- **📊 Traceability Management**: Full REQ↔DESIGN↔TASK mapping and impact analysis
+- **🔄 Intelligent Validation**: Automated quality checks with actionable feedback and **100% traceability enforcement**
+- **📊 Traceability Management**: Full REQ↔DESIGN↔TASK mapping with mandatory coverage validation
 - **🚀 Progressive Prompting**: Step-by-step guidance for high-quality deliverables
 - **🛠️ MCP Integration**: Seamless integration with Claude Code and other MCP clients via FastMCP
 - **🧪 Robust Testing**: [118 comprehensive tests](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with automated MCP integration and consistently fast response times (<0.01ms avg)
@@ -193,6 +193,8 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 | `validate-design`       | Validate design structure     | Design path       | Validation report |
 | `validate-tasks`        | Validate task dependencies    | Tasks path        | Validation report |
 
+> **📋 Validation Standards**: wassden enforces **100% traceability** - all requirements must be referenced in design and tasks. See [Validation Documentation](docs/validation/) for detailed requirements and examples.
+
 ### 📊 Analysis Tools
 *These tools provide project insights and traceability*
 
@@ -241,7 +243,7 @@ wassden-py/
 - **Testing**: pytest + pytest-asyncio with [118 comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 - **Performance**: 198,406+ req/sec throughput, <0.01ms avg response time
 - **Code Quality**: ruff + mypy for linting and type checking
-- **Standards**: EARS format, WBS structure, Traceability matrices
+- **Standards**: EARS format, WBS structure, 100% Traceability matrices
 
 ## 🎯 Use Cases
 
@@ -281,8 +283,15 @@ wassden-py/
 
 - **EARS Format**: Requirements must follow "システムは...すること" pattern
 - **REQ-ID Format**: Sequential numbering (REQ-01, REQ-02, ...)
-- **Traceability**: All design elements must reference requirements
+- **100% Traceability**: All requirements must be referenced in design and tasks
+- **Design Coverage**: All design components must be referenced in tasks
 - **Dependencies**: Task dependencies checked for circular references
+
+📖 **Detailed Documentation**:
+- [Requirements Validation](docs/validation/ears.md) - EARS format and ID validation
+- [Traceability Requirements](docs/validation/traceability.md) - REQ↔DESIGN↔TASK mapping rules
+- [Tasks Validation](docs/validation/tasks.md) - DAG requirements and coverage rules
+- [CLI Reference](docs/cli.md) - Command usage and troubleshooting
 
 ## ⚡ Performance Metrics
 
@@ -343,6 +352,8 @@ uv run wassden start-mcp-server --transport streamable-http --host 0.0.0.0 --por
 
 # Or using production method with uvx
 uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio
+
+# For detailed CLI options and troubleshooting, see docs/cli.md
 ```
 
 ### Continuous Integration
