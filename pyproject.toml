@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wassden"
+version = "0.1.0"
+description = "MCP-based Spec-Driven Development toolkit with automated Claude Code integration testing."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "ISC"
+authors = [
+    { name = "Your Name", email = "email@example.com" }
+]
+keywords = ["mcp", "spec-driven-development", "requirements", "design", "claude"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: ISC License (ISCL)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "fastmcp>=2.11.3",
+    "click>=8.2.1",
+    "colorama>=0.4.6",
+    "prompt-toolkit>=3.0.51",
+    "typing-extensions>=4.14.1",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/your-org/wassden-py"
+"Bug Tracker" = "https://github.com/your-org/wassden-py/issues"
+
+[project.scripts]
+wassden = "wassden.cli:main"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.12.9",
+    "mypy>=1.17.1",
+    "types-colorama>=0.4.15.20250801",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C", "N", "I", "UP", "B", "A", "C4", "ICN", "PIE", "PT", "Q", "RSE", "RET", "SIM", "TID", "TCH", "ARG", "PTH", "PL", "TRY", "PERF", "LOG", "RUF"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004"]  # Ignore magic value comparisons in test files
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["wassden"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError:",
+]
