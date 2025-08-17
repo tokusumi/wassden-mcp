@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from wassden.cli import cli
+from wassden.cli import app
 
 
 class TestCLICommands:
@@ -14,32 +14,32 @@ class TestCLICommands:
         """Set up test environment."""
         self.runner = CliRunner()
 
-    def test_cli_help(self):
+    def test_app_help(self):
         """Test CLI help command."""
-        result = self.runner.invoke(cli, ["--help"])
+        result = self.runner.invoke(app, ["--help"])
 
         assert result.exit_code == 0
         assert "wassden - MCP-based Spec-Driven Development toolkit" in result.output
         assert "check-completeness" in result.output
         assert "validate-requirements" in result.output
 
-    def test_cli_version(self):
+    def test_app_version(self):
         """Test CLI version command."""
-        result = self.runner.invoke(cli, ["--version"])
+        result = self.runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
         assert "0.1.0" in result.output
 
     def test_check_completeness_command(self):
         """Test check_completeness command."""
-        result = self.runner.invoke(cli, ["check-completeness", "--userInput", "Simple test project"])
+        result = self.runner.invoke(app, ["check-completeness", "--userInput", "Simple test project"])
 
         assert result.exit_code == 0
         assert "プロジェクト情報を確認" in result.output
 
     def test_check_completeness_missing_input(self):
         """Test check_completeness command without required input."""
-        result = self.runner.invoke(cli, ["check-completeness"])
+        result = self.runner.invoke(app, ["check-completeness"])
 
         assert result.exit_code != 0
         assert "Missing option" in result.output or "required" in result.output.lower()
@@ -47,7 +47,7 @@ class TestCLICommands:
     def test_prompt_requirements_command(self):
         """Test prompt_requirements command."""
         result = self.runner.invoke(
-            cli, ["prompt-requirements", "--projectDescription", "Test project for CLI testing"]
+            app, ["prompt-requirements", "--projectDescription", "Test project for CLI testing"]
         )
 
         assert result.exit_code == 0
@@ -58,7 +58,7 @@ class TestCLICommands:
     def test_prompt_requirements_with_scope_and_constraints(self):
         """Test prompt_requirements with optional parameters."""
         result = self.runner.invoke(
-            cli,
+            app,
             [
                 "prompt-requirements",
                 "--projectDescription",
@@ -77,7 +77,7 @@ class TestCLICommands:
     def test_validate_requirements_file_not_found(self):
         """Test validate_requirements with non-existent file."""
         result = self.runner.invoke(
-            cli, ["validate-requirements", "--requirementsPath", "/nonexistent/requirements.md"]
+            app, ["validate-requirements", "--requirementsPath", "/nonexistent/requirements.md"]
         )
 
         assert result.exit_code == 0  # Command succeeds but shows error message
@@ -86,7 +86,7 @@ class TestCLICommands:
 
     def test_validate_requirements_default_path(self):
         """Test validate_requirements with default path."""
-        result = self.runner.invoke(cli, ["validate-requirements"])
+        result = self.runner.invoke(app, ["validate-requirements"])
 
         assert result.exit_code == 0
         # Should show validation success since specs/requirements.md exists
@@ -102,7 +102,7 @@ class TestCLICommands:
 - **REQ-01**: Test requirement
 """)
 
-            result = self.runner.invoke(cli, ["prompt-design"])
+            result = self.runner.invoke(app, ["prompt-design"])
 
             assert result.exit_code == 0
             assert "design.md" in result.output
@@ -136,7 +136,7 @@ Test NFR
 Test strategy
 """)
 
-            result = self.runner.invoke(cli, ["validate-design"])
+            result = self.runner.invoke(app, ["validate-design"])
 
             assert result.exit_code == 0
             assert "検証" in result.output
@@ -148,7 +148,7 @@ Test strategy
             Path("specs/requirements.md").write_text("## 機能要件\n- **REQ-01**: Test")
             Path("specs/design.md").write_text("## コンポーネント設計\n- **component**: Test")
 
-            result = self.runner.invoke(cli, ["prompt-tasks"])
+            result = self.runner.invoke(app, ["prompt-tasks"])
 
             assert result.exit_code == 0
             assert "tasks.md" in result.output
@@ -172,7 +172,7 @@ Dependencies
 Milestones
 """)
 
-            result = self.runner.invoke(cli, ["validate-tasks"])
+            result = self.runner.invoke(app, ["validate-tasks"])
 
             assert result.exit_code == 0
             assert "検証" in result.output
@@ -185,7 +185,7 @@ Milestones
             Path("specs/design.md").write_text("# Design\n- Component: Test")
             Path("specs/tasks.md").write_text("# Tasks\n- **TASK-01-01**: Test")
 
-            result = self.runner.invoke(cli, ["prompt-code"])
+            result = self.runner.invoke(app, ["prompt-code"])
 
             assert result.exit_code == 0
             assert "実装" in result.output
@@ -194,7 +194,7 @@ Milestones
     def test_analyze_changes_command(self):
         """Test analyze_changes command."""
         result = self.runner.invoke(
-            cli,
+            app,
             [
                 "analyze-changes",
                 "--changedFile",
@@ -216,17 +216,10 @@ Milestones
             Path("specs/design.md").write_text("## アーキテクチャ\n[REQ-01]")
             Path("specs/tasks.md").write_text("## タスク一覧\n- **TASK-01-01**: Test")
 
-            result = self.runner.invoke(cli, ["get-traceability"])
+            result = self.runner.invoke(app, ["get-traceability"])
 
             assert result.exit_code == 0
             assert "トレーサビリティレポート" in result.output
-
-    def test_serve_command_without_server_flag(self):
-        """Test serve command without --server flag."""
-        result = self.runner.invoke(cli, ["serve"])
-
-        assert result.exit_code == 1
-        assert "Use --server flag" in result.output
 
     def test_all_commands_have_help(self):
         """Test that all commands have help text."""
@@ -241,20 +234,21 @@ Milestones
             "prompt-code",
             "analyze-changes",
             "get-traceability",
-            "serve",
+            "start-mcp-server",
         ]
 
         for cmd in commands:
-            result = self.runner.invoke(cli, [cmd, "--help"])
+            result = self.runner.invoke(app, [cmd, "--help"])
             assert result.exit_code == 0
             assert "Usage:" in result.output
-            assert "Options:" in result.output
+            # Typer uses rich formatting with box characters
+            assert "Options:" in result.output or "╭─" in result.output
 
     def test_command_error_handling(self):
         """Test command error handling."""
         # Test with invalid file path that will cause an error
         result = self.runner.invoke(
-            cli, ["validate-requirements", "--requirementsPath", "/invalid/path/that/definitely/does/not/exist.md"]
+            app, ["validate-requirements", "--requirementsPath", "/invalid/path/that/definitely/does/not/exist.md"]
         )
 
         # Command should handle the error gracefully
@@ -271,7 +265,7 @@ class TestCLIEdgeCases:
 
     def test_empty_user_input(self):
         """Test check_completeness with empty input."""
-        result = self.runner.invoke(cli, ["check-completeness", "--userInput", ""])
+        result = self.runner.invoke(app, ["check-completeness", "--userInput", ""])
 
         assert result.exit_code == 0
         # Should still provide guidance even with empty input
@@ -280,14 +274,14 @@ class TestCLIEdgeCases:
         """Test check_completeness with very long input."""
         long_input = "A" * 10000  # Very long input
 
-        result = self.runner.invoke(cli, ["check-completeness", "--userInput", long_input])
+        result = self.runner.invoke(app, ["check-completeness", "--userInput", long_input])
 
         assert result.exit_code == 0
 
     def test_japanese_input(self):
         """Test CLI with Japanese input."""
         result = self.runner.invoke(
-            cli,
+            app,
             ["check-completeness", "--userInput", "日本語のプロジェクト説明です。Python、FastAPI、Reactを使用します。"],
         )
 
@@ -297,7 +291,7 @@ class TestCLIEdgeCases:
     def test_special_characters_input(self):
         """Test CLI with special characters."""
         result = self.runner.invoke(
-            cli, ["check-completeness", "--userInput", "Project with symbols: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"]
+            app, ["check-completeness", "--userInput", "Project with symbols: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"]
         )
 
         assert result.exit_code == 0
@@ -305,7 +299,7 @@ class TestCLIEdgeCases:
     def test_multiple_flags_same_command(self):
         """Test command with multiple flags."""
         result = self.runner.invoke(
-            cli,
+            app,
             [
                 "prompt-requirements",
                 "--projectDescription",
@@ -335,7 +329,7 @@ class TestCLIIntegration:
         with self.runner.isolated_filesystem():
             # Step 1: Check completeness
             result1 = self.runner.invoke(
-                cli, ["check-completeness", "--userInput", "Python FastAPI web application for task management"]
+                app, ["check-completeness", "--userInput", "Python FastAPI web application for task management"]
             )
             assert result1.exit_code == 0
 
@@ -367,12 +361,12 @@ class TestCLIIntegration:
 """)
 
             # Step 3: Validate requirements
-            result3 = self.runner.invoke(cli, ["validate-requirements"])
+            result3 = self.runner.invoke(app, ["validate-requirements"])
             assert result3.exit_code == 0
             assert "検証に成功" in result3.output or "検証" in result3.output
 
             # Step 4: Generate design prompt
-            result4 = self.runner.invoke(cli, ["prompt-design"])
+            result4 = self.runner.invoke(app, ["prompt-design"])
             assert result4.exit_code == 0
             assert "design.md" in result4.output
 
@@ -398,11 +392,11 @@ Unit and integration tests
 """)
 
             # Step 5: Validate design
-            result5 = self.runner.invoke(cli, ["validate-design"])
+            result5 = self.runner.invoke(app, ["validate-design"])
             assert result5.exit_code == 0
 
             # Step 6: Generate tasks prompt
-            result6 = self.runner.invoke(cli, ["prompt-tasks"])
+            result6 = self.runner.invoke(app, ["prompt-tasks"])
             assert result6.exit_code == 0
             assert "tasks.md" in result6.output
 
@@ -424,15 +418,15 @@ TASK-01-01 → TASK-01-02 → TASK-02-01
 """)
 
             # Step 7: Validate tasks
-            result7 = self.runner.invoke(cli, ["validate-tasks"])
+            result7 = self.runner.invoke(app, ["validate-tasks"])
             assert result7.exit_code == 0
 
             # Step 8: Get traceability report
-            result8 = self.runner.invoke(cli, ["get-traceability"])
+            result8 = self.runner.invoke(app, ["get-traceability"])
             assert result8.exit_code == 0
             assert "トレーサビリティレポート" in result8.output
 
             # Step 9: Generate implementation prompt
-            result9 = self.runner.invoke(cli, ["prompt-code"])
+            result9 = self.runner.invoke(app, ["prompt-code"])
             assert result9.exit_code == 0
             assert "実装" in result9.output

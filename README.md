@@ -38,13 +38,10 @@ Detailed usage examples will be provided in the videos—please stay tuned!
 ### Installation
 
 ```bash
-# Via uv (recommended)
-uv pip install wassden
+# Direct install from GitHub (recommended)
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden
 
-# Via pip
-pip install wassden
-
-# Via git
+# Or development installation
 git clone https://github.com/tokusumi/wassden-mcp
 cd wassden-py
 uv pip install -e .
@@ -52,24 +49,47 @@ uv pip install -e .
 
 ### MCP Integration
 
+#### Transport Options
+
+wassden supports multiple transport protocols for maximum compatibility:
+
+- **stdio** (default): Standard input/output for Claude Code
+- **sse**: Server-Sent Events for HTTP-based communication
+- **streamable-http**: Streamable HTTP for web-based clients
+
 #### Claude Code Setup (Recommended)
 
-1. **Install the package**
+1. **Install uv (if not already installed)**
 
    ```bash
-   uv pip install wassden
+   # On macOS and Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   
+   # On Windows
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   
+   # Via pip
+   pip install uv
    ```
 
 2. **Add to Claude Code settings**
 
    Edit `~/.claude/settings.json`:
 
+   **Using stdio transport (recommended for Claude Code)**
    ```json
    {
      "mcpServers": {
        "wassden": {
-         "command": "wassden",
-         "args": ["serve", "--server"],
+         "command": "uvx",
+         "args": [
+           "--from",
+           "git+https://github.com/tokusumi/wassden-mcp",
+           "wassden",
+           "start-mcp-server",
+           "--transport",
+           "stdio"
+         ],
          "env": {}
        }
      }
@@ -83,11 +103,20 @@ uv pip install -e .
 4. **Verify connection**
    ```bash
    # Manual verification
-   wassden check_completeness --userInput "test project"
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check_completeness --userInput "test project"
    ```
 
-#### Alternative: Development Installation
+#### IDE Compatibility
 
+wassden provides flexible transport options for MCP-compatible environments:
+
+- **Claude Code**: Full support via stdio transport (recommended)
+
+The transport flexibility ensures wassden can be integrated into any MCP-compatible development environment.
+
+#### Alternative Installation Methods
+
+**1. Development Installation**
 ```bash
 git clone https://github.com/tokusumi/wassden-mcp
 cd wassden-py
@@ -95,7 +124,6 @@ uv pip install -e .
 ```
 
 Then use absolute path in settings:
-
 ```json
 {
   "mcpServers": {
@@ -108,12 +136,18 @@ Then use absolute path in settings:
 }
 ```
 
+**2. Claude Code CLI**
+For quick setup with Claude Code CLI:
+```bash
+claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio"
+```
+
 ### Basic Usage
 
 1. **Complete Project Analysis & Requirements Generation**
 
    ```bash
-   wassden check_completeness --userInput "Your project description"
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check_completeness --userInput "Your project description"
    ```
    
    This command analyzes your input for completeness and:
@@ -131,9 +165,9 @@ Then use absolute path in settings:
    
    wassden validates the agent-generated documents:
    ```bash
-   wassden validate_requirements specs/requirements.md
-   wassden validate_design specs/design.md
-   wassden validate_tasks specs/tasks.md
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate_requirements specs/requirements.md
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate_design specs/design.md
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate_tasks specs/tasks.md
    ```
 
 ## 🛠️ Available Tools
@@ -297,9 +331,10 @@ uv pip install -e ".[dev]"
 make check                # Run format, lint, typecheck, and test with coverage
 make ci                   # CI checks without modifying files
 
-# Run MCP server
-wassden serve --server    # Start MCP server
-python -m wassden.server  # Alternative method
+# Run MCP server with different transports
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio                                       # Start with stdio (default)
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport sse --host 127.0.0.1 --port 3001           # Start with SSE
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport streamable-http --host 0.0.0.0 --port 3001 # Start with streamable-http
 ```
 
 ### Continuous Integration

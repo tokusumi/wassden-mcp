@@ -194,10 +194,25 @@ async def get_traceability(
     return str(result["content"][0]["text"])
 
 
-def main() -> None:
-    """Run the MCP server."""
-    # Run the FastMCP server
-    mcp.run()
+def main(
+    transport: str = "stdio",
+    host: str = "127.0.0.1",
+    port: int = 3001,
+) -> None:
+    """Run the MCP server with specified transport.
+
+    Args:
+        transport: Transport type - 'stdio', 'sse', or 'streamable-http'
+        host: HTTP host (only used for sse/streamable-http transports)
+        port: HTTP port (only used for sse/streamable-http transports)
+    """
+    if transport == "stdio":
+        mcp.run()
+    elif transport in ["sse", "streamable-http"]:
+        mcp.run(transport=transport, host=host, port=port)  # type: ignore[arg-type]
+    else:
+        msg = f"Invalid transport: {transport}"
+        raise ValueError(msg)
 
 
 if __name__ == "__main__":
