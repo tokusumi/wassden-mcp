@@ -120,16 +120,17 @@ The transport flexibility ensures wassden can be integrated into any MCP-compati
 ```bash
 git clone https://github.com/tokusumi/wassden-mcp
 cd wassden-py
-uv pip install -e .
+uv sync
 ```
 
-Then use absolute path in settings:
+Then use uv run in settings:
 ```json
 {
   "mcpServers": {
     "wassden": {
-      "command": "python",
-      "args": ["-m", "wassden.server"],
+      "command": "uv",
+      "args": ["run", "wassden", "start-mcp-server", "--transport", "stdio"],
+      "cwd": "/path/to/wassden-py",
       "env": {}
     }
   }
@@ -147,7 +148,7 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 1. **Complete Project Analysis & Requirements Generation**
 
    ```bash
-   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check_completeness --userInput "Your project description"
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "Your project description"
    ```
    
    This command analyzes your input for completeness and:
@@ -165,9 +166,9 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
    
    wassden validates the agent-generated documents:
    ```bash
-   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate_requirements specs/requirements.md
-   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate_design specs/design.md
-   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate_tasks specs/tasks.md
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-requirements specs/requirements.md
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-design specs/design.md
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-tasks specs/tasks.md
    ```
 
 ## 🛠️ Available Tools
@@ -177,28 +178,28 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 
 | Tool                  | Purpose                                     | Input             | Agent Output                                |
 | --------------------- | ------------------------------------------- | ----------------- | ------------------------------------------- |
-| `check_completeness`  | Analyze input & provide requirements prompt | User description  | Questions or structured requirements prompt |
-| `prompt_requirements` | Generate specialized requirements prompt    | Project details   | EARS-formatted requirements prompt          |
-| `prompt_design`       | Generate design document prompt             | Requirements path | Architectural design prompt                 |
-| `prompt_tasks`        | Generate WBS tasks prompt                   | Design path       | Task breakdown prompt                       |
-| `prompt_code`         | Generate implementation prompt              | All spec paths    | Implementation guide prompt                 |
+| `check-completeness`  | Analyze input & provide requirements prompt | User description  | Questions or structured requirements prompt |
+| `prompt-requirements` | Generate specialized requirements prompt    | Project details   | EARS-formatted requirements prompt          |
+| `prompt-design`       | Generate design document prompt             | Requirements path | Architectural design prompt                 |
+| `prompt-tasks`        | Generate WBS tasks prompt                   | Design path       | Task breakdown prompt                       |
+| `prompt-code`         | Generate implementation prompt              | All spec paths    | Implementation guide prompt                 |
 
 ### ✅ Validation Tools  
 *These tools validate agent-generated documents for quality and consistency*
 
 | Tool                    | Purpose                       | Input             | Output            |
 | ----------------------- | ----------------------------- | ----------------- | ----------------- |
-| `validate_requirements` | Validate requirements quality | Requirements path | Validation report |
-| `validate_design`       | Validate design structure     | Design path       | Validation report |
-| `validate_tasks`        | Validate task dependencies    | Tasks path        | Validation report |
+| `validate-requirements` | Validate requirements quality | Requirements path | Validation report |
+| `validate-design`       | Validate design structure     | Design path       | Validation report |
+| `validate-tasks`        | Validate task dependencies    | Tasks path        | Validation report |
 
 ### 📊 Analysis Tools
 *These tools provide project insights and traceability*
 
 | Tool               | Purpose             | Input        | Output                   |
 | ------------------ | ------------------- | ------------ | ------------------------ |
-| `analyze_changes`  | Impact analysis     | Changed file | Change impact report     |
-| `get_traceability` | Traceability report | Spec paths   | Full traceability matrix |
+| `analyze-changes`  | Impact analysis     | Changed file | Change impact report     |
+| `get-traceability` | Traceability report | Spec paths   | Full traceability matrix |
 
 ## 📁 Project Structure
 
@@ -236,7 +237,7 @@ wassden-py/
 
 - **Primary**: Python 3.12+
 - **MCP Framework**: FastMCP for high-performance MCP server implementation
-- **CLI**: Click for command-line interface
+- **CLI**: Typer for modern command-line interface with enhanced type safety
 - **Testing**: pytest + pytest-asyncio with [118 comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 - **Performance**: 198,406+ req/sec throughput, <0.01ms avg response time
 - **Code Quality**: ruff + mypy for linting and type checking
@@ -325,16 +326,23 @@ pre-commit install
 
 ```bash
 # Install development dependencies
-uv pip install -e ".[dev]"
+uv sync
 
 # Quality checks (recommended)
 make check                # Run format, lint, typecheck, and test with coverage
 make ci                   # CI checks without modifying files
 
-# Run MCP server with different transports
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio                                       # Start with stdio (default)
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport sse --host 127.0.0.1 --port 3001           # Start with SSE
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport streamable-http --host 0.0.0.0 --port 3001 # Start with streamable-http
+# Run CLI commands locally
+uv run wassden --help                                     # Show available commands
+uv run wassden check-completeness --userInput "test"      # Test CLI functionality
+
+# Run MCP server with different transports (development)
+uv run wassden start-mcp-server --transport stdio                                       # Start with stdio (default)
+uv run wassden start-mcp-server --transport sse --host 127.0.0.1 --port 3001           # Start with SSE
+uv run wassden start-mcp-server --transport streamable-http --host 0.0.0.0 --port 3001 # Start with streamable-http
+
+# Or using production method with uvx
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio
 ```
 
 ### Continuous Integration

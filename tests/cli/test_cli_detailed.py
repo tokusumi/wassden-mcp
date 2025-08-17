@@ -52,7 +52,7 @@ class TestCLIBasicFunctionality:
             "prompt-code",
             "analyze-changes",
             "get-traceability",
-            "serve",
+            "start-mcp-server",
         ]
 
         for command in expected_commands:
