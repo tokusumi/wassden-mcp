@@ -1,5 +1,10 @@
 # wassden
 
+[![CI](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/tokusumi/wassden-mcp/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/tokusumi/wassden-mcp)
+[![Tests](https://img.shields.io/badge/tests-118%20passing-green)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
+
 A powerful MCP-based Spec-Driven Development (SDD) toolkit that transforms any LLM into a comprehensive development agent with structured specification generation and validation capabilities.
 
 > "Spec-first development made intelligent and systematic"
@@ -22,7 +27,7 @@ The tool acts as your **SDD methodology expert**, ensuring AI agents follow best
 - **📊 Traceability Management**: Full REQ↔DESIGN↔TASK mapping and impact analysis
 - **🚀 Progressive Prompting**: Step-by-step guidance for high-quality deliverables
 - **🛠️ MCP Integration**: Seamless integration with Claude Code and other MCP clients via FastMCP
-- **🧪 Robust Testing**: 118 comprehensive tests with automated MCP integration and consistently fast response times (<0.01ms avg)
+- **🧪 Robust Testing**: [118 comprehensive tests](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with automated MCP integration and consistently fast response times (<0.01ms avg)
 
 ## 🎪 Demonstrations
 
@@ -199,7 +204,7 @@ wassden-py/
 - **Primary**: Python 3.12+
 - **MCP Framework**: FastMCP for high-performance MCP server implementation
 - **CLI**: Click for command-line interface
-- **Testing**: pytest + pytest-asyncio with 118 comprehensive tests (100% passing)
+- **Testing**: pytest + pytest-asyncio with [118 comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 - **Performance**: 198,406+ req/sec throughput, <0.01ms avg response time
 - **Code Quality**: ruff + mypy for linting and type checking
 - **Standards**: EARS format, WBS structure, Traceability matrices
@@ -265,13 +270,25 @@ wassden-py delivers exceptional performance for production AI agent deployments:
 
 ### Reliability
 
-- **Test Coverage**: 118 comprehensive tests (100% passing)
+- **Test Coverage**: [118 comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 - **Automated Integration**: Full MCP server testing
 - **Error Recovery**: 100% graceful error handling
 - **Memory Leaks**: Zero detected (active optimization)
 - **Agent Compatibility**: Claude Code, Cursor, VS Code verified
 
 ## 🧪 Development & Testing
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks to ensure code quality. The hooks automatically run `make check` before each commit.
+
+```bash
+# Install pre-commit hooks
+uv add --dev pre-commit
+pre-commit install
+```
+
+### Development Commands
 
 ```bash
 # Install development dependencies
@@ -285,6 +302,14 @@ make ci                   # CI checks without modifying files
 wassden serve --server    # Start MCP server
 python -m wassden.server  # Alternative method
 ```
+
+### Continuous Integration
+
+All pull requests and pushes to main are automatically validated through GitHub Actions CI, which runs:
+- Code formatting (ruff format)
+- Linting (ruff check)
+- Type checking (mypy)
+- Full test suite with coverage reporting
 
 ## 🤝 Contributing
 

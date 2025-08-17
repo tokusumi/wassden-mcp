@@ -43,6 +43,7 @@ dev-dependencies = [
     "ruff>=0.12.9",
     "mypy>=1.17.1",
     "types-colorama>=0.4.15.20250801",
+    "pre-commit>=4.3.0",
 ]
 
 [tool.ruff]
