@@ -14,6 +14,7 @@ from colorama import Fore, Style, init
 from .handlers import (
     handle_analyze_changes,
     handle_check_completeness,
+    handle_generate_review_prompt,
     handle_get_traceability,
     handle_prompt_code,
     handle_prompt_design,
@@ -307,6 +308,30 @@ def get_traceability(
                 "requirementsPath": str(requirementspath),
                 "designPath": str(designpath),
                 "tasksPath": str(taskspath),
+            },
+        )
+    )
+
+
+@app.command()
+def generate_review_prompt(
+    task_id: str = typer.Argument(..., help="Task ID to generate review prompt for (e.g., TASK-01-01)"),
+    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+) -> None:
+    """Generate implementation review prompt for specific TASK-ID to validate implementation quality."""
+    print_info(f"Generating review prompt for {task_id}...")
+    asyncio.run(
+        run_handler(
+            handle_generate_review_prompt,
+            {
+                "taskId": task_id,
+                "tasksPath": str(taskspath),
+                "requirementsPath": str(requirementspath),
+                "designPath": str(designpath),
             },
         )
     )

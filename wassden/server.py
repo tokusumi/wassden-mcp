@@ -5,6 +5,7 @@ from fastmcp import FastMCP
 from .handlers import (
     handle_analyze_changes,
     handle_check_completeness,
+    handle_generate_review_prompt,
     handle_get_traceability,
     handle_prompt_code,
     handle_prompt_design,
@@ -189,6 +190,28 @@ async def get_traceability(
             "requirementsPath": requirements_path,
             "designPath": design_path,
             "tasksPath": tasks_path,
+        }
+    )
+    return str(result["content"][0]["text"])
+
+
+@mcp.tool(
+    name="generate_review_prompt",
+    description="Generate implementation review prompt for specific TASK-ID to validate implementation quality",
+)
+async def generate_review_prompt(
+    task_id: str,
+    tasks_path: str = "specs/tasks.md",
+    requirements_path: str = "specs/requirements.md",
+    design_path: str = "specs/design.md",
+) -> str:
+    """Generate review prompt for specific TASK-ID."""
+    result = await handle_generate_review_prompt(
+        {
+            "taskId": task_id,
+            "tasksPath": tasks_path,
+            "requirementsPath": requirements_path,
+            "designPath": design_path,
         }
     )
     return str(result["content"][0]["text"])
