@@ -103,7 +103,7 @@ wassden supports multiple transport protocols for maximum compatibility:
 4. **Verify connection**
    ```bash
    # Manual verification
-   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check_completeness --userInput "test project"
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "test project"
    ```
 
 #### IDE Compatibility
