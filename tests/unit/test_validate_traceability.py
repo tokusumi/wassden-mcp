@@ -17,12 +17,12 @@ class TestDesignTraceabilityValidation:
 
         design_content = """
 ## アーキテクチャ概要
-認証システム [REQ-01] とデータ管理システム [REQ-02] を実装する。
+認証システムとデータ管理システムを実装する。
 
 ## コンポーネント設計
-- **auth-service**: 認証サービス [REQ-01]
-- **data-service**: データ管理サービス [REQ-02]
-- **report-service**: レポート生成サービス [REQ-03]
+- **auth-service**: 認証サービス
+- **data-service**: データ管理サービス
+- **report-service**: レポート生成サービス
 
 ## データ設計
 データ構造の定義
@@ -35,6 +35,11 @@ API仕様
 
 ## テスト戦略
 テスト計画
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **auth-service**
+- REQ-02 ⇔ **data-service**
+- REQ-03 ⇔ **report-service**
 """
 
         result = validate.validate_design(design_content, requirements_content)
@@ -55,11 +60,11 @@ API仕様
 
         design_content = """
 ## アーキテクチャ概要
-認証システム [REQ-01] とデータ管理システム [REQ-02] を実装する。
+認証システムとデータ管理システムを実装する。
 
 ## コンポーネント設計
-- **auth-service**: 認証サービス [REQ-01]
-- **data-service**: データ管理サービス [REQ-02]
+- **auth-service**: 認証サービス
+- **data-service**: データ管理サービス
 
 ## データ設計
 データ構造の定義
@@ -72,6 +77,10 @@ API仕様
 
 ## テスト戦略
 テスト計画
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **auth-service**
+- REQ-02 ⇔ **data-service**
 """
 
         result = validate.validate_design(design_content, requirements_content)
@@ -85,7 +94,7 @@ API仕様
         """Test design validation when no requirements content is provided."""
         design_content = """
 ## アーキテクチャ概要
-システム設計 [REQ-01, REQ-02]
+システム設計
 
 ## コンポーネント設計
 - **auth-service**: 認証サービス
@@ -101,6 +110,10 @@ API仕様
 
 ## テスト戦略
 テスト計画
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **auth-service**
+- REQ-02 ⇔ **data-service**
 """
 
         result = validate.validate_design(design_content, None)
@@ -108,6 +121,90 @@ API仕様
         assert result["isValid"] is True
         assert result["stats"]["referencedRequirements"] == 2
         assert result["stats"]["missingReferences"] == []
+
+
+def test_design_validation_with_tr_references():
+    """Test design validation with TR references in traceability section."""
+    requirements_content = """
+## 6. 機能要件（EARS）
+- **REQ-01**: システムは、認証機能を提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: 入力処理のテスト要件
+- **TR-02**: 出力処理のテスト要件
+"""
+
+    design_content = """
+## 1. アーキテクチャ概要
+システム概要
+
+## 2. コンポーネント設計
+- **auth-service**: 認証サービス
+
+## 3. データ設計
+データ概要
+
+## 4. API設計
+API概要
+
+## 5. 非機能設計
+非機能概要
+
+## 6. テスト戦略
+- **test-input-processing**: 入力処理テスト
+- **test-output-generation**: 出力処理テスト
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **auth-service**
+- TR-01 ⇔ **test-input-processing**
+- TR-02 ⇔ **test-output-generation**
+"""
+
+    result = validate.validate_design(design_content, requirements_content)
+    assert result["isValid"] is True
+    assert result["stats"]["referencedTRs"] == 2
+
+
+def test_design_validation_missing_tr_references():
+    """Test design validation when some TRs are not referenced."""
+    requirements_content = """
+## 6. 機能要件（EARS）
+- **REQ-01**: システムは、認証機能を提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: 入力処理のテスト要件
+- **TR-02**: 出力処理のテスト要件
+- **TR-03**: 統合テストのテスト要件
+"""
+
+    design_content = """
+## 1. アーキテクチャ概要
+システム概要
+
+## 2. コンポーネント設計
+- **auth-service**: 認証サービス
+
+## 3. データ設計
+データ概要
+
+## 4. API設計
+API概要
+
+## 5. 非機能設計
+非機能概要
+
+## 6. テスト戦略
+- **test-input-processing**: 入力処理テスト
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **auth-service**
+- TR-01 ⇔ **test-input-processing**
+"""
+
+    result = validate.validate_design(design_content, requirements_content)
+    assert result["isValid"] is False
+    assert "TR-02" in str(result["stats"]["missingReferences"])
+    assert "TR-03" in str(result["stats"]["missingReferences"])
 
 
 class TestTasksTraceabilityValidation:

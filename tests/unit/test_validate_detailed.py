@@ -211,6 +211,10 @@ class TestRequirementsStructureDetailed:
 ## 6. 機能要件（EARS）
 - **REQ-01**: システムは、入力を受け付けること
 - **REQ-02**: システムは、出力を提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: 入力テスト要件
+- **TR-02**: 出力テスト要件
 """
 
         errors = validate.validate_requirements_structure(complete_content)

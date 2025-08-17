@@ -8,10 +8,13 @@ from .validation_common import (
     check_design_coverage_with_threshold,
     check_requirement_coverage,
     check_requirement_coverage_with_threshold,
+    check_tr_coverage,
     extract_design_components,
     extract_req_ids,
     extract_task_dependencies,
     extract_task_ids,
+    extract_test_scenarios,
+    extract_tr_ids,
     find_component_references,
 )
 
@@ -57,6 +60,7 @@ def _check_required_sections(req_content: str, errors: list[str]) -> None:
         "非機能要件",
         "KPI",
         "機能要件",
+        "テスト要件",
     ]
 
     for section in required_sections:
@@ -150,6 +154,53 @@ def validate_design_structure(design_content: str) -> list[str]:
     return errors
 
 
+def _find_duplicate_task_ids(task_ids: list[str]) -> set[str]:
+    """Find duplicate task IDs in a list."""
+    seen = set()
+    duplicates = set()
+    for task_id in task_ids:
+        if task_id in seen:
+            duplicates.add(task_id)
+        seen.add(task_id)
+    return duplicates
+
+
+def _extract_all_task_patterns(tasks_content: str) -> list[str]:
+    """Extract all TASK patterns for validation - includes valid and invalid patterns."""
+    all_task_ids = []
+
+    # 1. Standard TASK patterns (numeric)
+    all_task_ids.extend(re.findall(r"\bTASK-\d{1,3}(?:-\d{1,3}){1,2}\b", tasks_content))
+
+    # 2. Case-insensitive TASK patterns
+    additional_task_patterns = re.findall(r"\b[Tt][Aa][Ss][Kk]-\d+(?:-\d+)+\b", tasks_content)
+    all_task_ids.extend(additional_task_patterns)
+
+    # 3. Obviously malformed TASK patterns (wrong format but clearly intended as TASK-IDs)
+    malformed_patterns = re.findall(r"\bTASK-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\b", tasks_content)
+    for pattern in malformed_patterns:
+        if pattern not in all_task_ids:
+            all_task_ids.append(pattern)
+
+    # 4. Wrong prefixes that should be TASK
+    wrong_prefix_patterns = re.findall(r"\b(?:TSK|INVALID)-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\b", tasks_content)
+    all_task_ids.extend(wrong_prefix_patterns)
+
+    return all_task_ids
+
+
+def _find_invalid_task_ids(all_task_ids: list[str]) -> list[str]:
+    """Find invalid task IDs from extracted patterns."""
+    invalid_task_ids = []
+    for task_id in set(all_task_ids):
+        # Skip patterns that are clearly not intended as TASK-IDs
+        if task_id.startswith(("REQ-", "NFR-", "KPI-", "TR-")):
+            continue
+        if not validate_task_id(task_id):
+            invalid_task_ids.append(task_id)
+    return invalid_task_ids
+
+
 def validate_tasks_structure(tasks_content: str) -> list[str]:
     """Validate tasks document structure."""
     errors: list[str] = []
@@ -173,38 +224,15 @@ def validate_tasks_structure(tasks_content: str) -> list[str]:
 
     # Check for duplicates only in definitions
     if len(task_ids_in_defs) != len(set(task_ids_in_defs)):
-        # Find specific duplicates
-        seen = set()
-        duplicates = set()
-        for task_id in task_ids_in_defs:
-            if task_id in seen:
-                duplicates.add(task_id)
-            seen.add(task_id)
+        duplicates = _find_duplicate_task_ids(task_ids_in_defs)
         duplicate_list = sorted(duplicates)
         errors.append(f"Duplicate TASK-IDs found: {', '.join(duplicate_list)}")
 
-    # Extract all task IDs for format validation (including invalid ones)
-    # First get the main patterns
-    all_task_ids = re.findall(r"\bTASK-\d{1,3}(?:-\d{1,3}){0,2}\b", tasks_content)
-    # Also look for case-insensitive and slightly malformed ones
-    additional_patterns = re.findall(r"\b[Tt][Aa][Ss][Kk]-\d+(?:-\d+)*(?:-\d+)*\b", tasks_content)
-    all_task_ids.extend(additional_patterns)
-    # Look for other patterns that could be intended as task IDs (wrong prefix, format issues)
-    malformed_patterns = re.findall(
-        r"\b(?:[A-Z]+[A-Z]*|[Tt][Aa][Ss][Kk]|INVALID|TSK)-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\b", tasks_content
-    )
-    for task_id in malformed_patterns:
-        # Only include patterns that look like they were intended to be task IDs
-        # Exclude common things like REQ-XX, NFR-XX, etc.
-        if (
-            task_id not in all_task_ids
-            and not task_id.startswith(("REQ-", "NFR-", "KPI-"))
-            and not re.match(r"^[a-z]+-[a-z]+$", task_id)
-        ):  # Exclude things like "input-handler"
-            all_task_ids.append(task_id)
+    # Extract all TASK patterns for validation
+    all_task_ids = _extract_all_task_patterns(tasks_content)
 
-    # Validate format
-    invalid_task_ids = [task_id for task_id in set(all_task_ids) if not validate_task_id(task_id)]
+    # Validate format - exclude non-TASK patterns
+    invalid_task_ids = _find_invalid_task_ids(all_task_ids)
     errors.extend(f"Invalid TASK-ID format: {task_id}" for task_id in invalid_task_ids)
 
     return errors
@@ -229,13 +257,14 @@ def validate_requirements(content: str) -> dict[str, Any]:
     errors = validate_requirements_structure(content)
 
     # Count stats
-    req_ids = re.findall(r"\bREQ-\d{2}\b", content)
+    req_ids = list(extract_req_ids(content))
     nfr_ids = re.findall(r"\bNFR-\d{2}\b", content)
     kpi_ids = re.findall(r"\bKPI-\d{2}\b", content)
+    tr_ids = list(extract_tr_ids(content))
 
     # Find sections
     found_sections = []
-    for section in ["サマリー", "用語集", "スコープ", "制約", "非機能要件", "KPI", "機能要件"]:
+    for section in ["サマリー", "用語集", "スコープ", "制約", "非機能要件", "KPI", "機能要件", "テスト要件"]:
         pattern = rf"## \d*\.?\s*{re.escape(section)}"
         if re.search(pattern, content) or f"## {section}" in content:
             found_sections.append(section)
@@ -247,32 +276,62 @@ def validate_requirements(content: str) -> dict[str, Any]:
             "totalRequirements": len(set(req_ids)),
             "totalNFRs": len(set(nfr_ids)),
             "totalKPIs": len(set(kpi_ids)),
+            "totalTRs": len(set(tr_ids)),
         },
         "foundSections": found_sections,
     }
+
+
+def _extract_ids_from_traceability_section(content: str) -> tuple[set[str], set[str]]:
+    """Extract REQ-IDs and TR-IDs only from the traceability section of design document."""
+    # Find the traceability section (section 7) with optional "(必須)" suffix
+    traceability_match = re.search(r"## \d*\.?\s*トレーサビリティ(\s*\([^)]*\))?.*?(?=## |$)", content, re.DOTALL)
+    if not traceability_match:
+        return set(), set()
+
+    traceability_section = traceability_match.group(0)
+    req_ids = re.findall(r"\bREQ-\d{2}\b", traceability_section)
+    tr_ids = re.findall(r"\bTR-\d{2}\b", traceability_section)
+    return set(req_ids), set(tr_ids)
 
 
 def validate_design(content: str, requirements_content: str | None = None) -> dict[str, Any]:
     """Validate design document."""
     errors = validate_design_structure(content)
 
-    # Extract referenced REQ-IDs using common logic
-    referenced_reqs = extract_req_ids(content)
+    # Extract referenced REQ-IDs and TR-IDs only from traceability section for proper validation
+    referenced_reqs, referenced_trs = _extract_ids_from_traceability_section(content)
+
+    # If no traceability section found, add error
+    if not re.search(r"## \d*\.?\s*トレーサビリティ(\s*\([^)]*\))?", content):
+        errors.append("Missing required traceability section (トレーサビリティ)")
 
     # If requirements content provided, check traceability
     missing_refs = []
     if requirements_content:
-        # Extract all requirements using common logic
+        # Extract all requirements and TRs using common logic
         all_reqs = extract_req_ids(requirements_content)
-        coverage_errors = check_requirement_coverage(all_reqs, referenced_reqs)
-        errors.extend(coverage_errors)
-        missing_refs = list(all_reqs - referenced_reqs)
+        all_trs = extract_tr_ids(requirements_content)
+
+        # Check REQ coverage using common function
+        req_coverage_errors = check_requirement_coverage(all_reqs, referenced_reqs)
+        errors.extend(req_coverage_errors)
+
+        # Check TR coverage using common function
+        tr_coverage_errors = check_tr_coverage(all_trs, referenced_trs)
+        errors.extend(tr_coverage_errors)
+
+        # Calculate missing references (both REQs and TRs)
+        missing_reqs = list(all_reqs - referenced_reqs)
+        missing_trs = list(all_trs - referenced_trs)
+        missing_refs = missing_reqs + missing_trs
 
     return {
         "isValid": len(errors) == 0,
         "issues": errors,
         "stats": {
             "referencedRequirements": len(referenced_reqs),
+            "referencedTRs": len(referenced_trs),
             "missingReferences": missing_refs,
         },
     }
@@ -294,25 +353,63 @@ def validate_tasks(
 
     # Check traceability using common logic
     missing_req_refs: list[str] = []
+    missing_tr_refs: list[str] = []
     missing_design_refs: list[str] = []
 
-    # Check requirement traceability
+    # Extract REQ-IDs and TR-IDs referenced in tasks
+    tasks_referencing_reqs = extract_req_ids(content)
+    tasks_referencing_trs = extract_tr_ids(content)
+
+    # Check if tasks reference requirements but no requirements content exists
+    if tasks_referencing_reqs and not requirements_content:
+        errors.append("Requirements not referenced - tasks reference REQ-IDs but requirements.md is missing")
+
+    # Check if tasks reference test requirements but no requirements content exists
+    if tasks_referencing_trs and not requirements_content:
+        errors.append("Test requirements not referenced - tasks reference TR-IDs but requirements.md is missing")
+
+    # Check requirement and TR traceability
     if requirements_content:
         all_reqs = extract_req_ids(requirements_content)
-        tasks_referencing_reqs = extract_req_ids(content)
+        all_trs = extract_tr_ids(requirements_content)
 
-        coverage_errors, missing_req_refs = check_requirement_coverage_with_threshold(
+        # Check REQ coverage
+        req_coverage_errors, missing_req_refs = check_requirement_coverage_with_threshold(
             all_reqs, tasks_referencing_reqs, context="tasks"
         )
-        errors.extend(coverage_errors)
+        errors.extend(req_coverage_errors)
 
-    # Check design component traceability
+        # Check TR coverage using common function
+        tr_coverage_errors = check_tr_coverage(all_trs, tasks_referencing_trs)
+        errors.extend(tr_coverage_errors)
+        missing_tr_refs = list(all_trs - tasks_referencing_trs)
+
+    # Check if tasks reference design components but no design content exists
+    task_content_lines = content.split("\n")
+    dc_references = []
+    for line in task_content_lines:
+        if "**DC**:" in line:
+            # Extract component names from DC field
+            dc_part = line.split("**DC**:")[-1].strip()
+            components = re.findall(r"\*\*([a-zA-Z0-9_-]+)\*\*", dc_part)
+            dc_references.extend(components)
+
+    if dc_references and not design_content:
+        errors.append("Design components not referenced - tasks reference design components but design.md is missing")
+
+    # Check design component and test scenario traceability
     if design_content:
+        # Extract both design components and test scenarios
         design_components = extract_design_components(design_content)
-        tasks_referencing_design = find_component_references(design_components, content)
+        test_scenarios = extract_test_scenarios(design_content)
+        all_design_elements = design_components | test_scenarios
 
+        # Find references to all design elements in tasks
+        tasks_referencing_design = find_component_references(all_design_elements, content)
+
+        # Check coverage for all design elements (components + test scenarios)
         coverage_errors, missing_design_refs = check_design_coverage_with_threshold(
-            design_components, tasks_referencing_design, context="tasks"
+            all_design_elements, tasks_referencing_design, context="tasks"
         )
         errors.extend(coverage_errors)
 
@@ -323,6 +420,7 @@ def validate_tasks(
             "totalTasks": len(task_ids),
             "dependencies": len(dependencies),
             "missingRequirementReferences": missing_req_refs,
+            "missingTRReferences": missing_tr_refs,
             "missingDesignReferences": missing_design_refs,
         },
     }

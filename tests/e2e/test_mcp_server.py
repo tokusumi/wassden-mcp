@@ -230,6 +230,10 @@ class TestMCPServerIntegration:
 ## 6. 機能要件（EARS）
 - **REQ-01**: システムは、機能を提供すること
 - **REQ-02**: システムは、データを処理すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: 機能テスト要件
+- **TR-02**: データ処理テスト要件
 """
 
         req_file = specs_dir / "requirements.md"

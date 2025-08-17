@@ -120,7 +120,7 @@ class TestFullWorkflow:
         tasks_validation_result = await handle_validate_tasks({"tasksPath": str(tasks_file)})
         tasks_validation_text = tasks_validation_result["content"][0]["text"]
         assert "✅" in tasks_validation_text
-        assert "タスク数: 8" in tasks_validation_text
+        assert "タスク数: 9" in tasks_validation_text
 
         return tasks_file
 
@@ -214,6 +214,11 @@ class TestFullWorkflow:
 - **REQ-05**: システムは、ユーザーがログインできること
 - **REQ-06**: システムは、ユーザーがログアウトできること
 - **REQ-07**: システムは、基本的なタスク統計を提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: タスクCRUD操作のテスト要件
+- **TR-02**: ユーザー認証のテスト要件
+- **TR-03**: レポート機能のテスト要件
 """
 
     def _get_sample_design(self) -> str:
@@ -274,6 +279,18 @@ API エンドポイントのテスト
 
 ### 6.3 E2Eテスト
 完全なワークフローテスト
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **task-service**
+- REQ-02 ⇔ **task-service**
+- REQ-03 ⇔ **task-service**
+- REQ-04 ⇔ **task-service**
+- REQ-05 ⇔ **auth-service**
+- REQ-06 ⇔ **auth-service**
+- REQ-07 ⇔ **stats-service**
+- TR-01 ⇔ **test-auth-flow**
+- TR-02 ⇔ **test-task-crud**
+- TR-03 ⇔ **test-stats-generation**
 """
 
     def _get_sample_tasks(self) -> str:
@@ -286,52 +303,78 @@ FastAPI タスク管理システムのWBS（Work Breakdown Structure）
 
 ## 2. タスク一覧
 ### Phase 1: 基盤構築
-- **TASK-01-01**: 環境セットアップ (工数: 4h)
-  - 詳細: Python、FastAPI、PostgreSQL環境構築
-  - 関連: [NFR-04], [database-layer]
-  - 依存: なし
+- [ ] **TASK-01-01**: 環境セットアップ
+  - **REQ**: [NFR-04]
+  - **DC**: **database-layer**
+  - **依存**: なし
+  - **受け入れ観点**:
+    - 観点1: Python、FastAPI、PostgreSQL環境が正常に構築される
 
-- **TASK-01-02**: データベース設計実装 (工数: 6h)
-  - 詳細: SQLAlchemyモデル定義、マイグレーション
-  - 関連: [REQ-01, REQ-02, REQ-03, REQ-04], [database-layer]
-  - 依存: TASK-01-01
+- [ ] **TASK-01-02**: データベース設計実装
+  - **REQ**: [REQ-01, REQ-02, REQ-03, REQ-04]
+  - **DC**: **database-layer**
+  - **依存**: TASK-01-01
+  - **受け入れ観点**:
+    - 観点1: SQLAlchemyモデルが正しく定義される
 
 ### Phase 2: 認証機能実装
-- **TASK-02-01**: ユーザー認証システム (工数: 8h)
-  - 詳細: JWT認証、パスワードハッシュ化実装
-  - 関連: [REQ-05, REQ-06], [auth-service]
-  - 依存: TASK-01-02
+- [ ] **TASK-02-01**: ユーザー認証システム
+  - **REQ**: [REQ-05, REQ-06]
+  - **DC**: **auth-service**
+  - **依存**: TASK-01-02
+  - **受け入れ観点**:
+    - 観点1: JWT認証が正常に動作する
 
 ### Phase 3: コア機能実装
-- **TASK-03-01**: タスクCRUD API (工数: 12h)
-  - 詳細: タスク作成、取得、更新、削除エンドポイント
-  - 関連: [REQ-01, REQ-02, REQ-03, REQ-04], [task-service]
-  - 依存: TASK-02-01
+- [ ] **TASK-03-01**: タスクCRUD API
+  - **REQ**: [REQ-01, REQ-02, REQ-03, REQ-04]
+  - **DC**: **task-service**
+  - **依存**: TASK-02-01
+  - **受け入れ観点**:
+    - 観点1: CRUD操作が正常に動作する
 
-- **TASK-03-02**: 統計情報API (工数: 4h)
-  - 詳細: タスク統計情報提供エンドポイント
-  - 関連: [REQ-07], [stats-service]
-  - 依存: TASK-03-01
+- [ ] **TASK-03-02**: 統計情報API
+  - **REQ**: [REQ-07]
+  - **DC**: **stats-service**
+  - **依存**: TASK-03-01
+  - **受け入れ観点**:
+    - 観点1: 統計情報が正しく生成される
 
-- **TASK-03-03**: API Gateway 設定 (工数: 3h)
-  - 詳細: APIエンドポイント管理・ルーティング設定
-  - 関連: [api-gateway]
-  - 依存: TASK-03-01
+- [ ] **TASK-03-03**: API Gateway 設定
+  - **REQ**: [NFR-01]
+  - **DC**: **api-gateway**
+  - **依存**: TASK-03-01
+  - **受け入れ観点**:
+    - 観点1: APIルーティングが正常に動作する
 
 ### Phase 4: テスト・品質保証
-- **TASK-04-01**: 単体テスト作成 (工数: 8h)
-  - 詳細: 各サービスの単体テスト
-  - 関連: [全REQ]
-  - 依存: TASK-03-03
+- [ ] **TASK-04-01**: 認証フローテスト作成
+  - **REQ**: [TR-01]
+  - **DC**: **test-auth-flow**
+  - **依存**: TASK-02-01
+  - **受け入れ観点**:
+    - 観点1: 認証テストが正常に実行される
 
-- **TASK-04-02**: 統合テスト作成 (工数: 6h)
-  - 詳細: APIエンドポイントの統合テスト
-  - 関連: [NFR-01, NFR-05]
-  - 依存: TASK-04-01
+- [ ] **TASK-04-02**: タスクCRUDテスト作成
+  - **REQ**: [TR-02]
+  - **DC**: **test-task-crud**
+  - **依存**: TASK-03-01
+  - **受け入れ観点**:
+    - 観点1: CRUDテストが正常に実行される
+
+- [ ] **TASK-04-03**: 統計生成テスト作成
+  - **REQ**: [TR-03]
+  - **DC**: **test-stats-generation**
+  - **依存**: TASK-03-02
+  - **受け入れ観点**:
+    - 観点1: 統計テストが正常に実行される
 
 ## 3. 依存関係
 ```
-TASK-01-01 → TASK-01-02 → TASK-02-01 → TASK-03-01 → TASK-03-02 → TASK-04-01 → TASK-04-02
+TASK-01-01 → TASK-01-02 → TASK-02-01 → TASK-03-01 → TASK-04-02
+                                    → TASK-03-02 → TASK-04-03
+                                    → TASK-03-03
+                       → TASK-04-01
 ```
 
 ## 4. マイルストーン

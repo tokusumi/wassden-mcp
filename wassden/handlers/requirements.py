@@ -58,8 +58,17 @@ async def handle_prompt_requirements(args: dict[str, Any]) -> dict[str, Any]:
 ### 6. 機能要件（EARS）
 Easy Approach to Requirements Syntax（EARS）に従って記載：
 - **REQ-01**: システムは、[条件]のとき、[動作]すること
+  - 受け入れ観点1: [検証可能な条件]
+  - 受け入れ観点2: [検証可能な条件]
 - **REQ-02**: システムは、[条件]のとき、[動作]すること
+  - 受け入れ観点1: [検証可能な条件]
+  - 受け入れ観点2: [検証可能な条件]
 - [追加の要件...]
+
+### 7. テスト要件（Testing Requirements）
+- **TR-01**: [テスト要件の説明]
+- **TR-02**: [テスト要件の説明]
+- [追加のテスト要件...]
 
 ## 作成指示
 1. 各REQ-IDは連番（REQ-01, REQ-02...）で作成

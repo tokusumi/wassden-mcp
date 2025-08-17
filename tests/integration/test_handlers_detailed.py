@@ -239,6 +239,10 @@ class TestValidateRequirementsHandler:
 ## 6. 機能要件（EARS）
 - **REQ-01**: システムは、入力を受け付けること
 - **REQ-02**: システムは、出力を提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: 入力テスト要件
+- **TR-02**: 出力テスト要件
 """
         req_file.write_text(req_content)
 
@@ -463,11 +467,11 @@ class TestValidateDesignHandler:
 # Design Document
 
 ## 1. アーキテクチャ概要
-システム設計の概要 [REQ-01, REQ-02]
+システム設計の概要
 
 ## 2. コンポーネント設計
-- **auth-service**: 認証サービス [REQ-01]
-- **data-service**: データサービス [REQ-02]
+- **auth-service**: 認証サービス
+- **data-service**: データサービス
 
 ## 3. データモデル
 データ構造の定義
@@ -480,6 +484,10 @@ API仕様の詳細
 
 ## 6. テスト戦略
 テスト計画とアプローチ
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **auth-service**
+- REQ-02 ⇔ **data-service**
 """
         design_file.write_text(design_content)
 

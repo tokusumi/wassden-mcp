@@ -15,6 +15,12 @@ def extract_req_ids(content: str) -> set[str]:
     return set(re.findall(r"\bREQ-\d{2}\b", content))
 
 
+def extract_tr_ids(content: str) -> set[str]:
+    """Extract TR-IDs from content."""
+    tr_ids = re.findall(r"\bTR-\d{2}\b", content)
+    return set(tr_ids)
+
+
 def extract_nfr_ids(content: str) -> set[str]:
     """Extract NFR-IDs from content using consistent regex."""
     if not content:
@@ -54,6 +60,25 @@ def extract_design_components(content: str) -> set[str]:
     return components
 
 
+def extract_test_scenarios(content: str) -> set[str]:
+    """Extract test scenario names from design document."""
+    if not content:
+        return set()
+
+    scenarios = set()
+
+    # Look for test scenarios in the form: **test-scenario**:
+    # Find the test strategy section (Section 6)
+    test_section_match = re.search(r"## \d*\.?\s*テスト戦略.*?(?=## |$)", content, re.DOTALL)
+    if test_section_match:
+        test_section = test_section_match.group(0)
+        # Extract test scenarios from the test section
+        scenario_matches = re.findall(r"\*\*([a-zA-Z0-9_-]*test[a-zA-Z0-9_-]*)\*\*:", test_section)
+        scenarios.update(scenario_matches)
+
+    return scenarios
+
+
 def check_requirement_coverage(all_requirements: set[str], referenced_requirements: set[str]) -> list[str]:
     """Check requirement coverage and return validation errors."""
     errors = []
@@ -61,6 +86,17 @@ def check_requirement_coverage(all_requirements: set[str], referenced_requiremen
 
     if missing_refs:
         errors.append(f"Missing references to requirements: {', '.join(sorted(missing_refs))}")
+
+    return errors
+
+
+def check_tr_coverage(all_trs: set[str], referenced_trs: set[str]) -> list[str]:
+    """Check test requirement coverage and return validation errors."""
+    errors = []
+    missing_refs = list(all_trs - referenced_trs)
+
+    if missing_refs:
+        errors.append(f"Missing references to test requirements: {', '.join(sorted(missing_refs))}")
 
     return errors
 

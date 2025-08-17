@@ -4,7 +4,13 @@ import re
 from typing import Any
 
 # Import common validation functions
-from .validation_common import extract_design_components, extract_req_ids, extract_task_ids
+from .validation_common import (
+    extract_design_components,
+    extract_req_ids,
+    extract_task_ids,
+    extract_test_scenarios,
+    extract_tr_ids,
+)
 
 
 def build_traceability_matrix(
@@ -15,15 +21,19 @@ def build_traceability_matrix(
     """Build a complete traceability matrix from spec documents."""
     matrix: dict[str, Any] = {
         "requirements": set(),
+        "test_requirements": set(),
         "design_components": set(),
+        "test_scenarios": set(),
         "tasks": set(),
         "req_to_design": {},
+        "tr_to_design": {},
         "design_to_tasks": {},
         "task_dependencies": {},
     }
 
     _extract_all_ids(matrix, requirements_content, design_content, tasks_content)
     _build_req_to_design_mapping(matrix, requirements_content, design_content)
+    _build_tr_to_design_mapping(matrix, requirements_content, design_content)
     _build_design_to_tasks_mapping(matrix, design_content, tasks_content)
     _extract_task_dependencies(matrix, tasks_content)
 
@@ -37,9 +47,11 @@ def _extract_all_ids(
 
     if requirements_content:
         matrix["requirements"] = extract_req_ids(requirements_content)
+        matrix["test_requirements"] = extract_tr_ids(requirements_content)
 
     if design_content:
         matrix["design_components"] = extract_design_components(design_content)
+        matrix["test_scenarios"] = extract_test_scenarios(design_content)
 
     if tasks_content:
         matrix["tasks"] = extract_task_ids(tasks_content)
@@ -65,13 +77,34 @@ def _build_req_to_design_mapping(
             matrix["req_to_design"][req_id] = related_components
 
 
+def _build_tr_to_design_mapping(
+    matrix: dict[str, Any], requirements_content: str | None, design_content: str | None
+) -> None:
+    """Build mapping from test requirements to test scenarios."""
+    if not (requirements_content and design_content):
+        return
+
+    for tr_id in matrix["test_requirements"]:
+        pattern = rf"{tr_id}.*?(?=TR-\d{{2}}|##|$)"
+        matches = re.findall(pattern, design_content, re.DOTALL)
+
+        related_scenarios = set()
+        for match in matches:
+            scenario_matches = re.findall(r"\*\*([a-zA-Z0-9_-]*test[a-zA-Z0-9_-]*)\*\*", match[:500])
+            related_scenarios.update(scenario_matches)
+
+        if related_scenarios:
+            matrix["tr_to_design"][tr_id] = related_scenarios
+
+
 def _build_design_to_tasks_mapping(
     matrix: dict[str, Any], design_content: str | None, tasks_content: str | None
 ) -> None:
-    """Build mapping from design components to tasks."""
+    """Build mapping from design components and test scenarios to tasks."""
     if not (design_content and tasks_content):
         return
 
+    # Map design components to tasks
     for component in matrix["design_components"]:
         if component in tasks_content:
             related_tasks = set()
@@ -83,6 +116,19 @@ def _build_design_to_tasks_mapping(
 
             if related_tasks:
                 matrix["design_to_tasks"][component] = related_tasks
+
+    # Map test scenarios to tasks
+    for scenario in matrix["test_scenarios"]:
+        if scenario in tasks_content:
+            related_tasks = set()
+            pattern = rf"{re.escape(scenario)}.*?TASK-\d{{2}}(?:-\d{{2}}){{0,2}}"
+            matches = re.findall(pattern, tasks_content, re.DOTALL)
+            for match in matches:
+                task_matches = re.findall(r"TASK-\d{2}(?:-\d{2}){0,2}", match)
+                related_tasks.update(task_matches)
+
+            if related_tasks:
+                matrix["design_to_tasks"][scenario] = related_tasks
 
 
 def _extract_task_dependencies(matrix: dict[str, Any], tasks_content: str | None) -> None:
@@ -133,7 +179,9 @@ def calculate_coverage_metrics(matrix: dict[str, Any]) -> dict[str, float]:
     """Calculate coverage metrics from traceability matrix."""
     metrics = {
         "requirement_coverage": 0.0,
+        "test_requirement_coverage": 0.0,
         "design_coverage": 0.0,
+        "test_scenario_coverage": 0.0,
         "task_coverage": 0.0,
     }
 
@@ -142,10 +190,20 @@ def calculate_coverage_metrics(matrix: dict[str, Any]) -> dict[str, float]:
         covered_reqs = len([r for r in matrix["requirements"] if r in matrix["req_to_design"]])
         metrics["requirement_coverage"] = (covered_reqs / len(matrix["requirements"])) * 100
 
+    # Test requirement coverage: % of TRs with design references
+    if matrix["test_requirements"]:
+        covered_trs = len([tr for tr in matrix["test_requirements"] if tr in matrix["tr_to_design"]])
+        metrics["test_requirement_coverage"] = (covered_trs / len(matrix["test_requirements"])) * 100
+
     # Design coverage: % of design components with task references
     if matrix["design_components"]:
         covered_components = len([c for c in matrix["design_components"] if c in matrix["design_to_tasks"]])
         metrics["design_coverage"] = (covered_components / len(matrix["design_components"])) * 100
+
+    # Test scenario coverage: % of test scenarios with task references
+    if matrix["test_scenarios"]:
+        covered_scenarios = len([s for s in matrix["test_scenarios"] if s in matrix["design_to_tasks"]])
+        metrics["test_scenario_coverage"] = (covered_scenarios / len(matrix["test_scenarios"])) * 100
 
     # Task coverage: % of tasks with proper dependencies
     if matrix["tasks"]:

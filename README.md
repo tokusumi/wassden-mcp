@@ -23,7 +23,7 @@ The tool acts as your **SDD methodology expert**, ensuring AI agents follow best
 
 - **🎯 Spec-Driven Development**: Complete Requirements → Design → Tasks → Code workflow
 - **🔄 Intelligent Validation**: Automated quality checks with actionable feedback and **100% traceability enforcement**
-- **📊 Traceability Management**: Full REQ↔DESIGN↔TASK mapping with mandatory coverage validation
+- **📊 Traceability Management**: Complete REQ↔DESIGN↔TASK + TR↔TEST-SCENARIO mapping with mandatory 100% coverage validation
 - **🚀 Progressive Prompting**: Step-by-step guidance for high-quality deliverables
 - **🛠️ MCP Integration**: Seamless integration with Claude Code and other MCP clients via FastMCP
 - **🧪 Robust Testing**: [118 comprehensive tests](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with automated MCP integration and consistently fast response times (<0.01ms avg)
@@ -195,13 +195,24 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 
 > **📋 Validation Standards**: wassden enforces **100% traceability** - all requirements must be referenced in design and tasks. See [Validation Documentation](docs/validation/) for detailed requirements and examples.
 
-### 📊 Analysis Tools
-*These tools provide project insights and traceability*
+### 📊 Traceability & Analysis Tools
+*These tools provide project insights, dependency tracking, and change impact analysis*
 
-| Tool               | Purpose             | Input        | Output                   |
-| ------------------ | ------------------- | ------------ | ------------------------ |
-| `analyze-changes`  | Impact analysis     | Changed file | Change impact report     |
-| `get-traceability` | Traceability report | Spec paths   | Full traceability matrix |
+| Tool               | Purpose                                      | Input                    | Output                           |
+| ------------------ | -------------------------------------------- | ------------------------ | -------------------------------- |
+| `get-traceability` | Complete traceability matrix generation     | Spec paths (optional)    | Full REQ↔DESIGN↔TASK mapping   |
+| `analyze-changes`  | Impact analysis for spec changes            | Changed file + description | Dependency impact & update guide |
+
+#### 🔗 Traceability Features
+
+wassden provides comprehensive traceability management that ensures full project coherence:
+
+- **📋 Complete Mapping**: Automated REQ↔DESIGN↔TASK + TR↔TEST-SCENARIO relationship tracking
+- **🔍 Impact Analysis**: Identifies dependencies when specifications change
+- **📝 Update Guidance**: Generates specific prompts for updating affected documents
+- **✅ Coverage Validation**: Ensures 100% traceability compliance for all requirements and test scenarios
+
+> **💡 Pro Tip**: Use `analyze-changes` after modifying any spec file to identify all dependent documents that need updates. The tool provides step-by-step guidance for maintaining project consistency.
 
 ## 📁 Project Structure
 
@@ -283,11 +294,15 @@ wassden-py/
 
 - **EARS Format**: Requirements must follow "システムは...すること" pattern
 - **REQ-ID Format**: Sequential numbering (REQ-01, REQ-02, ...)
-- **100% Traceability**: All requirements must be referenced in design and tasks
+- **TR-ID Format**: Test requirements numbering (TR-01, TR-02, ...)
+- **100% Traceability**: All requirements (REQ + TR) must be referenced in design and tasks
+- **Test Coverage**: All test scenarios must be referenced in tasks via DC field
 - **Design Coverage**: All design components must be referenced in tasks
 - **Dependencies**: Task dependencies checked for circular references
 
 📖 **Detailed Documentation**:
+- [Specification Format Standards](docs/spec-format.md) - Complete format guide for requirements, design, and tasks documents
+- [Traceability Management](docs/traceability.md) - Complete guide to dependency tracking and change impact analysis
 - [Requirements Validation](docs/validation/ears.md) - EARS format and ID validation
 - [Traceability Requirements](docs/validation/traceability.md) - REQ↔DESIGN↔TASK mapping rules
 - [Tasks Validation](docs/validation/tasks.md) - DAG requirements and coverage rules

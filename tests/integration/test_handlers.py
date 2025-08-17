@@ -153,7 +153,7 @@ async def test_validate_tasks_handler_success_case(temp_dir, correct_requirement
     # Should pass validation with 100% traceability
     assert "✅" in text  # Should show success
     assert "検証に成功" in text  # Should indicate success
-    assert "タスク数: 4" in text  # Should detect the 4 tasks in correct_tasks
+    assert "タスク数: 6" in text  # Should detect the 6 tasks in correct_tasks
     assert "実装フェーズに進むことができます" in text  # Should allow proceeding to implementation
 
 
