@@ -38,22 +38,22 @@ class TransportType(str, Enum):
 
 def print_success(message: str) -> None:
     """Print a success message in green."""
-    typer.echo(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.GREEN}[SUCCESS] {message}{Style.RESET_ALL}")
 
 
 def print_warning(message: str) -> None:
     """Print a warning message in yellow."""
-    typer.echo(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.YELLOW}[WARNING] {message}{Style.RESET_ALL}")
 
 
 def print_error(message: str) -> None:
     """Print an error message in red."""
-    typer.echo(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.RED}[ERROR] {message}{Style.RESET_ALL}")
 
 
 def print_info(message: str) -> None:
     """Print an info message in blue."""
-    typer.echo(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.BLUE}[INFO] {message}{Style.RESET_ALL}")
 
 
 async def run_handler(handler: Any, args: dict[str, Any]) -> None:
