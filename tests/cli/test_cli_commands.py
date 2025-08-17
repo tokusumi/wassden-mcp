@@ -221,13 +221,6 @@ Milestones
             assert result.exit_code == 0
             assert "トレーサビリティレポート" in result.output
 
-    def test_serve_command_without_server_flag(self):
-        """Test serve command without --server flag."""
-        result = self.runner.invoke(cli, ["serve"])
-
-        assert result.exit_code == 1
-        assert "Use --server flag" in result.output
-
     def test_all_commands_have_help(self):
         """Test that all commands have help text."""
         commands = [
@@ -241,7 +234,7 @@ Milestones
             "prompt-code",
             "analyze-changes",
             "get-traceability",
-            "serve",
+            "start-mcp-server",
         ]
 
         for cmd in commands:

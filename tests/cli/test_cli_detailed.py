@@ -752,37 +752,6 @@ class TestGetTraceabilityCommand:
             assert "トレーサビリティレポート" in result.output
 
 
-class TestServeCommand:
-    """Detailed serve command tests."""
-
-    def setup_method(self):
-        """Set up test environment for each test."""
-        self.runner = CliRunner()
-
-    def test_serve_help(self):
-        """Test serve help output."""
-        result = self.runner.invoke(cli, ["serve", "--help"])
-
-        assert result.exit_code == 0
-        assert "serve" in result.output
-        assert "--server" in result.output
-
-    def test_serve_without_server_flag(self):
-        """Test serve command without --server flag."""
-        result = self.runner.invoke(cli, ["serve"])
-
-        assert result.exit_code == 1
-        assert "Use --server flag" in result.output
-
-    def test_serve_with_server_flag_help_only(self):
-        """Test that serve with --server flag would start server (help test only)."""
-        # We can't actually start the server in tests, but we can verify the flag is recognized
-        result = self.runner.invoke(cli, ["serve", "--help"])
-
-        assert result.exit_code == 0
-        assert "--server" in result.output
-
-
 class TestCLIErrorHandling:
     """Test CLI error handling scenarios."""
 
@@ -799,11 +768,11 @@ class TestCLIErrorHandling:
 
     def test_cli_with_conflicting_options(self):
         """Test CLI commands with conflicting options."""
-        # Test with command that doesn't accept certain combinations
-        result = self.runner.invoke(cli, ["serve", "--server", "--help"])
+        # Test with command that has multiple options
+        result = self.runner.invoke(cli, ["start-mcp-server", "--help"])
 
         # Should handle gracefully (help takes precedence)
-        assert "serve" in result.output
+        assert "start-mcp-server" in result.output
 
     def test_cli_commands_handle_file_errors_gracefully(self):
         """Test that CLI commands handle file errors gracefully."""

@@ -19,7 +19,7 @@ from .handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
-from .server import main as run_server
+from .server import main as run_server_with_transport
 
 # Initialize colorama for cross-platform colored output
 init(autoreset=True)
@@ -67,15 +67,31 @@ def cli() -> None:
 
 
 @cli.command()
-@click.option("--server", is_flag=True, help="Run as MCP server")
-def serve(server: bool) -> None:
-    """Run wassden as an MCP server."""
-    if server:
-        print_info("Starting wassden MCP server...")
-        run_server()
-    else:
-        print_error("Use --server flag to run as MCP server")
-        sys.exit(1)
+@click.option(
+    "--transport",
+    type=click.Choice(["stdio", "sse", "streamable-http"]),
+    default="stdio",
+    help="Transport type: stdio, sse, or streamable-http",
+)
+@click.option(
+    "--host",
+    default="127.0.0.1",
+    help="HTTP host (only used for sse/streamable-http transports)",
+)
+@click.option(
+    "--port",
+    type=int,
+    default=3001,
+    help="HTTP port (only used for sse/streamable-http transports)",
+)
+def start_mcp_server(transport: str, host: str, port: int) -> None:
+    """Start wassden MCP server with specified transport."""
+    print_info(f"Starting wassden MCP server with {transport} transport...")
+
+    if transport in ["sse", "streamable-http"]:
+        print_info(f"Listening on {host}:{port}")
+
+    run_server_with_transport(transport=transport, host=host, port=port)
 
 
 @cli.command()
