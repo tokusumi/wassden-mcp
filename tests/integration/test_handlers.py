@@ -1,5 +1,8 @@
 """Integration tests for handlers."""
 
+import tempfile
+from pathlib import Path
+
 import pytest
 
 from wassden.handlers import (
@@ -10,6 +13,25 @@ from wassden.handlers import (
     tasks,
     traceability,
 )
+
+
+def get_correct_tasks() -> str:
+    """Return correct tasks content for testing."""
+    return """
+## 概要
+開発タスクの分解
+
+## タスク一覧
+- **TASK-01-01**: 環境構築とプロジェクト初期化
+- **TASK-01-02**: データベース設計と実装
+- **TASK-02-01**: API実装とテスト
+
+## 依存関係
+TASK-01-01 → TASK-01-02 → TASK-02-01
+
+## マイルストーン
+- M1: 基盤完成
+"""
 
 
 @pytest.mark.asyncio
@@ -179,6 +201,88 @@ async def test_prompt_code_handler(temp_dir, correct_requirements, correct_desig
     text = result["content"][0]["text"]
     assert "実装" in text
     assert "TASK-01-01" in text
+
+
+@pytest.mark.asyncio
+async def test_generate_review_prompt_handler(temp_dir, correct_requirements, correct_design, correct_tasks):
+    """Test generate review prompt handler."""
+    # Create spec files
+    req_path = temp_dir / "requirements.md"
+    req_path.write_text(correct_requirements)
+    design_path = temp_dir / "design.md"
+    design_path.write_text(correct_design)
+    tasks_path = temp_dir / "tasks.md"
+    tasks_path.write_text(correct_tasks)
+
+    result = await code_analysis.handle_generate_review_prompt(
+        {
+            "taskId": "TASK-01-01",
+            "requirementsPath": str(req_path),
+            "designPath": str(design_path),
+            "tasksPath": str(tasks_path),
+        }
+    )
+
+    assert "content" in result
+    text = result["content"][0]["text"]
+
+    # Check basic structure
+    assert "TASK-01-01" in text
+    assert "実装レビュープロンプト" in text
+    assert "品質ガードレール" in text
+    assert "静的品質チェック" in text
+    assert "合格判定基準" in text
+
+    # Check specific sections
+    assert "テストケース改竄" in text
+    assert "TODO/FIXME" in text
+    assert "プロジェクト品質基準の特定" in text
+
+
+@pytest.mark.asyncio
+async def test_generate_review_prompt_missing_task_id():
+    """Test generate review prompt with missing task ID."""
+    result = await code_analysis.handle_generate_review_prompt({})
+
+    assert "content" in result
+    text = result["content"][0]["text"]
+    assert "taskId パラメータが必要です" in text
+
+
+@pytest.mark.asyncio
+async def test_generate_review_prompt_nonexistent_task():
+    """Test generate review prompt with nonexistent task ID."""
+
+    # Create temporary files with tasks content
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write(get_correct_tasks())
+        tasks_path = f.name
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write("# Dummy requirements")
+        req_path = f.name
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write("# Dummy design")
+        design_path = f.name
+
+    try:
+        result = await code_analysis.handle_generate_review_prompt(
+            {
+                "taskId": "TASK-99-99",  # Non-existent task
+                "tasksPath": tasks_path,
+                "requirementsPath": req_path,
+                "designPath": design_path,
+            }
+        )
+
+        assert "content" in result
+        text = result["content"][0]["text"]
+        assert "TASK-99-99 が tasks.md で見つかりません" in text
+    finally:
+        Path(tasks_path).unlink()
+        Path(req_path).unlink()
+        Path(design_path).unlink()
 
 
 @pytest.mark.asyncio

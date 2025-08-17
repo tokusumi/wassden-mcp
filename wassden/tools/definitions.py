@@ -187,4 +187,33 @@ tool_definitions: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "name": "generate_review_prompt",
+        "description": "Generate implementation review prompt for specific TASK-ID to validate implementation quality",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "taskId": {
+                    "type": "string",
+                    "description": "Task ID to generate review prompt for (e.g., TASK-01-01)",
+                },
+                "tasksPath": {
+                    "type": "string",
+                    "description": "Path to tasks.md file",
+                    "default": "specs/tasks.md",
+                },
+                "requirementsPath": {
+                    "type": "string",
+                    "description": "Path to requirements.md file",
+                    "default": "specs/requirements.md",
+                },
+                "designPath": {
+                    "type": "string",
+                    "description": "Path to design.md file",
+                    "default": "specs/design.md",
+                },
+            },
+            "required": ["taskId"],
+        },
+    },
 ]

@@ -171,6 +171,19 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
    uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-tasks specs/tasks.md
    ```
 
+4. **Task-Specific Implementation Review**
+   
+   Generate structured review prompts for each TASK-ID implementation:
+   ```bash
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden generate-review-prompt TASK-01-01
+   ```
+   
+   This provides agents with:
+   - **Quality guardrails** preventing test tampering and TODO shortcuts
+   - **Project-specific quality checks** (linting, formatting, testing)
+   - **Requirements traceability** validation against REQ/TR specifications
+   - **Pass/fail criteria** with actionable feedback for fixes
+
 ## 🛠️ Available Tools
 
 ### 📝 Prompt Generation Tools
@@ -183,6 +196,7 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 | `prompt-design`       | Generate design document prompt             | Requirements path | Architectural design prompt                 |
 | `prompt-tasks`        | Generate WBS tasks prompt                   | Design path       | Task breakdown prompt                       |
 | `prompt-code`         | Generate implementation prompt              | All spec paths    | Implementation guide prompt                 |
+| `generate-review-prompt` | Generate TASK-specific review prompt      | Task ID + spec paths | Quality review prompt with guardrails    |
 
 ### ✅ Validation Tools  
 *These tools validate agent-generated documents for quality and consistency*

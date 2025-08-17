@@ -191,6 +191,63 @@ Milestones
             assert "実装" in result.output
             assert "TASK-01-01" in result.output
 
+    def test_generate_review_prompt_command(self):
+        """Test generate_review_prompt command."""
+        with self.runner.isolated_filesystem():
+            Path("specs").mkdir(exist_ok=True)
+            Path("specs/requirements.md").write_text("## 機能要件\n- **REQ-01**: システムは、テストすること")
+            Path("specs/design.md").write_text("## コンポーネント設計\n- **component**: Test [REQ-01]")
+            Path("specs/tasks.md").write_text("## タスク一覧\n- **TASK-01-01**: テスト実装 [REQ-01]")
+
+            result = self.runner.invoke(app, ["generate-review-prompt", "TASK-01-01"])
+
+            assert result.exit_code == 0
+            assert "実装レビュープロンプト" in result.output
+            assert "TASK-01-01" in result.output
+            assert "品質ガードレール" in result.output
+            assert "静的品質チェック" in result.output
+
+    def test_generate_review_prompt_help(self):
+        """Test generate_review_prompt help command."""
+        result = self.runner.invoke(app, ["generate-review-prompt", "--help"])
+
+        assert result.exit_code == 0
+        assert "Task ID to generate review prompt for" in result.output
+        assert "TASK-01-01" in result.output
+
+    def test_generate_review_prompt_missing_task_id(self):
+        """Test generate_review_prompt command without task ID."""
+        result = self.runner.invoke(app, ["generate-review-prompt"])
+
+        assert result.exit_code != 0  # Missing required argument
+        assert "Missing argument" in result.output or "Usage:" in result.output
+
+    def test_generate_review_prompt_custom_paths(self):
+        """Test generate_review_prompt command with custom paths."""
+        with self.runner.isolated_filesystem():
+            Path("custom").mkdir(exist_ok=True)
+            Path("custom/req.md").write_text("## 機能要件\n- **REQ-01**: Test")
+            Path("custom/design.md").write_text("## 設計\n- Component: Test [REQ-01]")
+            Path("custom/tasks.md").write_text("## タスク\n- **TASK-01-01**: Test [REQ-01]")
+
+            result = self.runner.invoke(
+                app,
+                [
+                    "generate-review-prompt",
+                    "TASK-01-01",
+                    "--requirementsPath",
+                    "custom/req.md",
+                    "--designPath",
+                    "custom/design.md",
+                    "--tasksPath",
+                    "custom/tasks.md",
+                ],
+            )
+
+            assert result.exit_code == 0
+            assert "実装レビュープロンプト" in result.output
+            assert "TASK-01-01" in result.output
+
     def test_analyze_changes_command(self):
         """Test analyze_changes command."""
         result = self.runner.invoke(
@@ -232,6 +289,7 @@ Milestones
             "prompt-tasks",
             "validate-tasks",
             "prompt-code",
+            "generate-review-prompt",
             "analyze-changes",
             "get-traceability",
             "start-mcp-server",
