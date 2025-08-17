@@ -1,6 +1,7 @@
 """CLI interface for wassden."""
 
 import asyncio
+import os
 import sys
 from enum import Enum
 from importlib import metadata
@@ -28,6 +29,29 @@ from .server import main as run_server_with_transport
 init(autoreset=True)
 
 
+def _supports_color() -> bool:
+    """Check if the terminal supports color output."""
+    # Check for NO_COLOR environment variable (standard)
+    if os.environ.get("NO_COLOR"):
+        return False
+
+    # Check for FORCE_COLOR environment variable
+    if os.environ.get("FORCE_COLOR"):
+        return True
+
+    # Check if running in CI environment
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        return False
+
+    # Check if stdout is a TTY
+    if not sys.stdout.isatty():
+        return False
+
+    # Check TERM environment variable
+    term = os.environ.get("TERM", "")
+    return term not in ("dumb", "")
+
+
 class TransportType(str, Enum):
     """Available transport types for MCP server."""
 
@@ -38,22 +62,34 @@ class TransportType(str, Enum):
 
 def print_success(message: str) -> None:
     """Print a success message in green."""
-    typer.echo(f"{Fore.GREEN}[SUCCESS] {message}{Style.RESET_ALL}")
+    if _supports_color():
+        typer.echo(f"{Fore.GREEN}[SUCCESS] {message}{Style.RESET_ALL}")
+    else:
+        typer.echo(f"[SUCCESS] {message}")
 
 
 def print_warning(message: str) -> None:
     """Print a warning message in yellow."""
-    typer.echo(f"{Fore.YELLOW}[WARNING] {message}{Style.RESET_ALL}")
+    if _supports_color():
+        typer.echo(f"{Fore.YELLOW}[WARNING] {message}{Style.RESET_ALL}")
+    else:
+        typer.echo(f"[WARNING] {message}")
 
 
 def print_error(message: str) -> None:
     """Print an error message in red."""
-    typer.echo(f"{Fore.RED}[ERROR] {message}{Style.RESET_ALL}")
+    if _supports_color():
+        typer.echo(f"{Fore.RED}[ERROR] {message}{Style.RESET_ALL}")
+    else:
+        typer.echo(f"[ERROR] {message}")
 
 
 def print_info(message: str) -> None:
     """Print an info message in blue."""
-    typer.echo(f"{Fore.BLUE}[INFO] {message}{Style.RESET_ALL}")
+    if _supports_color():
+        typer.echo(f"{Fore.BLUE}[INFO] {message}{Style.RESET_ALL}")
+    else:
+        typer.echo(f"[INFO] {message}")
 
 
 async def run_handler(handler: Any, args: dict[str, Any]) -> None:
@@ -71,7 +107,11 @@ async def run_handler(handler: Any, args: dict[str, Any]) -> None:
         sys.exit(1)
 
 
-app = typer.Typer(help="wassden - MCP-based Spec-Driven Development toolkit.")
+app = typer.Typer(
+    help="wassden - MCP-based Spec-Driven Development toolkit.",
+    rich_markup_mode="markdown" if _supports_color() else None,
+    pretty_exceptions_enable=_supports_color(),
+)
 
 
 @app.command()
