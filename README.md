@@ -1,8 +1,19 @@
-# wassden (Python版)
+# wassden
 
 A powerful MCP-based Spec-Driven Development (SDD) toolkit that transforms any LLM into a comprehensive development agent with structured specification generation and validation capabilities.
 
 > "Spec-first development made intelligent and systematic"
+
+## 🎯 Core Philosophy
+
+**wassden** is designed as an **intelligent prompt orchestrator** for SDD workflows. It doesn't generate documents itself—instead, it:
+
+- **🧠 Provides expert-crafted prompts** that guide AI agents to create high-quality specifications
+- **🤝 Enables seamless agent collaboration** through standardized SDD workflows  
+- **✅ Validates generated documents** to ensure consistency and completeness
+- **📋 Maintains project coherence** across the entire development lifecycle
+
+The tool acts as your **SDD methodology expert**, ensuring AI agents follow best practices while you focus on the creative aspects of development.
 
 ## ✨ Key Features
 
@@ -11,46 +22,12 @@ A powerful MCP-based Spec-Driven Development (SDD) toolkit that transforms any L
 - **📊 Traceability Management**: Full REQ↔DESIGN↔TASK mapping and impact analysis
 - **🚀 Progressive Prompting**: Step-by-step guidance for high-quality deliverables
 - **🛠️ MCP Integration**: Seamless integration with Claude Code and other MCP clients via FastMCP
-- **🧪 Production-Ready**: 118 comprehensive tests with automated MCP integration + <0.01ms avg response time
+- **🧪 Robust Testing**: 118 comprehensive tests with automated MCP integration and consistently fast response times (<0.01ms avg)
 
 ## 🎪 Demonstrations
 
-### Complete Development Workflow
-
-```bash
-# 1. Unified input analysis + requirements generation
-wassden check_completeness --userInput "Python and FastMCP MCP tool for developers"
-# → Returns either questions OR direct requirements.md creation prompt
-
-# 2. Validate generated requirements
-wassden validate_requirements --requirementsPath specs/requirements.md
-
-# 3. Generate design from requirements
-wassden prompt_design --requirementsPath specs/requirements.md
-
-# 4. Create implementation tasks
-wassden prompt_tasks --designPath specs/design.md
-
-# 5. Generate implementation prompts
-wassden prompt_code --tasksPath specs/tasks.md
-```
-
-### Legacy Two-Step Approach (if needed)
-
-```bash
-# Alternative: explicit requirements generation
-wassden prompt_requirements --projectDescription "MCP-based tool"
-```
-
-### Real-time Traceability
-
-```bash
-# Get complete traceability report
-wassden get_traceability
-
-# Analyze change impact
-wassden analyze_changes --changedFile specs/requirements.md --changeDescription "Added REQ-05"
-```
+Demo videos showcasing the development workflow will be added to this section soon.  
+Detailed usage examples will be provided in the videos—please stay tuned!
 
 ## 🚀 Quick Start
 
@@ -64,7 +41,7 @@ uv pip install wassden
 pip install wassden
 
 # Via git
-git clone https://github.com/your-org/wassden-py
+git clone https://github.com/tokusumi/wassden-mcp
 cd wassden-py
 uv pip install -e .
 ```
@@ -108,7 +85,7 @@ uv pip install -e .
 #### Alternative: Development Installation
 
 ```bash
-git clone https://github.com/your-org/wassden-py
+git clone https://github.com/tokusumi/wassden-mcp
 cd wassden-py
 uv pip install -e .
 ```
@@ -129,38 +106,61 @@ Then use absolute path in settings:
 
 ### Basic Usage
 
-1. **Start with Project Analysis**
+1. **Complete Project Analysis & Requirements Generation**
 
    ```bash
    wassden check_completeness --userInput "Your project description"
    ```
+   
+   This command analyzes your input for completeness and:
+   - If information is missing: Returns clarifying questions
+   - If information is sufficient: **Provides structured prompts** for the agent to generate EARS format requirements.md
 
-2. **Generate Requirements**
+2. **Agent-Driven Document Creation**
+   
+   The agent uses wassden's prompts to create specifications:
+   - **Requirements**: Agent generates `specs/requirements.md` using wassden's EARS-formatted prompts
+   - **Design**: Agent creates `specs/design.md` following wassden's architectural guidance
+   - **Tasks**: Agent produces `specs/tasks.md` with wassden's WBS structure
 
+3. **Quality Assurance Through Validation**
+   
+   wassden validates the agent-generated documents:
    ```bash
-   wassden prompt_requirements --projectDescription "Detailed description"
+   wassden validate_requirements specs/requirements.md
+   wassden validate_design specs/design.md
+   wassden validate_tasks specs/tasks.md
    ```
-
-3. **Follow the SDD Process**
-   - Requirements validation
-   - Design generation
-   - Task breakdown
-   - Implementation guidance
 
 ## 🛠️ Available Tools
 
-| Tool                    | Purpose                       | Input             | Output                   |
-| ----------------------- | ----------------------------- | ----------------- | ------------------------ |
-| `check_completeness`    | Analyze input completeness    | User description  | Clarifying questions     |
-| `prompt_requirements`   | Generate EARS requirements    | Project details   | Requirements prompt      |
-| `validate_requirements` | Validate requirements quality | Requirements path | Validation report        |
-| `prompt_design`         | Generate design document      | Requirements path | Design prompt            |
-| `validate_design`       | Validate design structure     | Design path       | Validation report        |
-| `prompt_tasks`          | Generate WBS tasks            | Design path       | Tasks prompt             |
-| `validate_tasks`        | Validate task dependencies    | Tasks path        | Validation report        |
-| `prompt_code`           | Generate implementation guide | All spec paths    | Implementation prompt    |
-| `analyze_changes`       | Impact analysis               | Changed file      | Change impact report     |
-| `get_traceability`      | Traceability report           | Spec paths        | Full traceability matrix |
+### 📝 Prompt Generation Tools
+*These tools provide structured prompts for AI agents to create specifications*
+
+| Tool                  | Purpose                                     | Input             | Agent Output                                |
+| --------------------- | ------------------------------------------- | ----------------- | ------------------------------------------- |
+| `check_completeness`  | Analyze input & provide requirements prompt | User description  | Questions or structured requirements prompt |
+| `prompt_requirements` | Generate specialized requirements prompt    | Project details   | EARS-formatted requirements prompt          |
+| `prompt_design`       | Generate design document prompt             | Requirements path | Architectural design prompt                 |
+| `prompt_tasks`        | Generate WBS tasks prompt                   | Design path       | Task breakdown prompt                       |
+| `prompt_code`         | Generate implementation prompt              | All spec paths    | Implementation guide prompt                 |
+
+### ✅ Validation Tools  
+*These tools validate agent-generated documents for quality and consistency*
+
+| Tool                    | Purpose                       | Input             | Output            |
+| ----------------------- | ----------------------------- | ----------------- | ----------------- |
+| `validate_requirements` | Validate requirements quality | Requirements path | Validation report |
+| `validate_design`       | Validate design structure     | Design path       | Validation report |
+| `validate_tasks`        | Validate task dependencies    | Tasks path        | Validation report |
+
+### 📊 Analysis Tools
+*These tools provide project insights and traceability*
+
+| Tool               | Purpose             | Input        | Output                   |
+| ------------------ | ------------------- | ------------ | ------------------------ |
+| `analyze_changes`  | Impact analysis     | Changed file | Change impact report     |
+| `get_traceability` | Traceability report | Spec paths   | Full traceability matrix |
 
 ## 📁 Project Structure
 
@@ -297,7 +297,7 @@ python -m wassden.server  # Alternative method
 
 ## 📄 License
 
-ISC License - see LICENSE file for details.
+MIT License – see LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
