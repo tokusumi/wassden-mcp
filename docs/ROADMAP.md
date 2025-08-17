@@ -3,8 +3,6 @@
 ## Planned Features and Improvements
 
 ### Development & Quality
-- GitHub Actions CI/CD pipeline implementation
-- Pre-commit hooks to automatically run `make check` before commits
 - Consolidation of cli.py and server.py common code
 - Migration from dataclass to Pydantic
 
