@@ -103,6 +103,10 @@ class TestRequirementsValidation:
 ## 6. 機能要件（EARS）
 - **REQ-01**: システムは、入力を受け付けること
 - **REQ-02**: システムは、出力を提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: 入力テスト要件
+- **TR-02**: 出力テスト要件
 """
 
         errors = validate.validate_requirements_structure(content)
@@ -303,6 +307,10 @@ class TestCompleteValidation:
 - **REQ-02**: システムは機能Bを提供すること
 - **REQ-03**: システムは機能Cを提供すること
 - **REQ-04**: システムは機能Dを提供すること
+
+## 7. テスト要件（Testing Requirements）
+- **TR-01**: テスト要件A
+- **TR-02**: テスト要件B
 """
 
         result = validate.validate_requirements(content)
@@ -311,16 +319,16 @@ class TestCompleteValidation:
         assert result["stats"]["totalRequirements"] == 4
         assert result["stats"]["totalNFRs"] == 2
         assert result["stats"]["totalKPIs"] == 3
-        assert len(result["foundSections"]) == 7
+        assert len(result["foundSections"]) == 8
 
     def test_validate_design_with_traceability(self):
         """Test design validation with traceability checking."""
         design_content = """
 ## アーキテクチャ概要
-Design overview [REQ-01, REQ-02]
+Design overview
 
 ## コンポーネント設計
-Components [REQ-03]
+Components
 
 ## データ設計
 Data model
@@ -333,6 +341,11 @@ NFR implementation
 
 ## テスト戦略
 Test plan
+
+## 7. トレーサビリティ (必須)
+- REQ-01 ⇔ **component-a**
+- REQ-02 ⇔ **component-b**
+- REQ-03 ⇔ **component-c**
 """
 
         requirements_content = """

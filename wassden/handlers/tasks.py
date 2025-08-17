@@ -1,5 +1,6 @@
 """Tasks handling functions."""
 
+import contextlib
 from typing import Any
 
 from wassden.lib import fs_utils, validate
@@ -42,31 +43,40 @@ async def handle_prompt_tasks(args: dict[str, Any]) -> dict[str, Any]:
 以下の章立てに従って作成してください：
 
 ### 1. 概要
-プロジェクトのタスク分解構造（WBS）の概要
+プロジェクトのタスク分解構造（WBS）の概要とアプローチ
 
 ### 2. タスク一覧
-#### Phase 1: 基盤構築
-- **TASK-01-01**: [タスク名] (工数: Xh)
-  - 詳細: [具体的な作業内容]
-  - 関連: [REQ-XX], [component-name]
-  - 依存: なし
+#### Phase 1: Foundation
+- [ ] **TASK-01-01**: [タスク名]
+  - **REQ**: [REQ-01, REQ-02]
+  - **DC**: **component-name**
+  - **依存**: なし
+  - **受け入れ観点**:
+    - 観点1: [検証可能な条件]
+    - 観点2: [検証可能な条件]
 
-- **TASK-01-02**: [タスク名] (工数: Xh)
-  - 詳細: [具体的な作業内容]
-  - 関連: [REQ-YY], [component-name]
-  - 依存: TASK-01-01
+- [ ] **TASK-01-02**: [タスク名]
+  - **REQ**: [REQ-03]
+  - **DC**: **another-component**
+  - **依存**: TASK-01-01
+  - **受け入れ観点**:
+    - 観点1: [検証可能な条件]
 
-#### Phase 2: 機能実装
-- **TASK-02-01**: [タスク名] (工数: Xh)
-  - 詳細: [具体的な作業内容]
-  - 関連: [REQ-ZZ], [component-name]
-  - 依存: TASK-01-XX
+#### Phase 2: Implementation
+- [ ] **TASK-02-01**: [タスク名]
+  - **REQ**: [REQ-04, REQ-05]
+  - **DC**: **component-a**, **component-b**
+  - **依存**: TASK-01-02
+  - **受け入れ観点**:
+    - 観点1: [検証可能な条件]
 
-#### Phase 3: テスト・品質保証
-- **TASK-03-01**: [タスク名] (工数: Xh)
-  - 詳細: [具体的な作業内容]
-  - 関連: [全REQ]
-  - 依存: TASK-02-XX
+#### Phase 3: Testing & Quality
+- [ ] **TASK-03-01**: [タスク名]
+  - **REQ**: [TR-01, TR-02]
+  - **DC**: **test-scenario**
+  - **依存**: TASK-02-01
+  - **受け入れ観点**:
+    - 観点1: [検証可能な条件]
 
 ### 3. 依存関係
 ```
@@ -87,10 +97,11 @@ TASK-01-01 → TASK-01-02 → TASK-02-01
 
 ## 作成指示
 1. TASK-IDは階層構造（TASK-フェーズ-連番）で作成
-2. 各タスクで関連するREQ-IDとコンポーネントを明記
-3. 依存関係を明確にし、循環依存を避ける
-4. 工数見積もりを現実的に設定
-5. 文字数: 2000-4000文字程度
+2. チェックボックス形式: `- [ ] **TASK-01-01**: Task name`
+3. 各タスクで関連するREQ-IDとコンポーネントを明記（**REQ**, **DC**フィールド使用）
+4. 依存関係を明確にし、循環依存を避ける
+5. 受け入れ観点は検証可能な条件で記載
+6. 文字数: 2000-4000文字程度
 
 このプロンプトに従って、実行可能で管理しやすいtasks.mdを作成してください。"""
 
@@ -107,13 +118,35 @@ TASK-01-01 → TASK-01-02 → TASK-02-01
 async def handle_validate_tasks(args: dict[str, Any]) -> dict[str, Any]:
     """Validate tasks.md structure and dependencies."""
     tasks_path = args.get("tasksPath", "specs/tasks.md")
+    requirements_path = args.get("requirementsPath", "specs/requirements.md")
+    design_path = args.get("designPath", "specs/design.md")
 
     try:
         tasks_content = await fs_utils.read_file(tasks_path)
-        validation_result = validate.validate_tasks(tasks_content)
+
+        # Try to read requirements and design for traceability check
+        requirements_content = None
+        design_content = None
+
+        with contextlib.suppress(FileNotFoundError):
+            requirements_content = await fs_utils.read_file(requirements_path)
+
+        with contextlib.suppress(FileNotFoundError):
+            design_content = await fs_utils.read_file(design_path)
+
+        validation_result = validate.validate_tasks(tasks_content, requirements_content, design_content)
 
         if validation_result["isValid"]:
             stats = validation_result.get("stats", {})
+            missing_req_refs = stats.get("missingRequirementReferences", [])
+            missing_design_refs = stats.get("missingDesignReferences", [])
+
+            traceability_info = ""
+            if missing_req_refs:
+                traceability_info += f"\n- 未参照要件: {len(missing_req_refs)}件"
+            if missing_design_refs:
+                traceability_info += f"\n- 未参照設計要素: {len(missing_design_refs)}件"
+
             return {
                 "content": [
                     {
@@ -122,7 +155,7 @@ async def handle_validate_tasks(args: dict[str, Any]) -> dict[str, Any]:
 
 ## 検証結果
 - タスク数: {stats.get("totalTasks", 0)}
-- 依存関係数: {stats.get("dependencies", 0)}
+- 依存関係数: {stats.get("dependencies", 0)}{traceability_info}
 
 タスクドキュメントは正しい形式で記載されています。実装フェーズに進むことができます。""",
                     }
