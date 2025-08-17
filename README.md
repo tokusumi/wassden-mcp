@@ -1,7 +1,6 @@
 # wassden
 
 [![CI](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/tokusumi/wassden-mcp/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/tokusumi/wassden-mcp)
 [![Tests](https://img.shields.io/badge/tests-118%20passing-green)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 
