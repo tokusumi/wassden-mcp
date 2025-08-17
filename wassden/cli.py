@@ -2,9 +2,12 @@
 
 import asyncio
 import sys
-from typing import Any
+from enum import Enum
+from importlib import metadata
+from pathlib import Path
+from typing import Annotated, Any
 
-import click
+import typer
 from colorama import Fore, Style, init
 
 from .handlers import (
@@ -25,24 +28,32 @@ from .server import main as run_server_with_transport
 init(autoreset=True)
 
 
+class TransportType(str, Enum):
+    """Available transport types for MCP server."""
+
+    STDIO = "stdio"
+    SSE = "sse"
+    STREAMABLE_HTTP = "streamable-http"
+
+
 def print_success(message: str) -> None:
     """Print a success message in green."""
-    click.echo(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
 
 
 def print_warning(message: str) -> None:
     """Print a warning message in yellow."""
-    click.echo(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
 
 
 def print_error(message: str) -> None:
     """Print an error message in red."""
-    click.echo(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
 
 
 def print_info(message: str) -> None:
     """Print an info message in blue."""
-    click.echo(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
+    typer.echo(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
 
 
 async def run_handler(handler: Any, args: dict[str, Any]) -> None:
@@ -52,7 +63,7 @@ async def run_handler(handler: Any, args: dict[str, Any]) -> None:
         content = result.get("content", [])
         if content and len(content) > 0:
             text = content[0].get("text", "")
-            click.echo(text)
+            typer.echo(text)
         else:
             print_warning("No content returned from handler")
     except Exception as e:
@@ -60,53 +71,39 @@ async def run_handler(handler: Any, args: dict[str, Any]) -> None:
         sys.exit(1)
 
 
-@click.group()
-@click.version_option(version="0.1.0")
-def cli() -> None:
-    """wassden - MCP-based Spec-Driven Development toolkit."""
+app = typer.Typer(help="wassden - MCP-based Spec-Driven Development toolkit.")
 
 
-@cli.command()
-@click.option(
-    "--transport",
-    type=click.Choice(["stdio", "sse", "streamable-http"]),
-    default="stdio",
-    help="Transport type: stdio, sse, or streamable-http",
-)
-@click.option(
-    "--host",
-    default="127.0.0.1",
-    help="HTTP host (only used for sse/streamable-http transports)",
-)
-@click.option(
-    "--port",
-    type=int,
-    default=3001,
-    help="HTTP port (only used for sse/streamable-http transports)",
-)
-def start_mcp_server(transport: str, host: str, port: int) -> None:
+@app.command()
+def start_mcp_server(
+    transport: Annotated[TransportType, typer.Option(help="Transport type")] = TransportType.STDIO,
+    host: Annotated[str, typer.Option(help="HTTP host (only used for sse/streamable-http transports)")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="HTTP port (only used for sse/streamable-http transports)")] = 3001,
+) -> None:
     """Start wassden MCP server with specified transport."""
-    print_info(f"Starting wassden MCP server with {transport} transport...")
+    print_info(f"Starting wassden MCP server with {transport.value} transport...")
 
-    if transport in ["sse", "streamable-http"]:
+    if transport in [TransportType.SSE, TransportType.STREAMABLE_HTTP]:
         print_info(f"Listening on {host}:{port}")
 
-    run_server_with_transport(transport=transport, host=host, port=port)
+    run_server_with_transport(transport=transport.value, host=host, port=port)
 
 
-@cli.command()
-@click.option("--userInput", "-i", required=True, help="User's project description")
-def check_completeness(userinput: str) -> None:
+@app.command()
+def check_completeness(
+    userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
+) -> None:
     """Analyze user input for completeness."""
     print_info("Analyzing input completeness...")
     asyncio.run(run_handler(handle_check_completeness, {"userInput": userinput}))
 
 
-@cli.command()
-@click.option("--projectDescription", "-p", required=True, help="Project description")
-@click.option("--scope", "-s", default="", help="Project scope")
-@click.option("--constraints", "-c", default="", help="Technical constraints")
-def prompt_requirements(projectdescription: str, scope: str, constraints: str) -> None:
+@app.command()
+def prompt_requirements(
+    projectdescription: Annotated[str, typer.Option("--projectDescription", "-p", help="Project description")],
+    scope: Annotated[str, typer.Option("--scope", "-s", help="Project scope")] = "",
+    constraints: Annotated[str, typer.Option("--constraints", "-c", help="Technical constraints")] = "",
+) -> None:
     """Generate prompt for creating requirements.md."""
     print_info("Generating requirements prompt...")
     asyncio.run(
@@ -121,209 +118,179 @@ def prompt_requirements(projectdescription: str, scope: str, constraints: str) -
     )
 
 
-@cli.command()
-@click.option(
-    "--requirementsPath",
-    "-r",
-    default="specs/requirements.md",
-    help="Path to requirements.md",
-)
-def validate_requirements(requirementspath: str) -> None:
+@app.command()
+def validate_requirements(
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+) -> None:
     """Validate requirements.md document."""
     print_info(f"Validating {requirementspath}...")
     asyncio.run(
         run_handler(
             handle_validate_requirements,
             {
-                "requirementsPath": requirementspath,
+                "requirementsPath": str(requirementspath),
             },
         )
     )
 
 
-@cli.command()
-@click.option(
-    "--requirementsPath",
-    "-r",
-    default="specs/requirements.md",
-    help="Path to requirements.md",
-)
-def prompt_design(requirementspath: str) -> None:
+@app.command()
+def prompt_design(
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+) -> None:
     """Generate prompt for creating design.md."""
     print_info("Generating design prompt...")
     asyncio.run(
         run_handler(
             handle_prompt_design,
             {
-                "requirementsPath": requirementspath,
+                "requirementsPath": str(requirementspath),
             },
         )
     )
 
 
-@cli.command()
-@click.option(
-    "--designPath",
-    "-d",
-    default="specs/design.md",
-    help="Path to design.md",
-)
-@click.option(
-    "--requirementsPath",
-    "-r",
-    default="specs/requirements.md",
-    help="Path to requirements.md",
-)
-def validate_design(designpath: str, requirementspath: str) -> None:
+@app.command()
+def validate_design(
+    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+) -> None:
     """Validate design.md document."""
     print_info(f"Validating {designpath}...")
     asyncio.run(
         run_handler(
             handle_validate_design,
             {
-                "designPath": designpath,
-                "requirementsPath": requirementspath,
+                "designPath": str(designpath),
+                "requirementsPath": str(requirementspath),
             },
         )
     )
 
 
-@cli.command()
-@click.option(
-    "--designPath",
-    "-d",
-    default="specs/design.md",
-    help="Path to design.md",
-)
-@click.option(
-    "--requirementsPath",
-    "-r",
-    default="specs/requirements.md",
-    help="Path to requirements.md",
-)
-def prompt_tasks(designpath: str, requirementspath: str) -> None:
+@app.command()
+def prompt_tasks(
+    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+) -> None:
     """Generate prompt for creating tasks.md."""
     print_info("Generating tasks prompt...")
     asyncio.run(
         run_handler(
             handle_prompt_tasks,
             {
-                "designPath": designpath,
-                "requirementsPath": requirementspath,
+                "designPath": str(designpath),
+                "requirementsPath": str(requirementspath),
             },
         )
     )
 
 
-@cli.command()
-@click.option(
-    "--tasksPath",
-    "-t",
-    default="specs/tasks.md",
-    help="Path to tasks.md",
-)
-def validate_tasks(taskspath: str) -> None:
+@app.command()
+def validate_tasks(
+    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
+) -> None:
     """Validate tasks.md document."""
     print_info(f"Validating {taskspath}...")
     asyncio.run(
         run_handler(
             handle_validate_tasks,
             {
-                "tasksPath": taskspath,
+                "tasksPath": str(taskspath),
             },
         )
     )
 
 
-@cli.command()
-@click.option(
-    "--tasksPath",
-    "-t",
-    default="specs/tasks.md",
-    help="Path to tasks.md",
-)
-@click.option(
-    "--requirementsPath",
-    "-r",
-    default="specs/requirements.md",
-    help="Path to requirements.md",
-)
-@click.option(
-    "--designPath",
-    "-d",
-    default="specs/design.md",
-    help="Path to design.md",
-)
-def prompt_code(taskspath: str, requirementspath: str, designpath: str) -> None:
+@app.command()
+def prompt_code(
+    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+) -> None:
     """Generate implementation prompt."""
     print_info("Generating implementation prompt...")
     asyncio.run(
         run_handler(
             handle_prompt_code,
             {
-                "tasksPath": taskspath,
-                "requirementsPath": requirementspath,
-                "designPath": designpath,
+                "tasksPath": str(taskspath),
+                "requirementsPath": str(requirementspath),
+                "designPath": str(designpath),
             },
         )
     )
 
 
-@cli.command()
-@click.option("--changedFile", "-f", required=True, help="Path to changed file")
-@click.option("--changeDescription", "-c", required=True, help="Description of changes")
-def analyze_changes(changedfile: str, changedescription: str) -> None:
+@app.command()
+def analyze_changes(
+    changedfile: Annotated[Path, typer.Option("--changedFile", "-f", help="Path to changed file")],
+    changedescription: Annotated[str, typer.Option("--changeDescription", "-c", help="Description of changes")],
+) -> None:
     """Analyze impact of changes to spec files."""
     print_info(f"Analyzing changes to {changedfile}...")
     asyncio.run(
         run_handler(
             handle_analyze_changes,
             {
-                "changedFile": changedfile,
+                "changedFile": str(changedfile),
                 "changeDescription": changedescription,
             },
         )
     )
 
 
-@cli.command()
-@click.option(
-    "--requirementsPath",
-    "-r",
-    default="specs/requirements.md",
-    help="Path to requirements.md",
-)
-@click.option(
-    "--designPath",
-    "-d",
-    default="specs/design.md",
-    help="Path to design.md",
-)
-@click.option(
-    "--tasksPath",
-    "-t",
-    default="specs/tasks.md",
-    help="Path to tasks.md",
-)
-def get_traceability(requirementspath: str, designpath: str, taskspath: str) -> None:
+@app.command()
+def get_traceability(
+    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
+        "specs/requirements.md"
+    ),
+    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
+) -> None:
     """Generate traceability report."""
     print_info("Generating traceability report...")
     asyncio.run(
         run_handler(
             handle_get_traceability,
             {
-                "requirementsPath": requirementspath,
-                "designPath": designpath,
-                "tasksPath": taskspath,
+                "requirementsPath": str(requirementspath),
+                "designPath": str(designpath),
+                "tasksPath": str(taskspath),
             },
         )
     )
 
 
-def main() -> None:
-    """Main entry point for the CLI."""
-    cli()
+def version_callback(value: bool) -> None:
+    """Show version and exit."""
+    if value:
+        try:
+            version = metadata.version("wassden")
+        except metadata.PackageNotFoundError:
+            version = "unknown"
+        typer.echo(f"wassden version {version}")
+        raise typer.Exit
+
+
+@app.callback()
+def main(
+    version: Annotated[
+        bool, typer.Option("--version", callback=version_callback, help="Show version and exit")
+    ] = False,
+) -> None:
+    """wassden - MCP-based Spec-Driven Development toolkit."""
 
 
 if __name__ == "__main__":
-    main()
+    app()

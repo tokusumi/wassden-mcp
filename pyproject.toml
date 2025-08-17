@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "fastmcp>=2.11.3",
-    "click>=8.2.1",
+    "typer>=0.12.5",
     "colorama>=0.4.6",
     "prompt-toolkit>=3.0.51",
     "typing-extensions>=4.14.1",
@@ -33,7 +33,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/tokusumi/wassden-mcp/issues"
 
 [project.scripts]
-wassden = "wassden.cli:main"
+wassden = "wassden.cli:app"
 
 [tool.uv]
 dev-dependencies = [
