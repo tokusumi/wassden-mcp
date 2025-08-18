@@ -3,9 +3,10 @@
 import asyncio
 import gc
 import os
-import time
+import statistics
 from pathlib import Path
 
+import psutil
 import pytest
 
 from wassden.handlers import (
@@ -21,6 +22,7 @@ from wassden.handlers import (
     handle_validate_tasks,
 )
 from wassden.server import mcp
+from wassden.utils.benchmark import PerformanceBenchmark
 
 # Test constants
 MAX_RESPONSE_TIME_SECONDS = 5.0
@@ -328,56 +330,96 @@ class TestMCPServerIntegration:
 
 
 class TestMCPServerPerformance:
-    """Test MCP server performance characteristics."""
+    """Test MCP server performance characteristics with reproducible measurements."""
 
     @pytest.mark.asyncio
     async def test_tool_response_times(self):
-        """Test that MCP tools respond within reasonable time."""
-        # Test check_completeness performance
-        start_time = time.time()
-        result = await handle_check_completeness({"userInput": "Performance test project"})
-        end_time = time.time()
-
-        response_time = end_time - start_time
-        assert response_time < MAX_RESPONSE_TIME_SECONDS  # Should respond within 5 seconds
-        result_text = result["content"][0]["text"]
-        assert len(result_text) > MIN_RESPONSE_LENGTH  # Should provide substantial response
-
-        # Test analyze_changes performance
-        start_time = time.time()
-        result = await handle_analyze_changes(
-            {"changedFile": "specs/requirements.md", "changeDescription": "Performance test change"}
+        """Test that MCP tools respond within reasonable time with reproducible benchmarks."""
+        benchmark = PerformanceBenchmark(
+            warmup_iterations=3,
+            benchmark_iterations=20,
+            gc_collect_interval=5,
         )
-        end_time = time.time()
 
-        response_time = end_time - start_time
-        assert response_time < MAX_RESPONSE_TIME_SECONDS  # Should respond within 5 seconds
+        # Benchmark check_completeness performance
+        async def check_completeness_test():
+            return await handle_check_completeness({"userInput": "Performance test project"})
+
+        result = await benchmark.benchmark_async(
+            check_completeness_test,
+            name="check_completeness",
+        )
+
+        # Assert performance requirements
+        assert result.median < MAX_RESPONSE_TIME_SECONDS, f"Median response time {result.median:.3f}s exceeds limit"
+        assert result.p95 < MAX_RESPONSE_TIME_SECONDS, f"P95 response time {result.p95:.3f}s exceeds limit"
+
+        # Verify response quality
+        test_result = await check_completeness_test()
+        result_text = test_result["content"][0]["text"]
+        assert len(result_text) > MIN_RESPONSE_LENGTH
+
+        # Benchmark analyze_changes performance
+        async def analyze_changes_test():
+            return await handle_analyze_changes(
+                {"changedFile": "specs/requirements.md", "changeDescription": "Performance test change"}
+            )
+
+        result = await benchmark.benchmark_async(
+            analyze_changes_test,
+            name="analyze_changes",
+        )
+
+        # Assert performance requirements
+        assert result.median < MAX_RESPONSE_TIME_SECONDS, f"Median response time {result.median:.3f}s exceeds limit"
+        assert result.p95 < MAX_RESPONSE_TIME_SECONDS, f"P95 response time {result.p95:.3f}s exceeds limit"
 
     @pytest.mark.asyncio
     async def test_concurrent_tool_calls(self):
-        """Test concurrent MCP tool calls."""
-        # Create multiple concurrent tasks
-        tasks = []
-        for i in range(5):
-            task1 = handle_check_completeness({"userInput": f"Concurrent test project {i}"})
-            task2 = handle_analyze_changes(
-                {"changedFile": f"test{i}.md", "changeDescription": f"Concurrent change {i}"}
-            )
-            tasks.extend([task1, task2])
+        """Test concurrent MCP tool calls with reproducible measurements."""
+        benchmark = PerformanceBenchmark(
+            warmup_iterations=2,
+            benchmark_iterations=10,
+        )
 
-        # Execute all tasks concurrently
-        results = await asyncio.gather(*tasks)
+        async def concurrent_test():
+            # Create multiple concurrent tasks
+            tasks = []
+            for i in range(5):
+                task1 = handle_check_completeness({"userInput": f"Concurrent test project {i}"})
+                task2 = handle_analyze_changes(
+                    {"changedFile": f"test{i}.md", "changeDescription": f"Concurrent change {i}"}
+                )
+                tasks.extend([task1, task2])
 
-        # All tasks should complete successfully
-        assert len(results) == EXPECTED_TOOL_COUNT
-        for result in results:
-            assert isinstance(result, dict)
-            result_text = result["content"][0]["text"]
+            # Execute all tasks concurrently
+            return await asyncio.gather(*tasks)
+
+        result = await benchmark.benchmark_async(
+            concurrent_test,
+            name="concurrent_tools",
+        )
+
+        # Verify performance under concurrent load
+        assert result.median < MAX_RESPONSE_TIME_SECONDS * 2, "Concurrent execution too slow"
+        assert result.std_dev < result.mean * 0.5, "Too much variance in concurrent execution"
+
+        # Verify correctness
+        test_results = await concurrent_test()
+        assert len(test_results) == EXPECTED_TOOL_COUNT
+        for test_result in test_results:
+            assert isinstance(test_result, dict)
+            result_text = test_result["content"][0]["text"]
             assert len(result_text) > 0
 
     @pytest.mark.asyncio
     async def test_memory_usage_stability(self):
-        """Test that repeated tool calls don't cause memory leaks."""
+        """Test that repeated tool calls don't cause memory leaks with statistical verification."""
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+
+        memory_samples = []
+
         # Run many iterations to test memory stability
         for i in range(20):
             result = await handle_check_completeness({"userInput": f"Memory test iteration {i}"})
@@ -388,5 +430,20 @@ class TestMCPServerPerformance:
             # Force garbage collection every few iterations
             if i % 5 == 0:
                 gc.collect()
+                current_memory = process.memory_info().rss / 1024 / 1024  # MB
+                memory_samples.append(current_memory)
+
+        # Check memory growth is minimal
+        final_memory = process.memory_info().rss / 1024 / 1024  # MB
+        memory_growth = final_memory - initial_memory
+
+        # Allow up to 50MB growth (reasonable for Python)
+        assert memory_growth < 50, f"Memory grew by {memory_growth:.1f}MB, possible memory leak"
+
+        # Check memory stability (no continuous growth)
+        if len(memory_samples) > 2:
+            # Calculate trend - should be relatively flat
+            memory_std = statistics.stdev(memory_samples)
+            assert memory_std < 10, f"Memory usage too variable: std={memory_std:.1f}MB"
 
         # Test should complete without memory errors

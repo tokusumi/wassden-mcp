@@ -317,6 +317,7 @@ wassden-py/
 📖 **Detailed Documentation**:
 - [Specification Format Standards](docs/spec-format.md) - Complete format guide for requirements, design, and tasks documents
 - [Traceability Management](docs/traceability.md) - Complete guide to dependency tracking and change impact analysis
+- [Performance & Benchmarking](docs/performance.md) - Reproducible benchmark system and performance analysis
 - [Requirements Validation](docs/validation/ears.md) - EARS format and ID validation
 - [Traceability Requirements](docs/validation/traceability.md) - REQ↔DESIGN↔TASK mapping rules
 - [Tasks Validation](docs/validation/tasks.md) - DAG requirements and coverage rules
@@ -324,29 +325,15 @@ wassden-py/
 
 ## ⚡ Performance Metrics
 
-wassden-py delivers exceptional performance for production AI agent deployments:
+Ultra-fast response times with **reproducible benchmarks**:
 
-### Response Times
+- **Sub-millisecond**: 0.001-0.013ms median response times ⚡️  
+- **High Throughput**: 200,000+ requests/second
+- **Concurrent Load**: 20+ tools simultaneously (0.11ms median)
+- **Memory Efficient**: <50MB growth per 1000 operations
+- **Reproducible Testing**: `python benchmarks/run_all.py`
 
-- **Average Response**: <0.01ms ⚡️
-- **P95 Response**: <0.01ms
-- **Min Response**: <0.01ms
-- **Sub-millisecond**: Consistent ultra-fast responses
-
-### Throughput & Scalability
-
-- **Peak Throughput**: 198,406+ requests/second 🚀
-- **Concurrent Load**: 50+ agents simultaneously
-- **Sustained Performance**: 150,000+ req/sec under load
-- **Memory Efficiency**: Minimal Python overhead
-
-### Reliability
-
-- **Test Coverage**: [118 comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
-- **Automated Integration**: Full MCP server testing
-- **Error Recovery**: 100% graceful error handling
-- **Memory Leaks**: Zero detected (active optimization)
-- **Agent Compatibility**: Claude Code, Cursor, VS Code verified
+📊 [Detailed Performance Analysis](docs/performance.md) | 🧪 [Test Coverage: 366 tests](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 
 ## 🧪 Development & Testing
 
