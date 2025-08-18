@@ -24,6 +24,12 @@
 - **Test functionality**: `uv run wassden check-completeness --userInput "test"` - Test CLI functionality
 - **Start MCP server**: `uv run wassden start-mcp-server --transport stdio` - Start MCP server locally
 
+### Performance & Benchmarking Commands
+- **Run all benchmarks**: `python benchmarks/run_all.py` - Comprehensive performance benchmarks with statistical analysis
+- **Performance tests**: `pytest tests/e2e/test_mcp_server.py::TestMCPServerPerformance -v` - Run reproducible performance tests
+- **Benchmark results**: View `benchmarks/results.json` for detailed performance metrics
+- **Benchmark library**: Use `from wassden.utils.benchmark import PerformanceBenchmark` for custom benchmarks
+
 ### Development Setup
 - **Install deps**: `uv sync` - Install all dependencies including dev dependencies
 - **Pre-commit**: `pre-commit install` - Install pre-commit hooks (runs `make check` before commits)
