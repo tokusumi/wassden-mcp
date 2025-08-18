@@ -76,10 +76,11 @@ class PerformanceBenchmark:
         if self.cpu_affinity:
             try:
                 process = psutil.Process()
-                self._original_affinity = process.cpu_affinity()  # type: ignore[attr-defined]
-                # Pin to first CPU core for consistency
-                if self._original_affinity:
-                    process.cpu_affinity([self._original_affinity[0]])  # type: ignore[attr-defined]
+                if hasattr(process, "cpu_affinity"):
+                    self._original_affinity = process.cpu_affinity()
+                    # Pin to first CPU core for consistency
+                    if self._original_affinity:
+                        process.cpu_affinity([self._original_affinity[0]])
             except (AttributeError, OSError):
                 # CPU affinity not supported on this platform
                 pass
@@ -89,7 +90,8 @@ class PerformanceBenchmark:
         if self._original_affinity is not None:
             try:
                 process = psutil.Process()
-                process.cpu_affinity(self._original_affinity)  # type: ignore[attr-defined]
+                if hasattr(process, "cpu_affinity"):
+                    process.cpu_affinity(self._original_affinity)
             except (AttributeError, OSError):
                 pass
 
