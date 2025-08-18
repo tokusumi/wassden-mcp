@@ -1,7 +1,7 @@
 # wassden
 
 [![CI](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-118%20passing-green)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-passing-green)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 
 A powerful MCP-based Spec-Driven Development (SDD) toolkit that transforms any LLM into a comprehensive development agent with structured specification generation and validation capabilities.
@@ -26,7 +26,7 @@ The tool acts as your **SDD methodology expert**, ensuring AI agents follow best
 - **📊 Traceability Management**: Complete REQ↔DESIGN↔TASK + TR↔TEST-SCENARIO mapping with mandatory 100% coverage validation
 - **🚀 Progressive Prompting**: Step-by-step guidance for high-quality deliverables
 - **🛠️ MCP Integration**: Seamless integration with Claude Code and other MCP clients via FastMCP
-- **🧪 Robust Testing**: [118 comprehensive tests](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with automated MCP integration and consistently fast response times (<0.01ms avg)
+- **🧪 Robust Testing**: [Comprehensive test suite](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with automated MCP integration and consistently fast response times (<0.01ms avg)
 
 ## 🎪 Demonstrations
 
@@ -265,7 +265,7 @@ wassden-py/
 - **Primary**: Python 3.12+
 - **MCP Framework**: FastMCP for high-performance MCP server implementation
 - **CLI**: Typer for modern command-line interface with enhanced type safety
-- **Testing**: pytest + pytest-asyncio with [118 comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
+- **Testing**: pytest + pytest-asyncio with [comprehensive test suite (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 - **Performance**: 198,406+ req/sec throughput, <0.01ms avg response time
 - **Code Quality**: ruff + mypy for linting and type checking
 - **Standards**: EARS format, WBS structure, 100% Traceability matrices
@@ -333,7 +333,7 @@ Ultra-fast response times with **reproducible benchmarks**:
 - **Memory Efficient**: <50MB growth per 1000 operations
 - **Reproducible Testing**: `python benchmarks/run_all.py`
 
-📊 [Detailed Performance Analysis](docs/performance.md) | 🧪 [Test Coverage: 366 tests](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
+📊 [Detailed Performance Analysis](docs/performance.md) | 🧪 [Comprehensive Test Suite](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 
 ## 🧪 Development & Testing
 
