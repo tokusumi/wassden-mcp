@@ -5,14 +5,13 @@ import gc
 import statistics
 import time
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 from typing import Any
 
 import psutil
+from pydantic import BaseModel
 
 
-@dataclass
-class BenchmarkResult:
+class BenchmarkResult(BaseModel):
     """Container for benchmark results with statistical analysis."""
 
     name: str
