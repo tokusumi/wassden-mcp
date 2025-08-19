@@ -26,6 +26,7 @@ dependencies = [
     "colorama>=0.4.6",
     "prompt-toolkit>=3.0.51",
     "typing-extensions>=4.14.1",
+    "pydantic>=2.11.7",
 ]
 
 [project.urls]
