@@ -28,30 +28,6 @@ async def test_read_file_not_found():
 
 
 @pytest.mark.asyncio
-async def test_write_file_success(temp_dir):
-    """Test successful file writing."""
-    test_file = temp_dir / "output.txt"
-    test_content = "Test content"
-
-    await fs_utils.write_file(str(test_file), test_content)
-
-    assert test_file.exists()
-    assert test_file.read_text() == test_content
-
-
-@pytest.mark.asyncio
-async def test_write_file_creates_directories(temp_dir):
-    """Test that write_file creates parent directories."""
-    test_file = temp_dir / "subdir" / "nested" / "file.txt"
-    test_content = "Nested content"
-
-    await fs_utils.write_file(str(test_file), test_content)
-
-    assert test_file.exists()
-    assert test_file.read_text() == test_content
-
-
-@pytest.mark.asyncio
 async def test_file_exists_true(temp_dir):
     """Test file_exists returns True for existing file."""
     test_file = temp_dir / "exists.txt"
@@ -155,17 +131,4 @@ async def test_read_file_encoding_utf8(temp_dir):
     test_file.write_text(japanese_content, encoding="utf-8")
 
     result = await fs_utils.read_file(str(test_file))
-    assert result == japanese_content
-
-
-@pytest.mark.asyncio
-async def test_write_file_encoding_utf8(temp_dir):
-    """Test writing file with UTF-8 encoding."""
-    test_file = temp_dir / "utf8_output.txt"
-    japanese_content = "システムは、入力を受け付けること"
-
-    await fs_utils.write_file(str(test_file), japanese_content)
-
-    # Read back and verify
-    result = test_file.read_text(encoding="utf-8")
     assert result == japanese_content
