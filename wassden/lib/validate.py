@@ -52,27 +52,42 @@ def validate_requirements_structure(req_content: str) -> list[str]:
 
 def _check_required_sections(req_content: str, errors: list[str]) -> None:
     """Check for required sections in requirements document."""
-    required_sections = [
-        "サマリー",
-        "用語集",
-        "スコープ",
-        "制約",
-        "非機能要件",
-        "KPI",
-        "機能要件",
-        "テスト要件",
+    # Define section pairs (Japanese, English)
+    required_section_pairs = [
+        ("サマリー", "Summary"),
+        ("用語集", "Glossary"),
+        ("スコープ", "Scope"),
+        ("制約", "Constraints"),
+        ("非機能要件", "Non-Functional Requirements"),
+        ("KPI", "KPI"),
+        ("機能要件", "Functional Requirements"),
+        ("テスト要件", "Testing Requirements"),
     ]
 
-    for section in required_sections:
-        pattern = rf"## \d*\.?\s*{re.escape(section)}"
-        if not re.search(pattern, req_content) and f"## {section}" not in req_content:
-            errors.append(f"Missing required section: {section}")
+    for ja_section, en_section in required_section_pairs:
+        # Check if either Japanese or English version exists
+        ja_pattern = rf"## \d*\.?\s*{re.escape(ja_section)}"
+        en_pattern = rf"## \d*\.?\s*{re.escape(en_section)}"
+
+        ja_found = re.search(ja_pattern, req_content) or f"## {ja_section}" in req_content
+        en_found = re.search(en_pattern, req_content) or f"## {en_section}" in req_content
+
+        if not ja_found and not en_found:
+            errors.append(f"Missing required section: {ja_section} or {en_section}")
 
 
 def _validate_requirement_ids(req_content: str, errors: list[str]) -> None:
     """Validate requirement IDs in the functional requirements section."""
-    functional_req_match = re.search(r"## \d*\.?\s*機能要件.*?(?=## |$)", req_content, re.DOTALL)
-    functional_req_section = functional_req_match.group(0) if functional_req_match else ""
+    # Search for both Japanese and English functional requirements sections
+    functional_req_match_ja = re.search(r"## \d*\.?\s*機能要件.*?(?=## |$)", req_content, re.DOTALL)
+    functional_req_match_en = re.search(r"## \d*\.?\s*Functional Requirements.*?(?=## |$)", req_content, re.DOTALL)
+
+    # Use whichever section is found
+    functional_req_section = ""
+    if functional_req_match_ja:
+        functional_req_section = functional_req_match_ja.group(0)
+    elif functional_req_match_en:
+        functional_req_section = functional_req_match_en.group(0)
 
     req_lines = [line for line in functional_req_section.split("\n") if line.strip().startswith("-")]
 
@@ -133,19 +148,26 @@ def validate_design_structure(design_content: str) -> list[str]:
     """Validate design document structure."""
     errors: list[str] = []
 
-    required_sections = [
-        "アーキテクチャ",
-        "コンポーネント設計",
-        "データ",
-        "API",
-        "非機能",
-        "テスト",
+    # Define section pairs (Japanese, English)
+    required_section_pairs = [
+        ("アーキテクチャ", "Architecture"),
+        ("コンポーネント設計", "Component Design"),
+        ("データ", "Data"),
+        ("API", "API"),
+        ("非機能", "Non-functional"),
+        ("テスト", "Test"),
     ]
 
-    for section in required_sections:
-        pattern = rf"## \d*\.?\s*{re.escape(section)}"
-        if not re.search(pattern, design_content) and f"## {section}" not in design_content:
-            errors.append(f"Missing required section: {section}")
+    for ja_section, en_section in required_section_pairs:
+        # Check if either Japanese or English version exists
+        ja_pattern = rf"## \d*\.?\s*{re.escape(ja_section)}"
+        en_pattern = rf"## \d*\.?\s*{re.escape(en_section)}"
+
+        ja_found = re.search(ja_pattern, design_content) or f"## {ja_section}" in design_content
+        en_found = re.search(en_pattern, design_content) or f"## {en_section}" in design_content
+
+        if not ja_found and not en_found:
+            errors.append(f"Missing required section: {ja_section} or {en_section}")
 
     # Check for REQ-ID references
     if not re.search(r"\bREQ-\d{2}\b", design_content):
@@ -205,17 +227,24 @@ def validate_tasks_structure(tasks_content: str) -> list[str]:
     """Validate tasks document structure."""
     errors: list[str] = []
 
-    required_sections = [
-        "概要",
-        "タスク一覧",
-        "依存関係",
-        "マイルストーン",
+    # Define section pairs (Japanese, English)
+    required_section_pairs = [
+        ("概要", "Overview"),
+        ("タスク一覧", "Task List"),
+        ("依存関係", "Dependencies"),
+        ("マイルストーン", "Milestones"),
     ]
 
-    for section in required_sections:
-        pattern = rf"## \d*\.?\s*{re.escape(section)}"
-        if not re.search(pattern, tasks_content) and f"## {section}" not in tasks_content:
-            errors.append(f"Missing required section: {section}")
+    for ja_section, en_section in required_section_pairs:
+        # Check if either Japanese or English version exists
+        ja_pattern = rf"## \d*\.?\s*{re.escape(ja_section)}"
+        en_pattern = rf"## \d*\.?\s*{re.escape(en_section)}"
+
+        ja_found = re.search(ja_pattern, tasks_content) or f"## {ja_section}" in tasks_content
+        en_found = re.search(en_pattern, tasks_content) or f"## {en_section}" in tasks_content
+
+        if not ja_found and not en_found:
+            errors.append(f"Missing required section: {ja_section} or {en_section}")
 
     # Extract and validate task IDs - only unique IDs in task definitions
     # Look for task definitions (with **TASK pattern)
@@ -262,12 +291,30 @@ def validate_requirements(content: str) -> dict[str, Any]:
     kpi_ids = re.findall(r"\bKPI-\d{2}\b", content)
     tr_ids = list(extract_tr_ids(content))
 
-    # Find sections
+    # Find sections - check for both Japanese and English
     found_sections = []
-    for section in ["サマリー", "用語集", "スコープ", "制約", "非機能要件", "KPI", "機能要件", "テスト要件"]:
-        pattern = rf"## \d*\.?\s*{re.escape(section)}"
-        if re.search(pattern, content) or f"## {section}" in content:
-            found_sections.append(section)
+    section_pairs = [
+        ("サマリー", "Summary"),
+        ("用語集", "Glossary"),
+        ("スコープ", "Scope"),
+        ("制約", "Constraints"),
+        ("非機能要件", "Non-Functional Requirements"),
+        ("KPI", "KPI"),
+        ("機能要件", "Functional Requirements"),
+        ("テスト要件", "Testing Requirements"),
+    ]
+
+    for ja_section, en_section in section_pairs:
+        ja_pattern = rf"## \d*\.?\s*{re.escape(ja_section)}"
+        en_pattern = rf"## \d*\.?\s*{re.escape(en_section)}"
+
+        ja_found = re.search(ja_pattern, content) or f"## {ja_section}" in content
+        en_found = re.search(en_pattern, content) or f"## {en_section}" in content
+
+        if ja_found:
+            found_sections.append(ja_section)
+        elif en_found:
+            found_sections.append(en_section)
 
     return {
         "isValid": len(errors) == 0,
@@ -284,12 +331,18 @@ def validate_requirements(content: str) -> dict[str, Any]:
 
 def _extract_ids_from_traceability_section(content: str) -> tuple[set[str], set[str]]:
     """Extract REQ-IDs and TR-IDs only from the traceability section of design document."""
-    # Find the traceability section (section 7) with optional "(必須)" suffix
-    traceability_match = re.search(r"## \d*\.?\s*トレーサビリティ(\s*\([^)]*\))?.*?(?=## |$)", content, re.DOTALL)
-    if not traceability_match:
+    # Find the traceability section (section 7) with optional "(必須)" suffix - support both languages
+    traceability_match_ja = re.search(r"## \d*\.?\s*トレーサビリティ(\s*\([^)]*\))?.*?(?=## |$)", content, re.DOTALL)
+    traceability_match_en = re.search(r"## \d*\.?\s*Traceability(\s*\([^)]*\))?.*?(?=## |$)", content, re.DOTALL)
+
+    traceability_section = ""
+    if traceability_match_ja:
+        traceability_section = traceability_match_ja.group(0)
+    elif traceability_match_en:
+        traceability_section = traceability_match_en.group(0)
+    else:
         return set(), set()
 
-    traceability_section = traceability_match.group(0)
     req_ids = re.findall(r"\bREQ-\d{2}\b", traceability_section)
     tr_ids = re.findall(r"\bTR-\d{2}\b", traceability_section)
     return set(req_ids), set(tr_ids)
@@ -302,9 +355,12 @@ def validate_design(content: str, requirements_content: str | None = None) -> di
     # Extract referenced REQ-IDs and TR-IDs only from traceability section for proper validation
     referenced_reqs, referenced_trs = _extract_ids_from_traceability_section(content)
 
-    # If no traceability section found, add error
-    if not re.search(r"## \d*\.?\s*トレーサビリティ(\s*\([^)]*\))?", content):
-        errors.append("Missing required traceability section (トレーサビリティ)")
+    # If no traceability section found, add error - check for both languages
+    traceability_ja = re.search(r"## \d*\.?\s*トレーサビリティ(\s*\([^)]*\))?", content)
+    traceability_en = re.search(r"## \d*\.?\s*Traceability(\s*\([^)]*\))?", content)
+
+    if not traceability_ja and not traceability_en:
+        errors.append("Missing required traceability section (トレーサビリティ or Traceability)")
 
     # If requirements content provided, check traceability
     missing_refs = []

@@ -18,6 +18,7 @@ from wassden.handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
+from wassden.types import Language
 
 
 class TestFullWorkflow:
@@ -58,10 +59,10 @@ class TestFullWorkflow:
     async def _test_requirements_phase(self) -> Path:
         """Test requirements phase of workflow."""
         # Step 1: Check completeness with sufficient information
-        completeness_result = await handle_check_completeness({"userInput": self._get_sample_user_input()})
+        completeness_result = await handle_check_completeness(self._get_sample_user_input(), Language.JAPANESE)
 
-        assert "content" in completeness_result
-        completeness_text = completeness_result["content"][0]["text"]
+        assert completeness_result.content
+        completeness_text = completeness_result.content[0].text
         assert "requirements.md" in completeness_text
         assert "EARS" in completeness_text
 
@@ -71,8 +72,8 @@ class TestFullWorkflow:
         req_file.write_text(requirements_content)
 
         # Step 3: Validate requirements
-        validation_result = await handle_validate_requirements({"requirementsPath": str(req_file)})
-        validation_text = validation_result["content"][0]["text"]
+        validation_result = await handle_validate_requirements(req_file, Language.JAPANESE)
+        validation_text = validation_result.content[0].text
         assert "✅" in validation_text
         assert "要件数: 7" in validation_text
 
@@ -81,8 +82,8 @@ class TestFullWorkflow:
     async def _test_design_phase(self, req_file: Path) -> Path:
         """Test design phase of workflow."""
         # Step 4: Generate design prompt
-        design_prompt_result = await handle_prompt_design({"requirementsPath": str(req_file)})
-        design_prompt_text = design_prompt_result["content"][0]["text"]
+        design_prompt_result = await handle_prompt_design(req_file, Language.JAPANESE)
+        design_prompt_text = design_prompt_result.content[0].text
         assert "design.md" in design_prompt_text
         assert "アーキテクチャ" in design_prompt_text
 
@@ -92,10 +93,8 @@ class TestFullWorkflow:
         design_file.write_text(design_content)
 
         # Step 6: Validate design
-        design_validation_result = await handle_validate_design(
-            {"designPath": str(design_file), "requirementsPath": str(req_file)}
-        )
-        design_validation_text = design_validation_result["content"][0]["text"]
+        design_validation_result = await handle_validate_design(design_file, req_file, Language.JAPANESE)
+        design_validation_text = design_validation_result.content[0].text
         assert "✅" in design_validation_text
         assert "参照要件数: 7" in design_validation_text
 
@@ -104,10 +103,8 @@ class TestFullWorkflow:
     async def _test_tasks_phase(self, req_file: Path, design_file: Path) -> Path:
         """Test tasks phase of workflow."""
         # Step 7: Generate tasks prompt
-        tasks_prompt_result = await handle_prompt_tasks(
-            {"designPath": str(design_file), "requirementsPath": str(req_file)}
-        )
-        tasks_prompt_text = tasks_prompt_result["content"][0]["text"]
+        tasks_prompt_result = await handle_prompt_tasks(design_file, req_file, Language.JAPANESE)
+        tasks_prompt_text = tasks_prompt_result.content[0].text
         assert "tasks.md" in tasks_prompt_text
         assert "WBS" in tasks_prompt_text
 
@@ -117,8 +114,8 @@ class TestFullWorkflow:
         tasks_file.write_text(tasks_content)
 
         # Step 9: Validate tasks
-        tasks_validation_result = await handle_validate_tasks({"tasksPath": str(tasks_file)})
-        tasks_validation_text = tasks_validation_result["content"][0]["text"]
+        tasks_validation_result = await handle_validate_tasks(tasks_file, Language.JAPANESE)
+        tasks_validation_text = tasks_validation_result.content[0].text
         assert "✅" in tasks_validation_text
         assert "タスク数: 9" in tasks_validation_text
 
@@ -127,26 +124,22 @@ class TestFullWorkflow:
     async def _test_implementation_phase(self, req_file: Path, design_file: Path, tasks_file: Path) -> None:
         """Test implementation phase of workflow."""
         # Step 10: Generate implementation prompt
-        code_prompt_result = await handle_prompt_code(
-            {"tasksPath": str(tasks_file), "requirementsPath": str(req_file), "designPath": str(design_file)}
-        )
-        code_prompt_text = code_prompt_result["content"][0]["text"]
+        code_prompt_result = await handle_prompt_code(tasks_file, req_file, design_file, Language.JAPANESE)
+        code_prompt_text = code_prompt_result.content[0].text
         assert "実装" in code_prompt_text
         assert "TASK-01-01" in code_prompt_text
 
         # Step 11: Get traceability report
-        traceability_result = await handle_get_traceability(
-            {"requirementsPath": str(req_file), "designPath": str(design_file), "tasksPath": str(tasks_file)}
-        )
-        traceability_text = traceability_result["content"][0]["text"]
+        traceability_result = await handle_get_traceability(req_file, design_file, tasks_file, Language.JAPANESE)
+        traceability_text = traceability_result.content[0].text
         assert "トレーサビリティレポート" in traceability_text
         assert "要件数: 7" in traceability_text
 
         # Step 12: Analyze change impact
         change_analysis_result = await handle_analyze_changes(
-            {"changedFile": str(req_file), "changeDescription": "Added REQ-08 for user profile management"}
+            req_file, "Added REQ-08 for user profile management", Language.JAPANESE
         )
-        change_analysis_text = change_analysis_result["content"][0]["text"]
+        change_analysis_text = change_analysis_result.content[0].text
         assert "変更影響分析" in change_analysis_text
         assert "REQ-08" in change_analysis_text
 
@@ -388,9 +381,9 @@ TASK-01-01 → TASK-01-02 → TASK-02-01 → TASK-03-01 → TASK-04-02
     async def test_incomplete_input_workflow(self):
         """Test workflow with incomplete user input."""
         # Step 1: Check completeness with insufficient information
-        completeness_result = await handle_check_completeness({"userInput": "Simple project"})
+        completeness_result = await handle_check_completeness("Simple project", Language.JAPANESE)
 
-        completeness_text = completeness_result["content"][0]["text"]
+        completeness_text = completeness_result.content[0].text
 
         # Should ask for more information
         assert "不足している" in completeness_text or "不明" in completeness_text
@@ -435,9 +428,9 @@ Constraints
         req_file.write_text(invalid_requirements)
 
         # Validate requirements - should fail
-        validation_result = await handle_validate_requirements({"requirementsPath": str(req_file)})
+        validation_result = await handle_validate_requirements(req_file, Language.JAPANESE)
 
-        validation_text = validation_result["content"][0]["text"]
+        validation_text = validation_result.content[0].text
         assert "⚠️" in validation_text or "修正が必要" in validation_text
         assert "REQ-001" in validation_text  # Should detect invalid format
         assert "REQ-1" in validation_text
@@ -483,24 +476,18 @@ Test plan
         design_file.write_text(design_content)
 
         # Validate design - should detect missing REQ-03
-        design_validation_result = await handle_validate_design(
-            {"designPath": str(design_file), "requirementsPath": str(req_file)}
-        )
+        design_validation_result = await handle_validate_design(design_file, req_file, Language.JAPANESE)
 
-        validation_text = design_validation_result["content"][0]["text"]
+        validation_text = design_validation_result.content[0].text
         assert "⚠️" in validation_text or "修正が必要" in validation_text
         assert "REQ-03" in validation_text  # Should detect missing reference
 
         # Get traceability report to show gaps
         traceability_result = await handle_get_traceability(
-            {
-                "requirementsPath": str(req_file),
-                "designPath": str(design_file),
-                "tasksPath": "nonexistent.md",  # Optional file
-            }
+            req_file, design_file, Path("nonexistent.md"), Language.JAPANESE
         )
 
-        traceability_text = traceability_result["content"][0]["text"]
+        traceability_text = traceability_result.content[0].text
         assert "設計されていない要件" in traceability_text or "設計参照なし" in traceability_text
 
 
@@ -523,16 +510,16 @@ class TestWorkflowErrorHandling:
     async def test_missing_files_workflow(self):
         """Test workflow with missing prerequisite files."""
         # Try to validate requirements when file doesn't exist
-        validation_result = await handle_validate_requirements({"requirementsPath": "nonexistent/requirements.md"})
+        validation_result = await handle_validate_requirements(Path("nonexistent/requirements.md"), Language.JAPANESE)
 
-        validation_text = validation_result["content"][0]["text"]
+        validation_text = validation_result.content[0].text
         assert "エラー" in validation_text
         assert "見つかりません" in validation_text
 
         # Try to generate design prompt when requirements don't exist
-        design_prompt_result = await handle_prompt_design({"requirementsPath": "nonexistent/requirements.md"})
+        design_prompt_result = await handle_prompt_design(Path("nonexistent/requirements.md"), Language.JAPANESE)
 
-        design_text = design_prompt_result["content"][0]["text"]
+        design_text = design_prompt_result.content[0].text
         assert "エラー" in design_text
 
     @pytest.mark.asyncio
@@ -546,8 +533,8 @@ class TestWorkflowErrorHandling:
         corrupted_file.write_text("Completely invalid content with no structure")
 
         # Validation should handle corrupted files gracefully
-        validation_result = await handle_validate_requirements({"requirementsPath": str(corrupted_file)})
+        validation_result = await handle_validate_requirements(corrupted_file, Language.JAPANESE)
 
-        validation_text = validation_result["content"][0]["text"]
+        validation_text = validation_result.content[0].text
         # Should either show validation errors or handle gracefully
         assert "修正" in validation_text or "エラー" in validation_text

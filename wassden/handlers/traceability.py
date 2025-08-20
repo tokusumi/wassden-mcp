@@ -1,19 +1,25 @@
 """Traceability analysis and change impact assessment."""
 
 import re
+from pathlib import Path
 from typing import Any
 
+from wassden.i18n import get_i18n
 from wassden.lib import fs_utils, traceability
+from wassden.types import HandlerResponse, Language, TextContent
 
 # Constants
 COMPLETE_COVERAGE_PERCENTAGE = 100
 
 
-async def handle_get_traceability(args: dict[str, Any]) -> dict[str, Any]:
+async def handle_get_traceability(
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
+    tasks_path: Path = Path("specs/tasks.md"),
+    language: Language = Language.JAPANESE,
+) -> HandlerResponse:
     """Generate traceability report."""
-    requirements_path = args.get("requirementsPath", "specs/requirements.md")
-    design_path = args.get("designPath", "specs/design.md")
-    tasks_path = args.get("tasksPath", "specs/tasks.md")
+    i18n = get_i18n(language)
 
     specs = await _read_spec_files(requirements_path, design_path, tasks_path)
     matrix = traceability.build_traceability_matrix(
@@ -22,19 +28,12 @@ async def handle_get_traceability(args: dict[str, Any]) -> dict[str, Any]:
         specs.get("tasks"),
     )
 
-    report_lines = _build_traceability_report(matrix)
+    report_lines = _build_traceability_report(matrix, i18n)
 
-    return {
-        "content": [
-            {
-                "type": "text",
-                "text": "\n".join(report_lines),
-            }
-        ]
-    }
+    return HandlerResponse(content=[TextContent(text="\n".join(report_lines))])
 
 
-async def _read_spec_files(requirements_path: str, design_path: str, tasks_path: str) -> dict[str, str | None]:
+async def _read_spec_files(requirements_path: Path, design_path: Path, tasks_path: Path) -> dict[str, str | None]:
     """Read spec files if they exist."""
     specs: dict[str, str | None] = {}
     for name, path in [
@@ -49,84 +48,84 @@ async def _read_spec_files(requirements_path: str, design_path: str, tasks_path:
     return specs
 
 
-def _build_traceability_report(matrix: dict[str, Any]) -> list[str]:
+def _build_traceability_report(matrix: dict[str, Any], i18n: Any) -> list[str]:
     """Build the complete traceability report."""
-    report_lines = ["# トレーサビリティレポート\n"]
+    report_lines = [i18n.t("traceability.report.title") + "\n"]
 
-    _add_overview_section(report_lines, matrix)
-    _add_mapping_sections(report_lines, matrix)
-    _add_coverage_analysis(report_lines, matrix)
-    _add_task_dependencies(report_lines, matrix)
-    _add_summary_section(report_lines, matrix)
+    _add_overview_section(report_lines, matrix, i18n)
+    _add_mapping_sections(report_lines, matrix, i18n)
+    _add_coverage_analysis(report_lines, matrix, i18n)
+    _add_task_dependencies(report_lines, matrix, i18n)
+    _add_summary_section(report_lines, matrix, i18n)
 
     return report_lines
 
 
-def _add_overview_section(report_lines: list[str], matrix: dict[str, Any]) -> None:
+def _add_overview_section(report_lines: list[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add overview section to the report."""
     report_lines.extend(
         [
-            "## 概要",
-            f"- 要件数: {len(matrix['requirements'])}",
-            f"- 設計要素数: {len(matrix['design_components'])}",
-            f"- タスク数: {len(matrix['tasks'])}\n",
+            i18n.t("traceability.report.overview.title"),
+            i18n.t("traceability.report.overview.requirements_count", count=len(matrix["requirements"])),
+            i18n.t("traceability.report.overview.design_elements_count", count=len(matrix["design_components"])),
+            i18n.t("traceability.report.overview.tasks_count", count=len(matrix["tasks"])) + "\n",
         ]
     )
 
 
-def _add_mapping_sections(report_lines: list[str], matrix: dict[str, Any]) -> None:
+def _add_mapping_sections(report_lines: list[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add mapping sections to the report."""
     # Requirements to Design mapping
     if matrix["req_to_design"]:
-        report_lines.append("## 要件 → 設計 マッピング")
+        report_lines.append(i18n.t("traceability.report.mappings.req_to_design"))
         for req_id, design_refs in sorted(matrix["req_to_design"].items()):
             if design_refs:
                 report_lines.append(f"- **{req_id}** → {', '.join(sorted(design_refs))}")
             else:
-                report_lines.append(f"- **{req_id}** → ⚠️ 設計参照なし")
+                report_lines.append(f"- **{req_id}** → ⚠️ {i18n.t('traceability.report.mappings.no_design_reference')}")
         report_lines.append("")
 
     # Design to Tasks mapping
     if matrix["design_to_tasks"]:
-        report_lines.append("## 設計 → タスク マッピング")
+        report_lines.append(i18n.t("traceability.report.mappings.design_to_task"))
         for component, task_refs in sorted(matrix["design_to_tasks"].items()):
             if task_refs:
                 report_lines.append(f"- **{component}** → {', '.join(sorted(task_refs))}")
             else:
-                report_lines.append(f"- **{component}** → ⚠️ タスク参照なし")
+                report_lines.append(f"- **{component}** → ⚠️ {i18n.t('traceability.report.mappings.no_task_reference')}")
         report_lines.append("")
 
 
-def _add_coverage_analysis(report_lines: list[str], matrix: dict[str, Any]) -> None:
+def _add_coverage_analysis(report_lines: list[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add coverage analysis section to the report."""
-    report_lines.append("## カバレッジ分析")
+    report_lines.append(i18n.t("traceability.report.coverage.title"))
 
     # Requirements coverage
     uncovered_reqs = matrix["requirements"] - set(matrix["req_to_design"].keys())
     if uncovered_reqs:
-        report_lines.append("### ⚠️ 設計されていない要件")
+        report_lines.append(i18n.t("traceability.report.coverage.undesigned_requirements"))
         report_lines.extend(f"- {req}" for req in sorted(uncovered_reqs))
         report_lines.append("")
 
     # Design coverage
     uncovered_design = matrix["design_components"] - set(matrix["design_to_tasks"].keys())
     if uncovered_design:
-        report_lines.append("### ⚠️ タスク化されていない設計要素")
+        report_lines.append(i18n.t("traceability.report.coverage.untasked_design_elements"))
         report_lines.extend(f"- {component}" for component in sorted(uncovered_design))
         report_lines.append("")
 
 
-def _add_task_dependencies(report_lines: list[str], matrix: dict[str, Any]) -> None:
+def _add_task_dependencies(report_lines: list[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add task dependencies section to the report."""
     if matrix["task_dependencies"]:
-        report_lines.append("## タスク依存関係")
+        report_lines.append(i18n.t("traceability.report.dependencies.title"))
         for task_id, deps in sorted(matrix["task_dependencies"].items()):
             if deps:
                 report_lines.append(f"- **{task_id}** ← {', '.join(sorted(deps))}")
         report_lines.append("")
 
 
-def _add_summary_section(report_lines: list[str], matrix: dict[str, Any]) -> None:
+def _add_summary_section(report_lines: list[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add summary section to the report."""
     req_coverage = len(matrix["req_to_design"]) / len(matrix["requirements"]) * 100 if matrix["requirements"] else 0
     design_coverage = (
@@ -134,31 +133,37 @@ def _add_summary_section(report_lines: list[str], matrix: dict[str, Any]) -> Non
     )
 
     report_lines.extend(
-        ["## サマリー", f"- 要件カバレッジ: {req_coverage:.1f}%", f"- 設計カバレッジ: {design_coverage:.1f}%"]
+        [
+            i18n.t("traceability.report.summary.title"),
+            i18n.t("traceability.report.summary.requirements_coverage", coverage=f"{req_coverage:.1f}"),
+            i18n.t("traceability.report.summary.design_coverage", coverage=f"{design_coverage:.1f}"),
+        ]
     )
 
     if req_coverage == COMPLETE_COVERAGE_PERCENTAGE and design_coverage == COMPLETE_COVERAGE_PERCENTAGE:
-        report_lines.append("\n✅ 完全なトレーサビリティが確保されています！")
+        report_lines.append(f"\n{i18n.t('traceability.report.summary.complete_traceability')}")
     else:
-        report_lines.append("\n⚠️ トレーサビリティに改善の余地があります。")
+        report_lines.append(f"\n{i18n.t('traceability.report.summary.improvement_needed')}")
 
 
-async def handle_analyze_changes(args: dict[str, Any]) -> dict[str, Any]:
+async def handle_analyze_changes(
+    changed_file: Path,
+    change_description: str,
+    language: Language = Language.JAPANESE,
+) -> HandlerResponse:
     """Analyze impact of changes to spec documents."""
-    changed_file = args["changedFile"]
-    change_description = args["changeDescription"]
-
+    i18n = get_i18n(language)
     spec_type = _determine_spec_type(changed_file)
 
     if spec_type is None:
-        return _handle_non_spec_file_change(changed_file, change_description)
+        return _handle_non_spec_file_change(changed_file, change_description, i18n)
 
-    return await _handle_spec_file_change(changed_file, change_description, spec_type)
+    return await _handle_spec_file_change(changed_file, change_description, spec_type, i18n)
 
 
-def _determine_spec_type(changed_file: str) -> str | None:
+def _determine_spec_type(changed_file: Path) -> str | None:
     """Determine the type of spec file from the filename."""
-    file_lower = changed_file.lower()
+    file_lower = str(changed_file).lower()
     if "requirements" in file_lower:
         return "requirements"
     if "design" in file_lower:
@@ -168,45 +173,55 @@ def _determine_spec_type(changed_file: str) -> str | None:
     return None
 
 
-def _handle_non_spec_file_change(changed_file: str, change_description: str) -> dict[str, Any]:
+def _handle_non_spec_file_change(changed_file: Path, change_description: str, i18n: Any) -> HandlerResponse:
     """Handle changes to non-spec files."""
-    impact_lines = ["# 変更影響分析レポート\n"]
-    impact_lines.append("## 変更内容")
-    impact_lines.append(f"- ファイル: {changed_file}")
-    impact_lines.append(f"- 変更: {change_description}\n")
+    impact_lines = [i18n.t("traceability.changes.non_spec_title") + "\n"]
+    impact_lines.append(i18n.t("traceability.changes.non_spec_change_details.title"))
+    impact_lines.append(i18n.t("traceability.changes.non_spec_change_details.file_label", file=str(changed_file)))
+    impact_lines.append(
+        i18n.t("traceability.changes.non_spec_change_details.change_label", change=change_description) + "\n"
+    )
 
-    file_lower = changed_file.lower()
+    file_lower = str(changed_file).lower()
     if file_lower.endswith((".py", ".js", ".ts", ".java", ".cpp", ".c")):
         impact_lines.extend(
-            ["## 実装ファイルの変更", "- コードベースへの直接的な変更", "- 関連する仕様書との整合性確認が必要"]
+            [
+                i18n.t("traceability.changes.non_spec_change_details.implementation_files.title"),
+                i18n.t("traceability.changes.non_spec_change_details.implementation_files.direct_change"),
+                i18n.t("traceability.changes.non_spec_change_details.implementation_files.consistency_check"),
+            ]
         )
     elif file_lower.endswith((".md", ".txt", ".doc")):
         impact_lines.extend(
-            ["## ドキュメント変更", "- ドキュメントの更新", "- 他の関連ドキュメントとの整合性確認が必要"]
+            [
+                i18n.t("traceability.changes.non_spec_change_details.document_files.title"),
+                i18n.t("traceability.changes.non_spec_change_details.document_files.document_update"),
+                i18n.t("traceability.changes.non_spec_change_details.document_files.consistency_check"),
+            ]
         )
     else:
-        impact_lines.extend(["## ファイル変更", "- ファイルの変更が検出されました"])
+        impact_lines.extend(
+            [
+                i18n.t("traceability.changes.non_spec_change_details.other_files.title"),
+                i18n.t("traceability.changes.non_spec_change_details.other_files.change_detected"),
+            ]
+        )
 
     impact_lines.extend(
         [
-            "\n## 推奨アクション",
-            "1. 変更内容を関連する仕様書に反映",
-            "2. 仕様書の検証ツールを実行",
-            "3. `get_traceability` で全体の整合性を確認",
+            "\n" + i18n.t("traceability.changes.non_spec_change_details.recommended_actions.title"),
+            i18n.t("traceability.changes.non_spec_change_details.recommended_actions.reflect_changes"),
+            i18n.t("traceability.changes.non_spec_change_details.recommended_actions.run_validation"),
+            i18n.t("traceability.changes.non_spec_change_details.recommended_actions.check_consistency"),
         ]
     )
 
-    return {
-        "content": [
-            {
-                "type": "text",
-                "text": "\n".join(impact_lines),
-            }
-        ]
-    }
+    return HandlerResponse(content=[TextContent(text="\n".join(impact_lines))])
 
 
-async def _handle_spec_file_change(changed_file: str, change_description: str, spec_type: str) -> dict[str, Any]:
+async def _handle_spec_file_change(
+    changed_file: Path, change_description: str, spec_type: str, i18n: Any
+) -> HandlerResponse:
     """Handle changes to spec files."""
     specs = await _read_all_specs()
     matrix = traceability.build_traceability_matrix(
@@ -215,42 +230,35 @@ async def _handle_spec_file_change(changed_file: str, change_description: str, s
         specs.get("tasks"),
     )
 
-    impact_lines = _build_change_header(changed_file, change_description)
+    impact_lines = _build_change_header(changed_file, change_description, i18n)
     changed_ids = _extract_changed_ids(change_description)
 
     if spec_type == "requirements":
-        _add_requirements_impact(impact_lines, changed_ids, matrix)
+        _add_requirements_impact(impact_lines, changed_ids, matrix, i18n)
     elif spec_type == "design":
-        _add_design_impact(impact_lines, changed_ids, matrix)
+        _add_design_impact(impact_lines, changed_ids, matrix, i18n)
     elif spec_type == "tasks":
-        _add_tasks_impact(impact_lines, changed_ids, matrix)
+        _add_tasks_impact(impact_lines, changed_ids, matrix, i18n)
 
     impact_lines.extend(
         [
-            "\n## 次のステップ",
-            "1. 影響を受ける文書を更新",
-            "2. 各文書の validate_* ツールで検証",
-            "3. `get_traceability` で全体の整合性を確認",
+            "\n" + i18n.t("traceability.changes.spec_change_details.next_steps.title"),
+            i18n.t("traceability.changes.spec_change_details.next_steps.update_documents"),
+            i18n.t("traceability.changes.spec_change_details.next_steps.validate_tools"),
+            i18n.t("traceability.changes.spec_change_details.next_steps.check_traceability"),
         ]
     )
 
-    return {
-        "content": [
-            {
-                "type": "text",
-                "text": "\n".join(impact_lines),
-            }
-        ]
-    }
+    return HandlerResponse(content=[TextContent(text="\n".join(impact_lines))])
 
 
 async def _read_all_specs() -> dict[str, str | None]:
     """Read all spec files."""
     specs: dict[str, str | None] = {}
     for name, path in [
-        ("requirements", "specs/requirements.md"),
-        ("design", "specs/design.md"),
-        ("tasks", "specs/tasks.md"),
+        ("requirements", Path("specs/requirements.md")),
+        ("design", Path("specs/design.md")),
+        ("tasks", Path("specs/tasks.md")),
     ]:
         try:
             specs[name] = await fs_utils.read_file(path)
@@ -259,9 +267,14 @@ async def _read_all_specs() -> dict[str, str | None]:
     return specs
 
 
-def _build_change_header(changed_file: str, change_description: str) -> list[str]:
+def _build_change_header(changed_file: Path, change_description: str, i18n: Any) -> list[str]:
     """Build the header section of the change impact report."""
-    return ["# 変更影響分析レポート\n", "## 変更内容", f"- ファイル: {changed_file}", f"- 変更: {change_description}\n"]
+    return [
+        i18n.t("traceability.changes.non_spec_title") + "\n",
+        i18n.t("traceability.changes.non_spec_change_details.title"),
+        i18n.t("traceability.changes.non_spec_change_details.file_label", file=str(changed_file)),
+        i18n.t("traceability.changes.non_spec_change_details.change_label", change=change_description) + "\n",
+    ]
 
 
 def _extract_changed_ids(change_description: str) -> set[str]:
@@ -272,9 +285,9 @@ def _extract_changed_ids(change_description: str) -> set[str]:
     return changed_ids
 
 
-def _add_requirements_impact(impact_lines: list[str], changed_ids: set[str], matrix: dict[str, Any]) -> None:
+def _add_requirements_impact(impact_lines: list[str], changed_ids: set[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add requirements change impact analysis."""
-    impact_lines.append("## 影響を受ける設計要素")
+    impact_lines.append(i18n.t("traceability.changes.requirements_impact.title"))
     affected_design = set()
     for req_id in changed_ids:
         if req_id in matrix["req_to_design"]:
@@ -282,21 +295,16 @@ def _add_requirements_impact(impact_lines: list[str], changed_ids: set[str], mat
 
     if affected_design:
         impact_lines.extend(f"- {component}" for component in sorted(affected_design))
-        impact_lines.extend(
-            [
-                "\n## 推奨アクション",
-                "1. 上記の設計要素を確認し、必要に応じて更新",
-                "2. `validate_design` を実行して整合性を確認",
-                "3. 関連するタスクの見直し",
-            ]
-        )
+        impact_lines.append("\n" + i18n.t("traceability.changes.requirements_impact.recommendations_title"))
+        recommendations = i18n.t("traceability.changes.requirements_impact.recommendations")
+        impact_lines.extend(recommendations)
     else:
-        impact_lines.append("- なし（この要件はまだ設計に反映されていません）")
+        impact_lines.append(i18n.t("traceability.changes.requirements_impact.no_impact"))
 
 
-def _add_design_impact(impact_lines: list[str], changed_ids: set[str], matrix: dict[str, Any]) -> None:
+def _add_design_impact(impact_lines: list[str], changed_ids: set[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add design change impact analysis."""
-    impact_lines.append("## 影響を受けるタスク")
+    impact_lines.append(i18n.t("traceability.changes.design_impact.title"))
     affected_tasks = set()
     for component in changed_ids:
         if component in matrix["design_to_tasks"]:
@@ -304,21 +312,16 @@ def _add_design_impact(impact_lines: list[str], changed_ids: set[str], matrix: d
 
     if affected_tasks:
         impact_lines.extend(f"- {task}" for task in sorted(affected_tasks))
-        impact_lines.extend(
-            [
-                "\n## 推奨アクション",
-                "1. 上記のタスクの内容を確認し、必要に応じて更新",
-                "2. `validate_tasks` を実行して整合性を確認",
-                "3. タスクの工数見積もりの再評価",
-            ]
-        )
+        impact_lines.append("\n" + i18n.t("traceability.changes.design_impact.recommendations_title"))
+        recommendations = i18n.t("traceability.changes.design_impact.recommendations")
+        impact_lines.extend(recommendations)
     else:
-        impact_lines.append("- なし（この設計要素はまだタスク化されていません）")
+        impact_lines.append(i18n.t("traceability.changes.design_impact.no_impact"))
 
 
-def _add_tasks_impact(impact_lines: list[str], changed_ids: set[str], matrix: dict[str, Any]) -> None:
+def _add_tasks_impact(impact_lines: list[str], changed_ids: set[str], matrix: dict[str, Any], i18n: Any) -> None:
     """Add tasks change impact analysis."""
-    impact_lines.append("## 依存関係の影響")
+    impact_lines.append(i18n.t("traceability.changes.tasks_impact.title"))
     affected_tasks = set()
     for task_id in changed_ids:
         for other_task, deps in matrix["task_dependencies"].items():
@@ -326,14 +329,10 @@ def _add_tasks_impact(impact_lines: list[str], changed_ids: set[str], matrix: di
                 affected_tasks.add(other_task)
 
     if affected_tasks:
-        impact_lines.extend(f"- {task} (依存タスク)" for task in sorted(affected_tasks))
-        impact_lines.extend(
-            [
-                "\n## 推奨アクション",
-                "1. 依存タスクのスケジュール調整",
-                "2. マイルストーンへの影響確認",
-                "3. リスク評価の更新",
-            ]
-        )
+        dependent_task_suffix = i18n.t("traceability.changes.tasks_impact.dependent_task")
+        impact_lines.extend(f"- {task}{dependent_task_suffix}" for task in sorted(affected_tasks))
+        impact_lines.append("\n" + i18n.t("traceability.changes.tasks_impact.recommendations_title"))
+        recommendations = i18n.t("traceability.changes.tasks_impact.recommendations")
+        impact_lines.extend(recommendations)
     else:
-        impact_lines.append("- なし（他のタスクへの依存影響はありません）")
+        impact_lines.append(i18n.t("traceability.changes.tasks_impact.no_impact"))

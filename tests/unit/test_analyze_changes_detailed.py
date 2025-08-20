@@ -1,10 +1,12 @@
 """Detailed unit tests for analyze_changes functionality."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from wassden.handlers.traceability import handle_analyze_changes
+from wassden.types import HandlerResponse, Language
 
 
 @pytest.fixture
@@ -79,19 +81,15 @@ class TestAnalyzeChangesDetailed:
             }
 
             result = await handle_analyze_changes(
-                {
-                    "changedFile": "specs/requirements.md",
-                    "changeDescription": "Added REQ-04 for new notification feature",
-                }
+                Path("specs/requirements.md"), "Added REQ-04 for new notification feature", Language.JAPANESE
             )
 
         # Verify basic response structure
-        assert isinstance(result, dict)
-        assert "content" in result
-        assert len(result["content"]) == 1
-        assert result["content"][0]["type"] == "text"
+        assert isinstance(result, HandlerResponse)
+        assert len(result.content) == 1
+        assert result.content[0].type == "text"
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify change detection in header
         assert "specs/requirements.md" in result_text
@@ -124,13 +122,10 @@ class TestAnalyzeChangesDetailed:
             }
 
             result = await handle_analyze_changes(
-                {
-                    "changedFile": "specs/requirements.md",
-                    "changeDescription": "Modified REQ-01 to include OAuth support",
-                }
+                Path("specs/requirements.md"), "Modified REQ-01 to include OAuth support", Language.JAPANESE
             )
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify change detection
         assert "specs/requirements.md" in result_text
@@ -158,13 +153,12 @@ class TestAnalyzeChangesDetailed:
             }
 
             result = await handle_analyze_changes(
-                {
-                    "changedFile": "specs/design.md",
-                    "changeDescription": "Modified data-processor component to use microservices architecture",
-                }
+                Path("specs/design.md"),
+                "Modified data-processor component to use microservices architecture",
+                Language.JAPANESE,
             )
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify design change detection
         assert "specs/design.md" in result_text
@@ -191,10 +185,10 @@ class TestAnalyzeChangesDetailed:
             }
 
             result = await handle_analyze_changes(
-                {"changedFile": "specs/tasks.md", "changeDescription": "Modified TASK-02 implementation approach"}
+                Path("specs/tasks.md"), "Modified TASK-02 implementation approach", Language.JAPANESE
             )
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify task change detection
         assert "specs/tasks.md" in result_text
@@ -218,15 +212,12 @@ class TestAnalyzeChangesDetailed:
             }
 
             result = await handle_analyze_changes(
-                {
-                    "changedFile": "specs/requirements.md",
-                    "changeDescription": (
-                        "Added REQ-04 for notifications, REQ-05 for analytics, and modified REQ-01 authentication scope"
-                    ),
-                }
+                Path("specs/requirements.md"),
+                "Added REQ-04 for notifications, REQ-05 for analytics, and modified REQ-01 authentication scope",
+                Language.JAPANESE,
             )
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify multiple change detection in description
         assert "REQ-04" in result_text
@@ -244,11 +235,9 @@ class TestAnalyzeChangesDetailed:
     async def test_non_spec_file_change_handling(self):
         """Test handling of changes to non-specification files."""
 
-        result = await handle_analyze_changes(
-            {"changedFile": "src/main.py", "changeDescription": "Refactored authentication logic"}
-        )
+        result = await handle_analyze_changes(Path("src/main.py"), "Refactored authentication logic", Language.JAPANESE)
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify non-spec file handling
         assert "src/main.py" in result_text
@@ -268,9 +257,9 @@ class TestAnalyzeChangesDetailed:
                 "tasks": sample_tasks,
             }
 
-            result = await handle_analyze_changes({"changedFile": "specs/requirements.md", "changeDescription": ""})
+            result = await handle_analyze_changes(Path("specs/requirements.md"), "", Language.JAPANESE)
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Should still provide basic analysis even with empty description
         assert "specs/requirements.md" in result_text
@@ -291,13 +280,10 @@ class TestAnalyzeChangesDetailed:
             }
 
             result = await handle_analyze_changes(
-                {
-                    "changedFile": "specs/requirements.md",
-                    "changeDescription": "Added REQ-04 for user preferences management",
-                }
+                Path("specs/requirements.md"), "Added REQ-04 for user preferences management", Language.JAPANESE
             )
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify required sections exist
         required_sections = [
@@ -345,16 +331,15 @@ class TestAnalyzeChangesDetailed:
                 }
 
                 result = await handle_analyze_changes(
-                    {
-                        "changedFile": "specs/requirements.md",
-                        "changeDescription": "Modified REQ-02 to include additional validation requirements",
-                    }
+                    Path("specs/requirements.md"),
+                    "Modified REQ-02 to include additional validation requirements",
+                    Language.JAPANESE,
                 )
 
                 # Verify traceability matrix was used
                 mock_matrix.assert_called_once()
 
-        result_text = result["content"][0]["text"]
+        result_text = result.content[0].text
 
         # Verify analysis identified correct dependencies based on matrix
         assert "REQ-02" in result_text

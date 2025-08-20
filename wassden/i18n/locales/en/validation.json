@@ -1,0 +1,56 @@
+{
+  "requirements": {
+    "success": {
+      "title": "✅ requirements.md validation successful!",
+      "stats": "## Validation Results\n- Requirements: {totalRequirements}\n- NFRs: {totalNFRs}\n- KPIs: {totalKPIs}",
+      "structure": "## Structure Check",
+      "next_step": "Requirements are correctly formatted. You can proceed to the next step (creating design.md)."
+    },
+    "error": {
+      "title": "⚠️ requirements.md needs fixes:",
+      "detected_issues": "## Detected Issues",
+      "fix_instructions": "## Fix Instructions\nPlease fix requirements.md according to the following instructions:",
+      "verify_after_fix": "## Verification After Fix\nOnce fixes are complete, run validate_requirements again to verify."
+    },
+    "file_error": {
+      "not_found": "❌ Error: {path} not found.\n\nPlease first use prompt_requirements or check_completeness to create requirements.md.",
+      "general_error": "❌ An error occurred: {error}"
+    }
+  },
+  "design": {
+    "success": {
+      "title": "✅ design.md validation successful!",
+      "stats": "## Validation Results\n- Design elements: {totalDesignElements}\n- Components: {totalComponents}\n- REQ coverage: {reqCoverage}%",
+      "structure": "## Structure Check",
+      "next_step": "Design is correctly formatted and requirements are properly covered. You can proceed to the next step (creating tasks.md)."
+    },
+    "error": {
+      "title": "⚠️ design.md needs fixes:",
+      "detected_issues": "## Detected Issues",
+      "fix_instructions": "## Fix Instructions\nPlease fix design.md according to the following instructions:",
+      "verify_after_fix": "## Verification After Fix\nOnce fixes are complete, run validate_design again to verify."
+    },
+    "file_error": {
+      "not_found": "❌ Error: {path} not found.\n\nPlease first use prompt_design to create design.md.",
+      "general_error": "❌ An error occurred: {error}"
+    }
+  },
+  "tasks": {
+    "success": {
+      "title": "✅ tasks.md validation successful!",
+      "stats": "## Validation Results\n- Tasks: {totalTasks}\n- Estimated hours: {totalEstimatedHours}\n- Dependencies: {totalDependencies}",
+      "structure": "## Structure Check",
+      "next_step": "Tasks are correctly formatted and dependencies are properly defined. You can proceed to implementation."
+    },
+    "error": {
+      "title": "⚠️ tasks.md needs fixes:",
+      "detected_issues": "## Detected Issues",
+      "fix_instructions": "## Fix Instructions\nPlease fix tasks.md according to the following instructions:",
+      "verify_after_fix": "## Verification After Fix\nOnce fixes are complete, run validate_tasks again to verify."
+    },
+    "file_error": {
+      "not_found": "❌ Error: {path} not found.\n\nPlease first use prompt_tasks to create tasks.md.",
+      "general_error": "❌ An error occurred: {error}"
+    }
+  }
+}

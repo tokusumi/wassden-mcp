@@ -111,7 +111,7 @@ class TestCheckCompletenessCommand:
         result = self.runner.invoke(app, ["check-completeness", "--userInput", "Simple test project"])
 
         assert result.exit_code == 0
-        assert "プロジェクト情報を確認" in result.output
+        assert "Please review the following project information" in result.output
 
     def test_check_completeness_with_complex_input(self):
         """Test check-completeness with complex input."""
@@ -126,7 +126,7 @@ class TestCheckCompletenessCommand:
         result = self.runner.invoke(app, ["check-completeness", "--userInput", complex_input])
 
         assert result.exit_code == 0
-        assert "プロジェクト情報を確認" in result.output
+        assert "Please review the following project information" in result.output
 
     def test_check_completeness_with_empty_input(self):
         """Test check-completeness with empty input."""
@@ -193,7 +193,7 @@ class TestPromptRequirementsCommand:
 
         assert result.exit_code == 0
         assert "requirements.md" in result.output
-        assert "EARS形式" in result.output
+        assert "EARS format" in result.output
         assert "Test project for CLI testing" in result.output
 
     def test_prompt_requirements_with_scope(self):

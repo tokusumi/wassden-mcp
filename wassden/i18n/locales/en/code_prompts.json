@@ -1,0 +1,59 @@
+{
+  "implementation": {
+    "error": {
+      "files_not_found": "❌ Error: {error}\n\nRequired specification files not found."
+    },
+    "prompt": {
+      "intro": "Based on the following specifications, proceed with implementation step by step:",
+      "requirements_header": "## Foundation Specifications for Implementation\n\n### Requirements (Requirements Definition)",
+      "design_header": "### Design (Design Document)",
+      "tasks_header": "### Tasks (Implementation Tasks)",
+      "guidelines_header": "## Implementation Guidelines",
+      "implementation_order": "### 1. Implementation Order\nFollow the TASK-ID sequence in Tasks.md:\n1. Start with Phase 1 tasks\n2. Implement sequentially considering dependencies\n3. Run tests after each task completion",
+      "quality_standards": "### 2. Quality Standards\n- **Coding conventions**: Follow existing project code style\n- **Testing**: Create unit tests for each feature\n- **Documentation**: Add docstrings to major functions/classes\n- **Error handling**: Implement appropriate exception handling",
+      "traceability": "### 3. Traceability\nClearly document in comments during implementation:\n```\n// Implements: REQ-XX, TASK-YY-ZZ\n```",
+      "quality_review": "### 4. Quality Review (Important)\n**For each TASK-ID completion, mandatory review following these steps**:\n\n1. **Generate Review Prompt**:\n   ```\n   generate-review-prompt <TASK-ID>\n   ```\n   Example: `generate-review-prompt TASK-01-01`\n\n2. **Conduct Self-Review**:\n   Perform strict quality checks following the generated review prompt\n   - 🚫 Detect test tampering (mandatory)\n   - 🚫 Prohibit TODO/FIXME checks (mandatory)\n   - ✅ Verify requirements traceability\n   - ✅ Execute project-specific quality standards\n\n3. **Pass Judgment**:\n   Add checkmark ✅ to tasks.md only when all items pass\n\n**Important**: Do not proceed to next task until all review items pass.",
+      "verification": "### 5. Verification Items (Basic)\nConfirm upon each task completion:\n- [ ] Meets requirements of related REQ-IDs\n- [ ] Complies with interfaces defined in Design\n- [ ] Tests pass\n- [ ] Quality check completed via review prompt",
+      "progress_report": "### 6. Progress Report\nReport the following upon each task completion:\n- Completed TASK-ID\n- Overview of implemented functionality\n- Test results\n- Quality review results\n- Next task readiness status",
+      "start_instructions": "## Start Instructions\nBegin implementation with the first task (TASK-01-01).\nAsk questions if additional information is needed for implementation.\n\n**Implementation Workflow**:\n1. Implement TASK-ID\n2. Generate review prompt with `generate-review-prompt <TASK-ID>`\n3. Execute quality checks following review prompt\n4. Add checkmark ✅ to tasks.md if all items pass\n5. Proceed to next TASK-ID\n\nWhen ready, declare \"Starting implementation\" before beginning work.\n\n**Note**: Quality review upon each task completion is mandatory. Do not skip reviews."
+    }
+  },
+  "review": {
+    "error": {
+      "task_id_required": "❌ Error: taskId parameter is required.\nExample: {'taskId': 'TASK-01-01'}",
+      "files_not_found": "❌ Error: {error}\n\nRequired specification files not found.",
+      "task_not_found": "❌ Error: Task {task_id} not found in tasks.md."
+    },
+    "prompt": {
+      "title": "{task_id} Implementation Review Prompt",
+      "target_task": "## 📋 Target Implementation Task\n\n**TASK-ID**: {task_id}\n**Summary**: {task_summary}\n**Phase**: {task_phase}",
+      "related_requirements": "## 🎯 Related Requirements",
+      "functional_requirements": "### Functional Requirements (REQ)",
+      "test_requirements": "### Test Requirements (TR)",
+      "quality_guardrails": "## 🚫 Quality Guardrails (Strict Check)",
+      "test_tampering": "### 1. Test Case Tampering Detection\n- **Prohibited**: Tampering with test cases to make tests pass\n- **Check Method**:\n  - Compare test scenarios defined in TR requirements with actual test code\n  - Check for improper use of `pytest.skip`, `@pytest.mark.skip`, `pass`\n  - Check if test expected values were changed to match implementation\n- **Pass Criteria**: Tests implemented according to TR specifications, tests pass with actual functionality",
+      "incomplete_implementation": "### 2. Incomplete Implementation Detection (TODO/FIXME Prohibition)\n- **Prohibited**: Leaving incomplete implementations with TODO/FIXME comments\n- **Check Method**:\n  - Search for `# TODO`, `# FIXME`, `// TODO`, `/* TODO */`\n  - Search for `NotImplementedError`\n  - Search for functions/methods with only `pass` statements\n- **Pass Criteria**: All functionality completely implemented, no placeholders",
+      "static_quality": "## 🔍 Static Quality Check (Required)",
+      "project_quality_standards": "### Identify and Execute Project Quality Standards\nIdentify and execute quality check commands defined for this project:\n\n#### 1. Quality Check Command Investigation\nCheck the following in order to identify this project's quality standards:\n- `CLAUDE.md` file Commands section\n- `Makefile` lint/format/test/check targets\n- `package.json` scripts section (Node.js)\n- `pyproject.toml` tool settings (Python)\n- `README.md` development procedures",
+      "required_checks": "#### 2. Required Check Items\n**Execute all** identified quality checks and ensure **all PASS**:\n- **Formatter**: Code style consistency\n- **Linter**: Static code analysis\n- **Type Checker**: Type safety verification (TypeScript/Python etc.)\n- **Test Execution**: Unit tests・Integration tests\n- **Comprehensive Check**: Commands integrating the above",
+      "execution_examples": "#### 3. Execution Examples (Adjust according to project)\n```bash\n# Example 1: Python project\nmake check          # or\nuv run ruff format && uv run ruff check && uv run mypy . && uv run pytest\n\n# Example 2: Node.js project\nnpm run check       # or\nnpm run format && npm run lint && npm run typecheck && npm test\n\n# Example 3: Go project\nmake test           # or\ngo fmt ./... && go vet ./... && go test ./...\n```",
+      "pass_criteria": "#### 4. Pass Criteria\n- **All commands terminate normally** (exit code 0)\n- **Zero warnings and errors**\n- **Test coverage maintains existing level**",
+      "design_compliance": "## 📊 Design Compliance Check",
+      "expected_file_structure": "### Expected File Structure",
+      "expected_interfaces": "### Expected Interfaces",
+      "pass_criteria_all": "## ✅ Pass Judgment Criteria (All Items Required)\n\nCheck all following items and pass only when **all PASS**:\n\n1. [ ] 🚫 No test case tampering (tests implemented per TR specifications)\n2. [ ] 🚫 No TODO/FIXME/incomplete implementation (completely implemented)\n3. [ ] ✅ All related REQ implemented (functional requirements satisfied)\n4. [ ] ✅ All related TR tested (test requirements satisfied)\n5. [ ] ✅ Design document compliance (file structure・interfaces)\n6. [ ] ✅ All quality checks PASS (linter/formatter/test)\n\n**Important**: Quality guardrails (items 1,2) are absolute conditions.\nIf these are violated, mark as fail even if everything else is perfect, fix and re-review.",
+      "review_instructions": "## 📝 Review Execution Instructions\n\n1. Check above items in order\n2. Report results of each item in detail\n3. Propose specific fixes if any items fail\n4. **Only when all items pass**: Add ✅ to {task_id} line in tasks.md",
+      "next_steps": "## 📈 Next Steps After Review Completion\n\nAfter pass judgment:\n1. Add checkmark ✅ to {task_id} line in tasks.md\n2. Confirm next task ID (considering dependencies)\n3. Prepare to start next task implementation\n\nIf failed:\n1. Fix pointed issues\n2. Re-execute this review after fixes complete\n3. Repeat until all items pass"
+    }
+  },
+  "helpers": {
+    "no_requirements": "None",
+    "file_structure_not_found": "Please check structure information from design document",
+    "interfaces_not_found": "Please check interface information from design document",
+    "search_keywords": {
+      "file_structure": ["file", "ファイル", "module", "モジュール", "structure", "構成"],
+      "interfaces": ["api", "interface", "インターフェース", "function", "関数", "method", "メソッド"],
+      "requirement_patterns": ["system", "システムは", "test", "テスト"]
+    }
+  }
+}

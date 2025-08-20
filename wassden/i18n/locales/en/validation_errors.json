@@ -1,0 +1,38 @@
+{
+  "sections": {
+    "requirements": {
+      "summary": "Summary",
+      "glossary": "Glossary", 
+      "scope": "Scope",
+      "constraints": "Constraints",
+      "non_functional": "Non-Functional Requirements",
+      "kpi": "KPI",
+      "functional": "Functional Requirements",
+      "testing": "Testing Requirements"
+    },
+    "design": {
+      "architecture": "Architecture",
+      "components": "Component Design",
+      "data": "Data",
+      "api": "API",
+      "non_functional": "Non-Functional",
+      "testing": "Testing",
+      "traceability": "Traceability"
+    },
+    "tasks": {
+      "overview": "Overview",
+      "task_list": "Task List",
+      "dependencies": "Dependencies",
+      "milestones": "Milestones"
+    }
+  },
+  "errors": {
+    "missing_section": "Missing required section: {section}",
+    "invalid_req_id": "Invalid REQ-ID format: {id}",
+    "invalid_task_id": "Invalid TASK-ID format: {id}",
+    "duplicate_req_id": "Duplicate REQ-ID found: {id}",
+    "duplicate_task_id": "Duplicate TASK-ID found: {id}",
+    "missing_traceability": "Missing required traceability section (Traceability)",
+    "missing_functional_section": "Missing functional requirements section for validation"
+  }
+}

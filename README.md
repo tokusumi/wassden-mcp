@@ -26,7 +26,8 @@ The tool acts as your **SDD methodology expert**, ensuring AI agents follow best
 - **📊 Traceability Management**: Complete REQ↔DESIGN↔TASK + TR↔TEST-SCENARIO mapping with mandatory 100% coverage validation
 - **🚀 Progressive Prompting**: Step-by-step guidance for high-quality deliverables
 - **🛠️ MCP Integration**: Seamless integration with Claude Code and other MCP clients via FastMCP
-- **🧪 Robust Testing**: [Comprehensive test suite](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with automated MCP integration and consistently fast response times (<0.01ms avg)
+- **🌍 Multi-Language**: Full Japanese and English support with automatic language detection and intelligent validation  
+- **🧪 Robust Testing**: [Comprehensive test suite](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml) with 405+ tests and consistently fast response times (<0.01ms avg)
 
 ## 🎪 Demonstrations
 
@@ -148,11 +149,16 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 1. **Complete Project Analysis & Requirements Generation**
 
    ```bash
-   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "Your project description"
+   # Auto-detect language from input (recommended)
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "Python FastAPI project"
+   
+   # Force specific language
+   uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "Your project description" --language ja
    ```
    
    This command analyzes your input for completeness and:
-   - If information is missing: Returns clarifying questions
+   - **Automatically detects language** from your input text (English/Japanese)
+   - If information is missing: Returns clarifying questions (in detected/chosen language)
    - If information is sufficient: **Provides structured prompts** for the agent to generate EARS format requirements.md
 
 2. **Agent-Driven Document Creation**
@@ -164,12 +170,18 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 
 3. **Quality Assurance Through Validation**
    
-   wassden validates the agent-generated documents:
+   wassden validates the agent-generated documents with automatic language detection:
    ```bash
+   # Auto-detects document language and provides appropriate feedback
    uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-requirements specs/requirements.md
    uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-design specs/design.md
    uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-tasks specs/tasks.md
    ```
+   
+   **Auto-detection features:**
+   - Detects document language from content (Japanese/English section headers)
+   - Provides validation feedback in the detected language
+   - Supports mixed-language environments seamlessly
 
 4. **Task-Specific Implementation Review**
    
@@ -187,35 +199,35 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 ## 🛠️ Available Tools
 
 ### 📝 Prompt Generation Tools
-*These tools provide structured prompts for AI agents to create specifications*
+*These tools provide structured prompts for AI agents to create specifications (auto-detects language or supports explicit --language)*
 
-| Tool                  | Purpose                                     | Input             | Agent Output                                |
-| --------------------- | ------------------------------------------- | ----------------- | ------------------------------------------- |
-| `check-completeness`  | Analyze input & provide requirements prompt | User description  | Questions or structured requirements prompt |
-| `prompt-requirements` | Generate specialized requirements prompt    | Project details   | EARS-formatted requirements prompt          |
-| `prompt-design`       | Generate design document prompt             | Requirements path | Architectural design prompt                 |
-| `prompt-tasks`        | Generate WBS tasks prompt                   | Design path       | Task breakdown prompt                       |
-| `prompt-code`         | Generate implementation prompt              | All spec paths    | Implementation guide prompt                 |
-| `generate-review-prompt` | Generate TASK-specific review prompt      | Task ID + spec paths | Quality review prompt with guardrails    |
+| Tool                     | Purpose                                     | Input                                                   | Agent Output                                |
+| ------------------------ | ------------------------------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| `check-completeness`     | Analyze input & provide requirements prompt | User description (auto-detects) + optional `--language` | Questions or structured requirements prompt |
+| `prompt-requirements`    | Generate specialized requirements prompt    | Project details (auto-detects) + optional `--language`  | EARS-formatted requirements prompt          |
+| `prompt-design`          | Generate design document prompt             | Requirements path (auto-detects language)               | Architectural design prompt                 |
+| `prompt-tasks`           | Generate WBS tasks prompt                   | Design path (auto-detects language)                     | Task breakdown prompt                       |
+| `prompt-code`            | Generate implementation prompt              | All spec paths (auto-detects language)                  | Implementation guide prompt                 |
+| `generate-review-prompt` | Generate TASK-specific review prompt        | Task ID + spec paths (auto-detects language)            | Quality review prompt with guardrails       |
 
 ### ✅ Validation Tools  
-*These tools validate agent-generated documents for quality and consistency*
+*These tools validate agent-generated documents for quality and consistency (auto-detects document language)*
 
-| Tool                    | Purpose                       | Input             | Output            |
-| ----------------------- | ----------------------------- | ----------------- | ----------------- |
-| `validate-requirements` | Validate requirements quality | Requirements path | Validation report |
-| `validate-design`       | Validate design structure     | Design path       | Validation report |
-| `validate-tasks`        | Validate task dependencies    | Tasks path        | Validation report |
+| Tool                    | Purpose                       | Input                                     | Output            |
+| ----------------------- | ----------------------------- | ----------------------------------------- | ----------------- |
+| `validate-requirements` | Validate requirements quality | Requirements path (auto-detects language) | Validation report |
+| `validate-design`       | Validate design structure     | Design path (auto-detects language)       | Validation report |
+| `validate-tasks`        | Validate task dependencies    | Tasks path (auto-detects language)        | Validation report |
 
 > **📋 Validation Standards**: wassden enforces **100% traceability** - all requirements must be referenced in design and tasks. See [Validation Documentation](docs/validation/) for detailed requirements and examples.
 
 ### 📊 Traceability & Analysis Tools
 *These tools provide project insights, dependency tracking, and change impact analysis*
 
-| Tool               | Purpose                                      | Input                    | Output                           |
-| ------------------ | -------------------------------------------- | ------------------------ | -------------------------------- |
-| `get-traceability` | Complete traceability matrix generation     | Spec paths (optional)    | Full REQ↔DESIGN↔TASK mapping   |
-| `analyze-changes`  | Impact analysis for spec changes            | Changed file + description | Dependency impact & update guide |
+| Tool               | Purpose                                 | Input                      | Output                           |
+| ------------------ | --------------------------------------- | -------------------------- | -------------------------------- |
+| `get-traceability` | Complete traceability matrix generation | Spec paths (optional)      | Full REQ↔DESIGN↔TASK mapping     |
+| `analyze-changes`  | Impact analysis for spec changes        | Changed file + description | Dependency impact & update guide |
 
 #### 🔗 Traceability Features
 
@@ -263,12 +275,14 @@ wassden-py/
 ## 🧩 Language & Framework Support
 
 - **Primary**: Python 3.12+
+- **Human Languages**: Japanese (ja) and English (en) with full i18n support
 - **MCP Framework**: FastMCP for high-performance MCP server implementation
 - **CLI**: Typer for modern command-line interface with enhanced type safety
-- **Testing**: pytest + pytest-asyncio with [comprehensive test suite (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
-- **Performance**: 198,406+ req/sec throughput, <0.01ms avg response time
+- **Testing**: pytest + pytest-asyncio with [405+ comprehensive tests (100% passing)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
+- **Performance**: Sub-millisecond response times with concurrent load support
 - **Code Quality**: ruff + mypy for linting and type checking
 - **Standards**: EARS format, WBS structure, 100% Traceability matrices
+- **Internationalization**: Namespace-based translation system with automatic language detection
 
 ## 🎯 Use Cases
 
@@ -323,13 +337,16 @@ wassden-py/
 - [Tasks Validation](docs/validation/tasks.md) - DAG requirements and coverage rules
 - [CLI Reference](docs/cli.md) - Command usage and troubleshooting
 
+
 ## ⚡ Performance Metrics
 
 Ultra-fast response times with **reproducible benchmarks**:
 
-- **Sub-millisecond**: 0.001-0.013ms median response times ⚡️  
-- **High Throughput**: 200,000+ requests/second
-- **Concurrent Load**: 20+ tools simultaneously (0.11ms median)
+- **check_completeness**: 0.008ms median (ultra-fast completeness analysis) ⚡️
+- **analyze_changes**: 0.018ms median (rapid change impact assessment)  
+- **get_traceability**: 0.018ms median (instant traceability matrix generation)
+- **prompt_requirements**: 0.003ms median (lightning-fast prompt generation)
+- **concurrent_20_tools**: 0.251ms median (excellent concurrency performance)
 - **Memory Efficient**: <50MB growth per 1000 operations
 - **Reproducible Testing**: `python benchmarks/run_all.py`
 
@@ -359,7 +376,8 @@ make ci                   # CI checks without modifying files
 
 # Run CLI commands locally
 uv run wassden --help                                     # Show available commands
-uv run wassden check-completeness --userInput "test"      # Test CLI functionality
+uv run wassden check-completeness --userInput "test"      # Test CLI functionality (Japanese)
+uv run wassden check-completeness --userInput "test" --language en  # Test CLI functionality (English)
 
 # Run MCP server with different transports (development)
 uv run wassden start-mcp-server --transport stdio                                       # Start with stdio (default)

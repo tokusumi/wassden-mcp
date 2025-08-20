@@ -9,7 +9,6 @@
 - Verification of compatibility with Claude Code, Cursor, and VS Code Copilot
 
 ### Features & UX
-- Multi-language support (Japanese/English)
 - Prompt refinement based on actual usage and feedback
 
 ### Documentation & Marketing

@@ -1,0 +1,67 @@
+{
+  "requirements": {
+    "instruction": "Please create a requirements.md file in EARS format according to the following instructions:",
+    "project_info": "## Project Information",
+    "overview": "- Overview: {project_description}",
+    "scope": "- Scope: {scope}",
+    "scope_default": "Analyze and specify scope information",
+    "constraints": "- Constraints: {constraints}",
+    "constraints_default": "Analyze and specify technical and business constraints",
+    "file_section": "## File to Create",
+    "filename": "Filename: specs/requirements.md",
+    "structure_section": "## Required Structure",
+    "structure_template": "[Requirements definition structure template...]",
+    "instruction_conclusion": "Please create a high-quality requirements.md according to this prompt."
+  },
+  "design": {
+    "instruction": "Please create a design.md file based on the following requirements.md:",
+    "requirements_section": "## Requirements Content",
+    "file_section": "## File to Create",
+    "filename": "Filename: specs/design.md",
+    "structure_section": "## Required Structure",
+    "structure_template": "[Design document structure template...]",
+    "instruction_conclusion": "Please create a high-quality design.md with ensured traceability according to this prompt."
+  },
+  "tasks": {
+    "instruction": "Please create a tasks.md file in WBS format based on the following design.md and requirements.md:",
+    "design_section": "## Design Content",
+    "requirements_section": "## Requirements Content",
+    "file_section": "## File to Create",
+    "filename": "Filename: specs/tasks.md",
+    "structure_section": "## Required Structure",
+    "structure_template": "[Task list structure template...]",
+    "instruction_conclusion": "Please create an executable and manageable tasks.md according to this prompt."
+  },
+  "validation_fix": {
+    "header": "⚠️ {spec_type}.md needs fixing:",
+    "issues_section": "## Detected Issues",
+    "fix_section": "## Fix Steps",
+    "fix_instruction": "Please fix {spec_type}.md according to the following instructions:",
+    "confirmation_section": "## Post-Fix Verification",
+    "confirmation_instruction": "After completing the fixes, please run validate_{spec_type} again for verification."
+  },
+  "implementation": {
+    "instruction": "Please proceed with implementation step by step based on the following specifications:",
+    "specs_section": "## Foundational Specifications for Implementation",
+    "requirements_subsection": "### Requirements (Requirements Definition)",
+    "design_subsection": "### Design (Design Document)",
+    "tasks_subsection": "### Tasks (Implementation Tasks)",
+    "guidelines_section": "## Implementation Guidelines",
+    "guidelines_template": "[Implementation guidelines...]",
+    "start_section": "## Starting Instructions",
+    "start_instruction": "Please start implementation from the first task (TASK-01-01).",
+    "ready_declaration": "When ready, declare \"Starting implementation\" before beginning work."
+  },
+  "completeness": {
+    "unclear_points": "The following points are particularly unclear:"
+  },
+  "traceability_report": {
+    "title": "# Traceability Report",
+    "overview_section": "## Overview",
+    "requirements_count": "- Requirements count: {count}",
+    "design_elements_count": "- Design elements count: {count}",
+    "tasks_count": "- Tasks count: {count}",
+    "req_to_design_section": "## Requirements → Design Mapping",
+    "no_design_reference": "⚠️ No design reference"
+  }
+}

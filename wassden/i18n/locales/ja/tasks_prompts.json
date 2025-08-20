@@ -1,0 +1,20 @@
+{
+  "error": {
+    "files_not_found": "❌ エラー: {error}\n\n必要なファイルが見つかりません。"
+  },
+  "prompt": {
+    "intro": "以下のdesign.mdとrequirements.mdに基づいて、WBS形式のtasks.mdファイルを作成してください：",
+    "design_content": "## Design内容",
+    "requirements_content": "## Requirements内容",
+    "file_to_create": "## 作成するファイル\nファイル名: specs/tasks.md",
+    "required_structure": "## 必須構造\n以下の章立てに従って作成してください：",
+    "sections": {
+      "overview": "### 1. 概要\nプロジェクトのタスク分解構造（WBS）の概要とアプローチ",
+      "task_list": "### 2. タスク一覧\n#### Phase 1: Foundation\n- [ ] **TASK-01-01**: [タスク名]\n  - **REQ**: [REQ-01, REQ-02]\n  - **DC**: **component-name**\n  - **依存**: なし\n  - **受け入れ観点**:\n    - 観点1: [検証可能な条件]\n    - 観点2: [検証可能な条件]\n\n- [ ] **TASK-01-02**: [タスク名]\n  - **REQ**: [REQ-03]\n  - **DC**: **another-component**\n  - **依存**: TASK-01-01\n  - **受け入れ観点**:\n    - 観点1: [検証可能な条件]\n\n#### Phase 2: Implementation\n- [ ] **TASK-02-01**: [タスク名]\n  - **REQ**: [REQ-04, REQ-05]\n  - **DC**: **component-a**, **component-b**\n  - **依存**: TASK-01-02\n  - **受け入れ観点**:\n    - 観点1: [検証可能な条件]\n\n#### Phase 3: Testing & Quality\n- [ ] **TASK-03-01**: [タスク名]\n  - **REQ**: [TR-01, TR-02]\n  - **DC**: **test-scenario**\n  - **依存**: TASK-02-01\n  - **受け入れ観点**:\n    - 観点1: [検証可能な条件]",
+      "dependencies": "### 3. 依存関係\n```\nTASK-01-01 → TASK-01-02 → TASK-02-01\n                       ↘\n                         TASK-03-01\n```",
+      "milestones": "### 4. マイルストーン\n- **M1**: Phase 1完了 (TASK-01-XX完了時点)\n- **M2**: Phase 2完了 (TASK-02-XX完了時点)\n- **M3**: リリース準備完了 (TASK-03-XX完了時点)",
+      "risks": "### 5. リスクと対策\n- **リスク**: [リスク内容]\n  - 影響タスク: TASK-XX-XX\n  - 対策: [対策内容]"
+    },
+    "instructions": "## 作成指示\n1. TASK-IDは階層構造（TASK-フェーズ-連番）で作成\n2. チェックボックス形式: `- [ ] **TASK-01-01**: Task name`\n3. 各タスクで関連するREQ-IDとコンポーネントを明記（**REQ**, **DC**フィールド使用）\n4. 依存関係を明確にし、循環依存を避ける\n5. 受け入れ観点は検証可能な条件で記録\n6. 文字数: 2000-4000文字程度\n\nこのプロンプトに従って、実行可能で管理しやすいtasks.mdを作成してください。"
+  }
+}
