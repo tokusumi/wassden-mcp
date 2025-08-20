@@ -7,6 +7,8 @@ Security guarantee: This server has no file writing capabilities and cannot
 modify your filesystem. It only reads files and generates analysis/prompts.
 """
 
+from pathlib import Path
+
 from fastmcp import FastMCP
 
 from .handlers import (
@@ -66,12 +68,12 @@ async def prompt_requirements(
     "(analyzes files only, does not modify files)",
 )
 async def validate_requirements(
-    requirements_path: str = "specs/requirements.md",
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Validate requirements document."""
     result = await handle_validate_requirements(
         {
-            "requirementsPath": requirements_path,
+            "requirementsPath": str(requirements_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -83,12 +85,12 @@ async def validate_requirements(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_design(
-    requirements_path: str = "specs/requirements.md",
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Generate design prompt."""
     result = await handle_prompt_design(
         {
-            "requirementsPath": requirements_path,
+            "requirementsPath": str(requirements_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -100,14 +102,14 @@ async def prompt_design(
     "(analyzes files only, does not modify files)",
 )
 async def validate_design(
-    design_path: str = "specs/design.md",
-    requirements_path: str = "specs/requirements.md",
+    design_path: Path = Path("specs/design.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Validate design document."""
     result = await handle_validate_design(
         {
-            "designPath": design_path,
-            "requirementsPath": requirements_path,
+            "designPath": str(design_path),
+            "requirementsPath": str(requirements_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -119,14 +121,14 @@ async def validate_design(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_tasks(
-    design_path: str = "specs/design.md",
-    requirements_path: str = "specs/requirements.md",
+    design_path: Path = Path("specs/design.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Generate tasks prompt."""
     result = await handle_prompt_tasks(
         {
-            "designPath": design_path,
-            "requirementsPath": requirements_path,
+            "designPath": str(design_path),
+            "requirementsPath": str(requirements_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -138,12 +140,12 @@ async def prompt_tasks(
     "(analyzes files only, does not modify files)",
 )
 async def validate_tasks(
-    tasks_path: str = "specs/tasks.md",
+    tasks_path: Path = Path("specs/tasks.md"),
 ) -> str:
     """Validate tasks document."""
     result = await handle_validate_tasks(
         {
-            "tasksPath": tasks_path,
+            "tasksPath": str(tasks_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -155,16 +157,16 @@ async def validate_tasks(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_code(
-    tasks_path: str = "specs/tasks.md",
-    requirements_path: str = "specs/requirements.md",
-    design_path: str = "specs/design.md",
+    tasks_path: Path = Path("specs/tasks.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
 ) -> str:
     """Generate implementation prompt."""
     result = await handle_prompt_code(
         {
-            "tasksPath": tasks_path,
-            "requirementsPath": requirements_path,
-            "designPath": design_path,
+            "tasksPath": str(tasks_path),
+            "requirementsPath": str(requirements_path),
+            "designPath": str(design_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -195,16 +197,16 @@ async def analyze_changes(
     "(analyzes files only, does not modify files)",
 )
 async def get_traceability(
-    requirements_path: str = "specs/requirements.md",
-    design_path: str = "specs/design.md",
-    tasks_path: str = "specs/tasks.md",
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
+    tasks_path: Path = Path("specs/tasks.md"),
 ) -> str:
     """Generate traceability report."""
     result = await handle_get_traceability(
         {
-            "requirementsPath": requirements_path,
-            "designPath": design_path,
-            "tasksPath": tasks_path,
+            "requirementsPath": str(requirements_path),
+            "designPath": str(design_path),
+            "tasksPath": str(tasks_path),
         }
     )
     return str(result["content"][0]["text"])
@@ -217,17 +219,17 @@ async def get_traceability(
 )
 async def generate_review_prompt(
     task_id: str,
-    tasks_path: str = "specs/tasks.md",
-    requirements_path: str = "specs/requirements.md",
-    design_path: str = "specs/design.md",
+    tasks_path: Path = Path("specs/tasks.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
 ) -> str:
     """Generate review prompt for specific TASK-ID."""
     result = await handle_generate_review_prompt(
         {
             "taskId": task_id,
-            "tasksPath": tasks_path,
-            "requirementsPath": requirements_path,
-            "designPath": design_path,
+            "tasksPath": str(tasks_path),
+            "requirementsPath": str(requirements_path),
+            "designPath": str(design_path),
         }
     )
     return str(result["content"][0]["text"])

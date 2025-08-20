@@ -1,6 +1,7 @@
 """Traceability analysis and change impact assessment."""
 
 import re
+from pathlib import Path
 from typing import Any
 
 from wassden.lib import fs_utils, traceability
@@ -34,7 +35,7 @@ async def handle_get_traceability(args: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _read_spec_files(requirements_path: str, design_path: str, tasks_path: str) -> dict[str, str | None]:
+async def _read_spec_files(requirements_path: Path, design_path: Path, tasks_path: Path) -> dict[str, str | None]:
     """Read spec files if they exist."""
     specs: dict[str, str | None] = {}
     for name, path in [
@@ -248,9 +249,9 @@ async def _read_all_specs() -> dict[str, str | None]:
     """Read all spec files."""
     specs: dict[str, str | None] = {}
     for name, path in [
-        ("requirements", "specs/requirements.md"),
-        ("design", "specs/design.md"),
-        ("tasks", "specs/tasks.md"),
+        ("requirements", Path("specs/requirements.md")),
+        ("design", Path("specs/design.md")),
+        ("tasks", Path("specs/tasks.md")),
     ]:
         try:
             specs[name] = await fs_utils.read_file(path)
