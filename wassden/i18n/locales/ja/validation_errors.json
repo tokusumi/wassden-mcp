@@ -1,0 +1,38 @@
+{
+  "sections": {
+    "requirements": {
+      "summary": "サマリー",
+      "glossary": "用語集", 
+      "scope": "スコープ",
+      "constraints": "制約",
+      "non_functional": "非機能要件",
+      "kpi": "KPI",
+      "functional": "機能要件",
+      "testing": "テスト要件"
+    },
+    "design": {
+      "architecture": "アーキテクチャ",
+      "components": "コンポーネント設計",
+      "data": "データ",
+      "api": "API",
+      "non_functional": "非機能",
+      "testing": "テスト",
+      "traceability": "トレーサビリティ"
+    },
+    "tasks": {
+      "overview": "概要",
+      "task_list": "タスク一覧",
+      "dependencies": "依存関係",
+      "milestones": "マイルストーン"
+    }
+  },
+  "errors": {
+    "missing_section": "Missing required section: {section}",
+    "invalid_req_id": "Invalid REQ-ID format: {id}",
+    "invalid_task_id": "Invalid TASK-ID format: {id}",
+    "duplicate_req_id": "Duplicate REQ-ID found: {id}",
+    "duplicate_task_id": "Duplicate TASK-ID found: {id}",
+    "missing_traceability": "Missing required traceability section (トレーサビリティ)",
+    "missing_functional_section": "Missing functional requirements section for validation"
+  }
+}

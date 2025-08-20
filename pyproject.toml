@@ -27,6 +27,7 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
     "typing-extensions>=4.14.1",
     "pydantic>=2.11.7",
+    "pycld2>=0.42",
 ]
 
 [project.urls]
@@ -55,7 +56,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C", "N", "I", "UP", "B", "A", "C4", "ICN", "PIE", "PT", "Q", "RSE", "RET", "SIM", "TID", "TCH", "ARG", "PTH", "PL", "TRY", "PERF", "LOG", "RUF"]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004"]  # Ignore magic value comparisons in test files

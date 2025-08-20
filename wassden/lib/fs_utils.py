@@ -6,22 +6,21 @@ from pathlib import Path
 FILE_NOT_FOUND_MSG = "File not found: {}"
 
 
-async def read_file(file_path: str | Path) -> str:
+async def read_file(file_path: Path) -> str:
     """Read a file asynchronously."""
-    path = Path(file_path)
-    if not path.exists():
+    if not file_path.exists():
         raise FileNotFoundError(FILE_NOT_FOUND_MSG.format(file_path))
-    return path.read_text(encoding="utf-8")
+    return file_path.read_text(encoding="utf-8")
 
 
-async def file_exists(file_path: str | Path) -> bool:
+async def file_exists(file_path: Path) -> bool:
     """Check if a file exists."""
-    return Path(file_path).exists()
+    return file_path.exists()
 
 
-async def ensure_dir(dir_path: str | Path) -> None:
+async def ensure_dir(dir_path: Path) -> None:
     """Ensure a directory exists."""
-    Path(dir_path).mkdir(parents=True, exist_ok=True)
+    dir_path.mkdir(parents=True, exist_ok=True)
 
 
 def get_project_root() -> Path:
@@ -41,9 +40,8 @@ def get_project_root() -> Path:
     return Path.cwd()
 
 
-def resolve_path(file_path: str | Path) -> Path:
+def resolve_path(file_path: Path) -> Path:
     """Resolve a path relative to the project root."""
-    path = Path(file_path)
-    if path.is_absolute():
-        return path
-    return get_project_root() / path
+    if file_path.is_absolute():
+        return file_path
+    return get_project_root() / file_path

@@ -1,0 +1,20 @@
+{
+  "keywords": {
+    "technology": ["technology", "programming language", "framework", "language"],
+    "users": ["user", "target", "audience"],
+    "constraints": ["constraint", "limitation", "restriction"],
+    "scope": ["scope", "range", "boundary"]
+  },
+  "questions": {
+    "technology": "What technology stack, programming language, or framework will be used?",
+    "users": "Who are the target users or intended audience?",
+    "constraints": "Are there any technical or business constraints?",
+    "scope": "Is the project scope and what won't be included clearly defined?"
+  },
+  "prompts": {
+    "base": "Please review the following project information and respond appropriately:\n\n## Provided Information\n{user_input}\n\n## Your Assessment and Response\n\nPlease verify if all the following critical information is included:\n1. Technology stack, programming language, and framework\n2. Target users and intended audience\n3. Technical and business constraints\n4. Project scope and exclusions\n5. Sufficient detail (description of 100+ characters)\n\n### If information is insufficient\nPlease ask specific questions about the missing information.",
+    "missing_info": "The following points are unclear:",
+    "sufficient_info": "### If information is sufficient\nPlease proceed to create a requirements.md file in EARS format:",
+    "file_instructions": "## File to Create\nFilename: specs/requirements.md\n\n## Required Structure\nPlease follow this chapter structure:\n\n### 0. Summary\nProvide a 3-5 sentence project overview\n\n### 1. Glossary\n- **MCP (Model Context Protocol)**: [Definition]\n- **Project-specific terms**: [Definition]\n\n### 2. Scope\n#### In Scope\n- [What will be done]\n\n#### Out of Scope\n- [What will not be done]\n\n### 3. Constraints\n- [Technical constraints]\n- [Business constraints]\n- [Environmental constraints]\n\n### 4. Non-Functional Requirements (NFR)\n- **NFR-01**: [Performance requirements]\n- **NFR-02**: [Security requirements]\n- **NFR-03**: [Availability requirements]\n- **NFR-04**: [Maintainability requirements]\n- **NFR-05**: [Other requirements]\n\n### 5. KPI / Acceptance Criteria\n- **KPI-01**: [Measurable success metric]\n- **KPI-02**: [Measurable success metric]\n- [Additional KPIs...]\n\n### 6. Functional Requirements (EARS)\nFollowing Easy Approach to Requirements Syntax (EARS):\n- **REQ-01**: The system shall, when [condition], perform [action]\n- **REQ-02**: The system shall, when [condition], perform [action]\n- [Additional requirements...]\n\n## Creation Guidelines\n1. Create each REQ-ID in sequence (REQ-01, REQ-02...)\n2. Functional requirements should follow \"The system shall...\" format\n3. Use measurable and verifiable expressions\n4. Avoid ambiguous expressions (\"appropriately\", \"sufficiently\", etc.)\n5. Word count: approximately 2000-5000 characters\n\n---\n\nFollowing the above guidelines, please either create the requirements.md file directly if information is sufficient, or ask questions if information is missing."
+  }
+}

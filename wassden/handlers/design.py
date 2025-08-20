@@ -1,125 +1,74 @@
 """Design handling functions."""
 
 import contextlib
-from typing import Any
+from pathlib import Path
 
+from wassden.i18n import get_i18n
 from wassden.lib import fs_utils, validate
+from wassden.types import HandlerResponse, Language, TextContent
 
 
-async def handle_prompt_design(args: dict[str, Any]) -> dict[str, Any]:
+async def handle_prompt_design(
+    requirements_path: Path = Path("specs/requirements.md"),
+    language: Language = Language.JAPANESE,
+) -> HandlerResponse:
     """Generate prompt for creating design.md from requirements."""
-    requirements_path = args.get("requirementsPath", "specs/requirements.md")
-
     try:
         requirements = await fs_utils.read_file(requirements_path)
+        i18n = get_i18n(language)
     except FileNotFoundError:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"❌ エラー: Requirements file not found: {requirements_path}\n\n"
-                    "まず requirements.md を作成してください。",
-                }
-            ]
-        }
+        i18n = get_i18n(language)
+        return HandlerResponse(
+            content=[TextContent(text=i18n.t("design_prompts.error.requirements_not_found", path=requirements_path))]
+        )
 
-    prompt = f"""以下のrequirements.mdに基づいて、design.mdファイルを作成してください：
+    prompt = f"""{i18n.t("design_prompts.prompt.intro")}
 
-## Requirements内容
+{i18n.t("design_prompts.prompt.requirements_content")}
 ```markdown
 {requirements}
 ```
 
-## 作成するファイル
-ファイル名: specs/design.md
+{i18n.t("design_prompts.prompt.file_to_create")}
 
-## 必須構造
-以下の章立てに従って作成してください：
+{i18n.t("design_prompts.prompt.required_structure")}
 
-### 1. アーキテクチャ概要
-- **コンテキスト/依存関係/制約**: システムの位置づけと制限事項
-- **全体図**: コンポーネント/データフロー/シーケンスの概要
-[Requirements: REQ-XX, REQ-YY, ...]
+{i18n.t("design_prompts.prompt.sections.architecture")}
 
-### 2. コンポーネント設計
-- **component-name**:
-  - **役割**: コンポーネントの責務
-  - **要件**: [REQ-XX, REQ-YY]
-  - **入出力**: インターフェース定義
-  - **例外・リトライ**: エラーハンドリング方針
-  - **可観測性**: ログ、メトリクス、トレース
+{i18n.t("design_prompts.prompt.sections.components")}
 
-### 3. データモデル
-データ構造と関係性の定義
+{i18n.t("design_prompts.prompt.sections.data")}
 
-### 4. API/インターフェース
-- **tool_name**:
-  - **概要**: 機能説明
-  - **エンドポイント**: URL/パス
-  - **リクエスト/レスポンス**: 形式と例
-  - **エラー**: エラーコードと対処
-  - **モジュール境界**: 責任分界点
+{i18n.t("design_prompts.prompt.sections.api")}
 
-### 5. 非機能・品質
-- **パフォーマンス**: Details [NFR-XX]
-- **セキュリティ**: Details [NFR-XX]
-- **可用性**: Details [NFR-XX]
+{i18n.t("design_prompts.prompt.sections.non_functional")}
 
-### 6. テスト戦略
-- **単体/結合/E2E の役割分担**: 各レベルでの検証内容
-- **test-scenario**: 重要なテストケース
-  - **テストデータ方針**: テストデータの準備方法
-  - **観測可能な合否基準**: 成功/失敗の判定基準
+{i18n.t("design_prompts.prompt.sections.testing")}
 
-### 7. トレーサビリティ (必須)
-- REQ-XX ⇔ **component-name**
-- TR-XX ⇔ **test-scenario**
+{i18n.t("design_prompts.prompt.sections.traceability")}
 
-### 8. フロー設計
-- **主要シーケンス**: 正常系の処理フロー
-- **状態遷移**: 状態管理とトランジション
-- **バックプレッシャー/キュー処理**: 負荷制御メカニズム
+{i18n.t("design_prompts.prompt.sections.flow")}
 
-### 9. 障害・エッジケース
-- **フェイルパターン**: 想定される障害
-- **フォールバック**: 代替処理
-- **タイムアウト/リトライ方針**: 時間制限と再試行戦略
+{i18n.t("design_prompts.prompt.sections.edge_cases")}
 
-### 10. セキュリティ & コンプライアンス
-- **認証/認可**: アクセス制御方式
-- **データ保護**: 暗号化、マスキング
-- **監査ログ**: 記録対象と保持期間
-- **秘密管理**: シークレットの取り扱い
+{i18n.t("design_prompts.prompt.sections.security")}
 
-### 11. リスクと対応 (Optional)
-- **Risk**: Description → Mitigation
+{i18n.t("design_prompts.prompt.sections.risks")}
 
-## 作成指示
-1. 各章で関連するREQ-IDを [REQ-XX] 形式で明記
-2. 技術的実装方針を具体的に記載
-3. 非機能要件（NFR）との対応を明確にする
-4. 文字数: 3000-6000文字程度
-5. すべての要件がdesignのどこかで言及されていること
+{i18n.t("design_prompts.prompt.instructions")}"""
 
-このプロンプトに従って、トレーサビリティが確保された高品質なdesign.mdを作成してください。"""
-
-    return {
-        "content": [
-            {
-                "type": "text",
-                "text": prompt,
-            }
-        ]
-    }
+    return HandlerResponse(content=[TextContent(text=prompt)])
 
 
-async def handle_validate_design(args: dict[str, Any]) -> dict[str, Any]:
+async def handle_validate_design(
+    design_path: Path = Path("specs/design.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
+    language: Language = Language.JAPANESE,
+) -> HandlerResponse:
     """Validate design.md structure and traceability."""
-    design_path = args.get("designPath", "specs/design.md")
-    requirements_path = args.get("requirementsPath", "specs/requirements.md")
-
     try:
         design_content = await fs_utils.read_file(design_path)
+        i18n = get_i18n(language)
 
         # Try to read requirements for traceability check
         requirements_content = None
@@ -130,57 +79,39 @@ async def handle_validate_design(args: dict[str, Any]) -> dict[str, Any]:
 
         if validation_result["isValid"]:
             stats = validation_result.get("stats", {})
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"""✅ design.md の検証に成功しました！
 
-## 検証結果
-- 参照要件数: {stats.get("referencedRequirements", 0)}
+            success_text = i18n.t("validation.design.success.title") + "\n\n"
+            success_text += (
+                i18n.t(
+                    "validation.design.success.stats",
+                    totalDesignElements=0,  # Not implemented in validation yet
+                    totalComponents=0,  # Not implemented in validation yet
+                    reqCoverage=stats.get("referencedRequirements", 0),
+                )
+                + "\n\n"
+            )
+            success_text += i18n.t("validation.design.success.next_step")
 
-デザインドキュメントは正しい形式で記載されています。次のステップ（tasks.md の作成）に進むことができます。""",
-                    }
-                ]
-            }
-        fix_instructions = chr(10).join(f"- {issue}" for issue in validation_result["issues"])
+            return HandlerResponse(content=[TextContent(text=success_text)])
 
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"""⚠️ design.md に修正が必要です：
+        fix_instructions = "\n".join(f"- {issue}" for issue in validation_result["issues"])
+        numbered_issues = "\n".join(f"{i + 1}. {issue}" for i, issue in enumerate(validation_result["issues"]))
 
-## 検出された問題
-{fix_instructions}
+        error_text = i18n.t("validation.design.error.title") + "\n\n"
+        error_text += i18n.t("validation.design.error.detected_issues") + "\n"
+        error_text += fix_instructions + "\n\n"
+        error_text += i18n.t("validation.design.error.fix_instructions") + "\n\n"
+        error_text += numbered_issues + "\n\n"
+        error_text += i18n.t("validation.design.error.verify_after_fix")
 
-## 修正手順
-以下の指示に従って design.md を修正してください：
-
-{chr(10).join(f"{i + 1}. {issue}" for i, issue in enumerate(validation_result["issues"]))}
-
-## 修正後の確認
-修正が完了したら、再度 validate_design を実行して検証してください。""",
-                }
-            ]
-        }
-    except FileNotFoundError as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"""❌ エラー: {e!s}
-
-まず prompt_design を使用して design.md を作成してください。""",
-                }
-            ]
-        }
+        return HandlerResponse(content=[TextContent(text=error_text)])
+    except FileNotFoundError:
+        i18n = get_i18n(language)
+        return HandlerResponse(
+            content=[TextContent(text=i18n.t("validation.design.file_error.not_found", path=design_path))]
+        )
     except Exception as e:
-        return {
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"❌ エラーが発生しました: {e!s}",
-                }
-            ]
-        }
+        i18n = get_i18n(language)
+        return HandlerResponse(
+            content=[TextContent(text=i18n.t("validation.design.file_error.general_error", error=str(e)))]
+        )

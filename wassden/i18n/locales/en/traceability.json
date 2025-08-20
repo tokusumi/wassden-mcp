@@ -1,0 +1,117 @@
+{
+  "report": {
+    "title": "# Traceability Report",
+    "overview": {
+      "title": "## Overview",
+      "requirements_count": "- Requirements count: {count}",
+      "design_elements_count": "- Design elements count: {count}",
+      "tasks_count": "- Tasks count: {count}"
+    },
+    "mappings": {
+      "req_to_design": "## Requirements → Design Mapping",
+      "design_to_task": "## Design → Task Mapping",
+      "no_design_reference": "No design reference",
+      "no_task_reference": "No task reference"
+    },
+    "coverage": {
+      "title": "## Coverage Analysis",
+      "undesigned_requirements": "### ⚠️ Undesigned Requirements",
+      "untasked_design_elements": "### ⚠️ Untasked Design Elements"
+    },
+    "dependencies": {
+      "title": "## Task Dependencies"
+    },
+    "summary": {
+      "title": "## Summary",
+      "requirements_coverage": "- Requirements coverage: {coverage}%",
+      "design_coverage": "- Design coverage: {coverage}%",
+      "complete_traceability": "✅ Complete traceability is ensured!",
+      "improvement_needed": "⚠️ Traceability has room for improvement."
+    }
+  },
+  "changes": {
+    "non_spec_title": "# 📋 Change Impact Analysis Report",
+    "non_spec_overview": "## Overview",
+    "non_spec_file_type": "**Changed file type**: Non-specification file",
+    "non_spec_no_direct_impact": "There is no direct impact on specification documents, but we recommend checking the following:",
+    "non_spec_recommendations": [
+      "1. Confirm that changes do not affect existing requirements, design, or tasks",
+      "2. Run specification document validation tools",
+      "3. Update related specification documents as needed"
+    ],
+    "spec_title": "# 📋 {spec_type} Change Impact Analysis Report",
+    "spec_overview": "## Overview",
+    "spec_file_type": "**Changed file type**: {spec_type}",
+    "spec_description": "**Change description**: {description}",
+    "spec_affected_items": "**Affected items**: {items}",
+    "spec_recommendations": [
+      "1. Review and update related specification document content",
+      "2. Validate with validate_* tools for each document",
+      "3. Check consistency with traceability report"
+    ],
+    "non_spec_change_details": {
+      "title": "## Change Details",
+      "file_label": "- File: {file}",
+      "change_label": "- Change: {change}",
+      "implementation_files": {
+        "title": "## Implementation File Changes", 
+        "direct_change": "- Direct changes to codebase",
+        "consistency_check": "- Consistency check with related specification documents required"
+      },
+      "document_files": {
+        "title": "## Document Changes",
+        "document_update": "- Document updates", 
+        "consistency_check": "- Consistency check with other related documents required"
+      },
+      "other_files": {
+        "title": "## File Changes",
+        "change_detected": "- File changes detected"
+      },
+      "recommended_actions": {
+        "title": "## Recommended Actions",
+        "reflect_changes": "1. Reflect changes in related specification documents",
+        "run_validation": "2. Run specification document validation tools", 
+        "check_consistency": "3. Check overall consistency with `get_traceability`"
+      }
+    },
+    "spec_change_details": {
+      "next_steps": {
+        "title": "## Next Steps",
+        "update_documents": "1. Update affected documents",
+        "validate_tools": "2. Validate with validate_* tools for each document",
+        "check_traceability": "3. Check consistency with `get_traceability`"
+      }
+    },
+    "requirements_impact": {
+      "title": "## Affected Design Elements",
+      "recommendations_title": "## Recommended Actions",
+      "recommendations": [
+        "1. Review the above design elements and update as needed",
+        "2. Run `validate_design` to check consistency",
+        "3. Review related tasks"
+      ],
+      "no_impact": "- None (this requirement is not yet reflected in the design)"
+    },
+    "design_impact": {
+      "title": "## Affected Tasks",
+      "recommendations_title": "## Recommended Actions",
+      "recommendations": [
+        "1. Review the above task content and update as needed",
+        "2. Run `validate_tasks` to check consistency",
+        "3. Re-evaluate task effort estimation"
+      ],
+      "no_impact": "- None (this design element is not yet converted to tasks)"
+    },
+    "tasks_impact": {
+      "title": "## Dependency Impact",
+      "dependent_task": " (dependent task)",
+      "recommendations_title": "## Recommended Actions",
+      "recommendations": [
+        "1. Adjust dependent task schedules",
+        "2. Confirm milestone impact",
+        "3. Update risk assessment"
+      ],
+      "no_impact": "- None (no dependency impact on other tasks)"
+    }
+  }
+}

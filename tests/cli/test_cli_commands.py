@@ -35,7 +35,7 @@ class TestCLICommands:
         result = self.runner.invoke(app, ["check-completeness", "--userInput", "Simple test project"])
 
         assert result.exit_code == 0
-        assert "プロジェクト情報を確認" in result.output
+        assert "Please review the following project information" in result.output
 
     def test_check_completeness_missing_input(self):
         """Test check_completeness command without required input."""
@@ -52,7 +52,7 @@ class TestCLICommands:
 
         assert result.exit_code == 0
         assert "requirements.md" in result.output
-        assert "EARS形式" in result.output
+        assert "EARS format" in result.output
         assert "Test project for CLI testing" in result.output
 
     def test_prompt_requirements_with_scope_and_constraints(self):

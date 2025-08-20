@@ -7,3 +7,10 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      
+      - id: validate-spec-examples
+        name: Validate spec examples
+        entry: make validate-examples
+        language: system
+        pass_filenames: false
+        files: ^(docs/.*\.md|wassden/.*\.py|tests/integration/test_spec_examples\.py)$

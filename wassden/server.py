@@ -24,9 +24,21 @@ from .handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
+from .lib import fs_utils
+from .lib.language_detection import determine_language
+from .types import Language
 
 # Create FastMCP server instance
 mcp = FastMCP("wassden")
+
+
+async def _determine_language_for_file(file_path: Path, is_spec_document: bool = True) -> Language:
+    """Determine language from file content, with fallback to Japanese."""
+    try:
+        content = await fs_utils.read_file(file_path)
+        return determine_language(content=content, is_spec_document=is_spec_document)
+    except FileNotFoundError:
+        return determine_language()
 
 
 # Register all tools
@@ -37,8 +49,9 @@ mcp = FastMCP("wassden")
 )
 async def check_completeness(user_input: str) -> str:
     """Analyze user input for completeness."""
-    result = await handle_check_completeness({"userInput": user_input})
-    return str(result["content"][0]["text"])
+    language = determine_language(user_input=user_input)
+    result = await handle_check_completeness(user_input, language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -52,14 +65,9 @@ async def prompt_requirements(
     constraints: str = "",
 ) -> str:
     """Generate requirements prompt."""
-    result = await handle_prompt_requirements(
-        {
-            "projectDescription": project_description,
-            "scope": scope,
-            "constraints": constraints,
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = determine_language(user_input=project_description)
+    result = await handle_prompt_requirements(project_description, scope, constraints, language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -71,12 +79,9 @@ async def validate_requirements(
     requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Validate requirements document."""
-    result = await handle_validate_requirements(
-        {
-            "requirementsPath": str(requirements_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(requirements_path)
+    result = await handle_validate_requirements(Path(requirements_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -88,12 +93,9 @@ async def prompt_design(
     requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Generate design prompt."""
-    result = await handle_prompt_design(
-        {
-            "requirementsPath": str(requirements_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(requirements_path)
+    result = await handle_prompt_design(Path(requirements_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -106,13 +108,9 @@ async def validate_design(
     requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Validate design document."""
-    result = await handle_validate_design(
-        {
-            "designPath": str(design_path),
-            "requirementsPath": str(requirements_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(design_path)
+    result = await handle_validate_design(Path(design_path), Path(requirements_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -125,13 +123,9 @@ async def prompt_tasks(
     requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Generate tasks prompt."""
-    result = await handle_prompt_tasks(
-        {
-            "designPath": str(design_path),
-            "requirementsPath": str(requirements_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(design_path)
+    result = await handle_prompt_tasks(Path(design_path), Path(requirements_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -143,12 +137,9 @@ async def validate_tasks(
     tasks_path: Path = Path("specs/tasks.md"),
 ) -> str:
     """Validate tasks document."""
-    result = await handle_validate_tasks(
-        {
-            "tasksPath": str(tasks_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(tasks_path)
+    result = await handle_validate_tasks(Path(tasks_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -162,14 +153,9 @@ async def prompt_code(
     design_path: Path = Path("specs/design.md"),
 ) -> str:
     """Generate implementation prompt."""
-    result = await handle_prompt_code(
-        {
-            "tasksPath": str(tasks_path),
-            "requirementsPath": str(requirements_path),
-            "designPath": str(design_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(tasks_path)
+    result = await handle_prompt_code(Path(tasks_path), Path(requirements_path), Path(design_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -178,17 +164,13 @@ async def prompt_code(
     "(analyzes files only, does not modify files)",
 )
 async def analyze_changes(
-    changed_file: str,
+    changed_file: Path,
     change_description: str,
 ) -> str:
     """Analyze impact of changes."""
-    result = await handle_analyze_changes(
-        {
-            "changedFile": changed_file,
-            "changeDescription": change_description,
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(changed_file)
+    result = await handle_analyze_changes(changed_file, change_description, language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -202,14 +184,9 @@ async def get_traceability(
     tasks_path: Path = Path("specs/tasks.md"),
 ) -> str:
     """Generate traceability report."""
-    result = await handle_get_traceability(
-        {
-            "requirementsPath": str(requirements_path),
-            "designPath": str(design_path),
-            "tasksPath": str(tasks_path),
-        }
-    )
-    return str(result["content"][0]["text"])
+    language = await _determine_language_for_file(requirements_path)
+    result = await handle_get_traceability(Path(requirements_path), Path(design_path), Path(tasks_path), language)
+    return str(result.content[0].text)
 
 
 @mcp.tool(
@@ -224,15 +201,11 @@ async def generate_review_prompt(
     design_path: Path = Path("specs/design.md"),
 ) -> str:
     """Generate review prompt for specific TASK-ID."""
+    language = await _determine_language_for_file(tasks_path)
     result = await handle_generate_review_prompt(
-        {
-            "taskId": task_id,
-            "tasksPath": str(tasks_path),
-            "requirementsPath": str(requirements_path),
-            "designPath": str(design_path),
-        }
+        task_id, Path(tasks_path), Path(requirements_path), Path(design_path), language
     )
-    return str(result["content"][0]["text"])
+    return str(result.content[0].text)
 
 
 def main(

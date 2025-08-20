@@ -1,0 +1,20 @@
+{
+  "error": {
+    "files_not_found": "❌ Error: {error}\n\nRequired files not found."
+  },
+  "prompt": {
+    "intro": "Please create a WBS-format tasks.md file based on the following design.md and requirements.md:",
+    "design_content": "## Design Content",
+    "requirements_content": "## Requirements Content",
+    "file_to_create": "## File to Create\nFilename: specs/tasks.md",
+    "required_structure": "## Required Structure\nPlease follow this chapter structure:",
+    "sections": {
+      "overview": "### 1. Overview\nOverview and approach of project task breakdown structure (WBS)",
+      "task_list": "### 2. Task List\n#### Phase 1: Foundation\n- [ ] **TASK-01-01**: [Task name]\n  - **REQ**: [REQ-01, REQ-02]\n  - **DC**: **component-name**\n  - **Dependencies**: None\n  - **Acceptance Criteria**:\n    - Criterion 1: [Verifiable condition]\n    - Criterion 2: [Verifiable condition]\n\n- [ ] **TASK-01-02**: [Task name]\n  - **REQ**: [REQ-03]\n  - **DC**: **another-component**\n  - **Dependencies**: TASK-01-01\n  - **Acceptance Criteria**:\n    - Criterion 1: [Verifiable condition]\n\n#### Phase 2: Implementation\n- [ ] **TASK-02-01**: [Task name]\n  - **REQ**: [REQ-04, REQ-05]\n  - **DC**: **component-a**, **component-b**\n  - **Dependencies**: TASK-01-02\n  - **Acceptance Criteria**:\n    - Criterion 1: [Verifiable condition]\n\n#### Phase 3: Testing & Quality\n- [ ] **TASK-03-01**: [Task name]\n  - **REQ**: [TR-01, TR-02]\n  - **DC**: **test-scenario**\n  - **Dependencies**: TASK-02-01\n  - **Acceptance Criteria**:\n    - Criterion 1: [Verifiable condition]",
+      "dependencies": "### 3. Dependencies\n```\nTASK-01-01 → TASK-01-02 → TASK-02-01\n                       ↘\n                         TASK-03-01\n```",
+      "milestones": "### 4. Milestones\n- **M1**: Phase 1 Complete (when TASK-01-XX completed)\n- **M2**: Phase 2 Complete (when TASK-02-XX completed)\n- **M3**: Release Ready (when TASK-03-XX completed)",
+      "risks": "### 5. Risks and Countermeasures\n- **Risk**: [Risk content]\n  - Affected tasks: TASK-XX-XX\n  - Countermeasure: [Countermeasure content]"
+    },
+    "instructions": "## Creation Instructions\n1. Create TASK-IDs with hierarchical structure (TASK-Phase-Sequential)\n2. Checkbox format: `- [ ] **TASK-01-01**: Task name`\n3. Clearly state related REQ-IDs and components for each task (use **REQ**, **DC** fields)\n4. Clarify dependencies and avoid circular dependencies\n5. Record acceptance criteria with verifiable conditions\n6. Word count: approximately 2000-4000 characters\n\nFollowing this prompt, please create an executable and manageable tasks.md."
+  }
+}

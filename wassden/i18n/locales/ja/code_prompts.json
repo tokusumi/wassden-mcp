@@ -1,0 +1,59 @@
+{
+  "implementation": {
+    "error": {
+      "files_not_found": "❌ エラー: {error}\n\n必要な仕様書ファイルが見つかりません。"
+    },
+    "prompt": {
+      "intro": "以下の仕様書に基づいて、段階的に実装を進めてください：",
+      "requirements_header": "## 実装の基礎となる仕様書\n\n### Requirements (要件定義)",
+      "design_header": "### Design (設計書)",
+      "tasks_header": "### Tasks (実装タスク)",
+      "guidelines_header": "## 実装ガイドライン",
+      "implementation_order": "### 1. 実装順序\nTasks.mdのTASK-IDの順序に従って実装を進めてください：\n1. Phase 1のタスクから開始\n2. 依存関係を考慮して順次実装\n3. 各タスク完了後にテストを実行",
+      "quality_standards": "### 2. 品質基準\n- **コーディング規約**: プロジェクトの既存コードスタイルに従う\n- **テスト**: 各機能に対して単体テストを作成\n- **ドキュメント**: 主要な関数/クラスにdocstringを追加\n- **エラーハンドリング**: 適切な例外処理を実装",
+      "traceability": "### 3. トレーサビリティ\n実装時は以下をコメントで明記：\n```\n// Implements: REQ-XX, TASK-YY-ZZ\n```",
+      "quality_review": "### 4. 品質レビュー（重要）\n**各TASK-ID完了時には必ず以下の手順でレビューを実施してください**：\n\n1. **レビュープロンプト生成**:\n   ```\n   generate-review-prompt <TASK-ID>\n   ```\n   例: `generate-review-prompt TASK-01-01`\n\n2. **自己レビュー実施**:\n   生成されたレビュープロンプトに従って厳格な品質チェックを実行\n   - 🚫 テスト改竄の検出（必須）\n   - 🚫 TODO/FIXME禁止チェック（必須）\n   - ✅ 要件トレーサビリティ確認\n   - ✅ プロジェクト固有の品質基準実行\n\n3. **合格判定**:\n   全項目合格の場合のみ tasks.md にチェックマーク ✅ を追加\n\n**重要**: レビューで不合格の場合は修正完了まで次のタスクに進まないでください。",
+      "verification": "### 5. 検証項目（基本）\n各タスク完了時に確認：\n- [ ] 関連するREQ-IDの要件を満たしている\n- [ ] Designで定義されたインターフェースに準拠\n- [ ] テストが通過する\n- [ ] レビュープロンプトによる品質チェック完了",
+      "progress_report": "### 6. 進捗報告\n各タスク完了時に以下を報告：\n- 完了したTASK-ID\n- 実装した機能の概要\n- テスト結果\n- 品質レビュー結果\n- 次のタスクの開始準備状況",
+      "start_instructions": "## 開始指示\n最初のタスク（TASK-01-01）から実装を開始してください。\n実装に必要な追加情報があれば質問してください。\n\n**実装ワークフロー**:\n1. TASK-ID を実装\n2. `generate-review-prompt <TASK-ID>` でレビュープロンプト生成\n3. レビュープロンプトに従って品質チェック実行\n4. 全項目合格なら tasks.md にチェックマーク ✅ 追加\n5. 次のTASK-IDに進む\n\n準備ができたら、\"実装を開始します\" と宣言してから作業を始めてください。\n\n**注意**: 各タスク完了時の品質レビューは必須です。レビューをスキップしないでください。"
+    }
+  },
+  "review": {
+    "error": {
+      "task_id_required": "❌ エラー: taskId パラメータが必要です。\n例: {'taskId': 'TASK-01-01'}",
+      "files_not_found": "❌ エラー: {error}\n\n必要な仕様書ファイルが見つかりません。",
+      "task_not_found": "❌ エラー: タスク {task_id} が tasks.md で見つかりません。"
+    },
+    "prompt": {
+      "title": "{task_id} 実装レビュープロンプト",
+      "target_task": "## 📋 実装対象タスク\n\n**TASK-ID**: {task_id}\n**概要**: {task_summary}\n**フェーズ**: {task_phase}",
+      "related_requirements": "## 🎯 関連要件",
+      "functional_requirements": "### 機能要件 (REQ)",
+      "test_requirements": "### テスト要件 (TR)",
+      "quality_guardrails": "## 🚫 品質ガードレール（厳格チェック）",
+      "test_tampering": "### 1. テストケース改竄の検出\n- **禁止事項**: テストを通すためのテストケース改竄\n- **チェック方法**:\n  - TR要件で定義されたテストシナリオと実際のテストコードを比較\n  - `pytest.skip`, `@pytest.mark.skip`, `pass`の不正使用をチェック\n  - テストの期待値を実装に合わせて変更していないかチェック\n- **合格基準**: TR仕様通りのテストが実装され、実機能でテストが通過",
+      "incomplete_implementation": "### 2. 未実装検出（TODO/FIXME禁止）\n- **禁止事項**: TODO/FIXMEコメントでの未実装放置\n- **チェック方法**:\n  - `# TODO`, `# FIXME`, `// TODO`, `/* TODO */`の検索\n  - `NotImplementedError`の検索\n  - `pass`文のみの関数/メソッドの検索\n- **合格基準**: 全機能が完全実装済み、プレースホルダーなし",
+      "static_quality": "## 🔍 静的品質チェック（必須）",
+      "project_quality_standards": "### プロジェクト品質基準の特定と実行\nこのプロジェクトで定義されている品質チェックコマンドを特定し、実行してください：\n\n#### 1. 品質チェックコマンドの調査\n以下を順番に確認し、このプロジェクトの品質基準を特定してください：\n- `CLAUDE.md` ファイルの Commands セクション\n- `Makefile` の lint/format/test/check ターゲット\n- `package.json` の scripts セクション（Node.js）\n- `pyproject.toml` の tool設定（Python）\n- `README.md` の開発手順",
+      "required_checks": "#### 2. 必須チェック項目\n特定した品質チェックを **全て実行** し、**全てPASS** することを確認：\n- **フォーマッター**: コードスタイルの統一\n- **リンター**: 静的コード解析\n- **型チェッカー**: 型安全性確認（TypeScript/Python等）\n- **テスト実行**: 単体テスト・結合テスト\n- **総合チェック**: 上記を統合したコマンド",
+      "execution_examples": "#### 3. 実行例（プロジェクトに応じて調整）\n```bash\n# 例1: Python プロジェクト\nmake check          # または\nuv run ruff format && uv run ruff check && uv run mypy . && uv run pytest\n\n# 例2: Node.js プロジェクト\nnpm run check       # または\nnpm run format && npm run lint && npm run typecheck && npm test\n\n# 例3: Go プロジェクト\nmake test           # または\ngo fmt ./... && go vet ./... && go test ./...\n```",
+      "pass_criteria": "#### 4. 合格基準\n- **全コマンドが正常終了**（exit code 0）\n- **警告・エラーが0件**\n- **テストカバレッジが既存水準を維持**",
+      "design_compliance": "## 📊 設計準拠性チェック",
+      "expected_file_structure": "### 期待ファイル構成",
+      "expected_interfaces": "### 期待インターフェース",
+      "pass_criteria_all": "## ✅ 合格判定基準（全項目必須）\n\n以下の全項目をチェックし、**全てPASS**した場合のみ合格としてください：\n\n1. [ ] 🚫 テストケース改竄なし（TR仕様通りのテスト実装）\n2. [ ] 🚫 TODO/FIXME/未実装なし（完全実装済み）\n3. [ ] ✅ 関連REQ全て実装済み（機能要件充足）\n4. [ ] ✅ 関連TR全てテスト済み（テスト要件充足）\n5. [ ] ✅ 設計書準拠（ファイル構成・インターフェース）\n6. [ ] ✅ 品質チェック全PASS（linter/formatter/test）\n\n**重要**: 品質ガードレール（項目1,2）は絶対条件です。\nこれらに違反している場合は他が完璧でも不合格とし、修正してから再レビューしてください。",
+      "review_instructions": "## 📝 レビュー実行指示\n\n1. 上記チェック項目を順番に確認\n2. 各項目の結果を詳細に報告\n3. 不合格項目があれば具体的な修正内容を提案\n4. **全項目合格の場合のみ**: tasks.md の {task_id} 行に ✅ を追加",
+      "next_steps": "## 📈 レビュー完了後の次ステップ\n\n合格判定後：\n1. tasks.md の {task_id} 行にチェックマーク ✅ を追加\n2. 次のタスクID確認（依存関係考慮）\n3. 次のタスクの実装開始準備\n\n不合格の場合：\n1. 指摘事項の修正実施\n2. 修正完了後に再度このレビューを実行\n3. 全項目合格まで繰り返し"
+    }
+  },
+  "helpers": {
+    "no_requirements": "なし",
+    "file_structure_not_found": "設計書から構成情報を確認してください",
+    "interfaces_not_found": "設計書からインターフェース情報を確認してください",
+    "search_keywords": {
+      "file_structure": ["ファイル", "file", "モジュール", "module", "構成"],
+      "interfaces": ["api", "インターフェース", "interface", "関数", "function", "メソッド", "method"],
+      "requirement_patterns": ["システムは", "テスト"]
+    }
+  }
+}

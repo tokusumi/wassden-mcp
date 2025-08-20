@@ -1,0 +1,67 @@
+{
+  "requirements": {
+    "instruction": "以下の指示に従って、EARS形式のrequirements.mdファイルを作成してください：",
+    "project_info": "## プロジェクト情報",
+    "overview": "- 概要: {project_description}",
+    "scope": "- スコープ: {scope}",
+    "scope_default": "スコープ情報を分析して記載",
+    "constraints": "- 制約: {constraints}",
+    "constraints_default": "技術的・ビジネス制約を分析して記載",
+    "file_section": "## 作成するファイル",
+    "filename": "ファイル名: specs/requirements.md",
+    "structure_section": "## 必須構造",
+    "structure_template": "[要件定義の構造テンプレート...]",
+    "instruction_conclusion": "このプロンプトに従って、高品質なrequirements.mdを作成してください。"
+  },
+  "design": {
+    "instruction": "以下のrequirements.mdに基づいて、design.mdファイルを作成してください：",
+    "requirements_section": "## Requirements内容",
+    "file_section": "## 作成するファイル",
+    "filename": "ファイル名: specs/design.md",
+    "structure_section": "## 必須構造",
+    "structure_template": "[設計書の構造テンプレート...]",
+    "instruction_conclusion": "このプロンプトに従って、トレーサビリティが確保された高品質なdesign.mdを作成してください。"
+  },
+  "tasks": {
+    "instruction": "以下のdesign.mdとrequirements.mdに基づいて、WBS形式のtasks.mdファイルを作成してください：",
+    "design_section": "## Design内容",
+    "requirements_section": "## Requirements内容",
+    "file_section": "## 作成するファイル",
+    "filename": "ファイル名: specs/tasks.md",
+    "structure_section": "## 必須構造",
+    "structure_template": "[タスクリストの構造テンプレート...]",
+    "instruction_conclusion": "このプロンプトに従って、実行可能で管理しやすいtasks.mdを作成してください。"
+  },
+  "validation_fix": {
+    "header": "⚠️ {spec_type}.md に修正が必要です：",
+    "issues_section": "## 検出された問題",
+    "fix_section": "## 修正手順",
+    "fix_instruction": "以下の指示に従って {spec_type}.md を修正してください：",
+    "confirmation_section": "## 修正後の確認",
+    "confirmation_instruction": "修正が完了したら、再度 validate_{spec_type} を実行して検証してください。"
+  },
+  "implementation": {
+    "instruction": "以下の仕様書に基づいて、段階的に実装を進めてください：",
+    "specs_section": "## 実装の基礎となる仕様書",
+    "requirements_subsection": "### Requirements (要件定義)",
+    "design_subsection": "### Design (設計書)",
+    "tasks_subsection": "### Tasks (実装タスク)",
+    "guidelines_section": "## 実装ガイドライン",
+    "guidelines_template": "[実装のガイドライン...]",
+    "start_section": "## 開始指示",
+    "start_instruction": "最初のタスク（TASK-01-01）から実装を開始してください。",
+    "ready_declaration": "準備ができたら、\"実装を開始します\" と宣言してから作業を始めてください。"
+  },
+  "completeness": {
+    "unclear_points": "特に以下の点が不明です："
+  },
+  "traceability_report": {
+    "title": "# トレーサビリティレポート",
+    "overview_section": "## 概要",
+    "requirements_count": "- 要件数: {count}",
+    "design_elements_count": "- 設計要素数: {count}",
+    "tasks_count": "- タスク数: {count}",
+    "req_to_design_section": "## 要件 → 設計 マッピング",
+    "no_design_reference": "⚠️ 設計参照なし"
+  }
+}

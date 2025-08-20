@@ -36,7 +36,7 @@ class TestFileReadOperations:
         test_content = "Hello, World!"
         test_file.write_text(test_content)
 
-        result = await fs_utils.read_file(str(test_file))
+        result = await fs_utils.read_file(test_file)
         assert result == test_content
 
     @pytest.mark.asyncio
@@ -45,7 +45,7 @@ class TestFileReadOperations:
         nonexistent_file = self.temp_dir / "nonexistent.txt"
 
         with pytest.raises(FileNotFoundError):
-            await fs_utils.read_file(str(nonexistent_file))
+            await fs_utils.read_file(nonexistent_file)
 
     @pytest.mark.asyncio
     async def test_read_empty_file(self):
@@ -53,7 +53,7 @@ class TestFileReadOperations:
         empty_file = self.temp_dir / "empty.txt"
         empty_file.write_text("")
 
-        result = await fs_utils.read_file(str(empty_file))
+        result = await fs_utils.read_file(empty_file)
         assert result == ""
 
     @pytest.mark.asyncio
@@ -63,7 +63,7 @@ class TestFileReadOperations:
         large_content = "A" * 10000  # 10KB of 'A's
         large_file.write_text(large_content)
 
-        result = await fs_utils.read_file(str(large_file))
+        result = await fs_utils.read_file(large_file)
         assert result == large_content
         assert len(result) == LARGE_FILE_SIZE
 
@@ -74,7 +74,7 @@ class TestFileReadOperations:
         special_content = "Special chars: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"
         special_file.write_text(special_content)
 
-        result = await fs_utils.read_file(str(special_file))
+        result = await fs_utils.read_file(special_file)
         assert result == special_content
 
     @pytest.mark.asyncio
@@ -84,7 +84,7 @@ class TestFileReadOperations:
         unicode_content = "Unicode: 日本語, 한국어, العربية, русский, français"
         unicode_file.write_text(unicode_content, encoding="utf-8")
 
-        result = await fs_utils.read_file(str(unicode_file))
+        result = await fs_utils.read_file(unicode_file)
         assert result == unicode_content
 
     @pytest.mark.asyncio
@@ -95,7 +95,7 @@ class TestFileReadOperations:
         # Write in binary mode to preserve exact newlines
         newline_file.write_bytes(newline_content.encode("utf-8"))
 
-        result = await fs_utils.read_file(str(newline_file))
+        result = await fs_utils.read_file(newline_file)
         # On some platforms, newlines might be normalized
         assert "Line 1" in result
         assert "Line 2" in result
@@ -109,7 +109,7 @@ class TestFileReadOperations:
         test_content = "Relative path content"
         test_file.write_text(test_content)
 
-        result = await fs_utils.read_file("relative_test.txt")
+        result = await fs_utils.read_file(Path("relative_test.txt"))
         assert result == test_content
 
     @pytest.mark.asyncio
@@ -119,7 +119,7 @@ class TestFileReadOperations:
         test_content = "Absolute path content"
         test_file.write_text(test_content)
 
-        result = await fs_utils.read_file(str(test_file.absolute()))
+        result = await fs_utils.read_file(test_file.absolute())
         assert result == test_content
 
     @pytest.mark.asyncio
@@ -129,7 +129,7 @@ class TestFileReadOperations:
         spaced_content = "Content in file with spaces"
         spaced_file.write_text(spaced_content)
 
-        result = await fs_utils.read_file(str(spaced_file))
+        result = await fs_utils.read_file(spaced_file)
         assert result == spaced_content
 
 
@@ -153,7 +153,7 @@ class TestFileExistsOperations:
         existing_file = self.temp_dir / "exists.txt"
         existing_file.write_text("Content")
 
-        result = await fs_utils.file_exists(str(existing_file))
+        result = await fs_utils.file_exists(existing_file)
         assert result is True
 
     @pytest.mark.asyncio
@@ -161,7 +161,7 @@ class TestFileExistsOperations:
         """Test file_exists returns False for non-existing file."""
         nonexistent_file = self.temp_dir / "does_not_exist.txt"
 
-        result = await fs_utils.file_exists(str(nonexistent_file))
+        result = await fs_utils.file_exists(nonexistent_file)
         assert result is False
 
     @pytest.mark.asyncio
@@ -170,7 +170,7 @@ class TestFileExistsOperations:
         test_dir = self.temp_dir / "test_directory"
         test_dir.mkdir()
 
-        result = await fs_utils.file_exists(str(test_dir))
+        result = await fs_utils.file_exists(test_dir)
         # Depending on implementation, might return True for directories
         assert isinstance(result, bool)
 
@@ -180,7 +180,7 @@ class TestFileExistsOperations:
         empty_file = self.temp_dir / "empty.txt"
         empty_file.write_text("")
 
-        result = await fs_utils.file_exists(str(empty_file))
+        result = await fs_utils.file_exists(empty_file)
         assert result is True
 
     @pytest.mark.asyncio
@@ -189,7 +189,7 @@ class TestFileExistsOperations:
         relative_file = Path("relative_exists.txt")
         relative_file.write_text("Content")
 
-        result = await fs_utils.file_exists("relative_exists.txt")
+        result = await fs_utils.file_exists(Path("relative_exists.txt"))
         assert result is True
 
     @pytest.mark.asyncio
@@ -198,7 +198,7 @@ class TestFileExistsOperations:
         absolute_file = self.temp_dir / "absolute_exists.txt"
         absolute_file.write_text("Content")
 
-        result = await fs_utils.file_exists(str(absolute_file.absolute()))
+        result = await fs_utils.file_exists(absolute_file.absolute())
         assert result is True
 
     @pytest.mark.asyncio
@@ -207,7 +207,7 @@ class TestFileExistsOperations:
         special_file = self.temp_dir / "file!@#$%^&*().txt"
         special_file.write_text("Content")
 
-        result = await fs_utils.file_exists(str(special_file))
+        result = await fs_utils.file_exists(special_file)
         assert result is True
 
     @pytest.mark.asyncio
@@ -216,7 +216,7 @@ class TestFileExistsOperations:
         unicode_file = self.temp_dir / "ファイル名.txt"
         unicode_file.write_text("Content")
 
-        result = await fs_utils.file_exists(str(unicode_file))
+        result = await fs_utils.file_exists(unicode_file)
         assert result is True
 
     @pytest.mark.asyncio
@@ -231,7 +231,7 @@ class TestFileExistsOperations:
         long_file = long_path / "long_path_file.txt"
         long_file.write_text("Content")
 
-        result = await fs_utils.file_exists(str(long_file))
+        result = await fs_utils.file_exists(long_file)
         assert result is True
 
 
@@ -388,7 +388,7 @@ class TestAsyncFileOperationsConcurrency:
             file_path = self.temp_dir / f"concurrent_read_{i}.txt"
             content = f"Content of file {i}"
             file_path.write_text(content)
-            files_data[str(file_path)] = content
+            files_data[file_path] = content
 
         # Read all files concurrently
         tasks = [fs_utils.read_file(path) for path in files_data]
@@ -404,11 +404,10 @@ class TestAsyncFileOperationsConcurrency:
         # Prepare file data
         files_data = {}
         for i in range(10):
-            file_path = self.temp_dir / f"concurrent_read_more_{i}.txt"
-            content = f"More concurrent read content {i}"
-            Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-            Path(file_path).write_text(content)
-            files_data[str(file_path)] = content
+            file_path = self.temp_dir / f"concurrent_write_{i}.txt"
+            content = f"Concurrent write content {i}"
+            files_data[file_path] = content
+            file_path.write_text(content)
 
         # Read all files concurrently
         tasks = [fs_utils.read_file(path) for path in files_data]
@@ -428,10 +427,10 @@ class TestAsyncFileOperationsConcurrency:
         for i in range(5):
             existing_file = self.temp_dir / f"exists_{i}.txt"
             existing_file.write_text(f"Content {i}")
-            existing_files.append(str(existing_file))
+            existing_files.append(existing_file)
 
             nonexistent_file = self.temp_dir / f"not_exists_{i}.txt"
-            nonexistent_files.append(str(nonexistent_file))
+            nonexistent_files.append(nonexistent_file)
 
         all_files = existing_files + nonexistent_files
 
@@ -461,9 +460,9 @@ class TestAsyncFileOperationsConcurrency:
         check_file2.write_text("Check content")
 
         # Run mixed operations concurrently
-        read_task = fs_utils.read_file(str(read_file))
-        exists_task = fs_utils.file_exists(str(check_file))
-        exists_task2 = fs_utils.file_exists(str(check_file2))
+        read_task = fs_utils.read_file(read_file)
+        exists_task = fs_utils.file_exists(check_file)
+        exists_task2 = fs_utils.file_exists(check_file2)
 
         read_result, exists_result, exists_result2 = await asyncio.gather(read_task, exists_task, exists_task2)
 
@@ -499,7 +498,7 @@ class TestErrorHandlingInFileOperations:
 
         try:
             with pytest.raises(PermissionError):
-                await fs_utils.read_file(str(restricted_file))
+                await fs_utils.read_file(restricted_file)
         finally:
             restricted_file.chmod(0o644)  # Restore permissions for cleanup
 
@@ -510,7 +509,7 @@ class TestErrorHandlingInFileOperations:
         test_dir.mkdir()
 
         with pytest.raises((IsADirectoryError, PermissionError)):
-            await fs_utils.read_file(str(test_dir))
+            await fs_utils.read_file(test_dir)
 
     @pytest.mark.asyncio
     async def test_invalid_file_path_characters(self):
@@ -524,7 +523,7 @@ class TestErrorHandlingInFileOperations:
             # Should handle invalid characters gracefully
             try:
                 Path(str(invalid_path)).write_text("test")
-                await fs_utils.read_file(str(invalid_path))
+                await fs_utils.read_file(invalid_path)
             except (OSError, ValueError):
                 # Expected on some platforms
                 pass

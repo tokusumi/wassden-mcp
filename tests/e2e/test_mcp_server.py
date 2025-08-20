@@ -22,6 +22,7 @@ from wassden.handlers import (
     handle_validate_tasks,
 )
 from wassden.server import mcp
+from wassden.types import Language
 from wassden.utils.benchmark import PerformanceBenchmark
 
 # Test constants
@@ -38,10 +39,10 @@ class TestMCPServer:
     @pytest.mark.asyncio
     async def test_check_completeness_tool(self):
         """Test check_completeness MCP tool."""
-        result = await handle_check_completeness({"userInput": "Simple Python project"})
+        result = await handle_check_completeness("Simple Python project", Language.JAPANESE)
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "プロジェクト情報を確認" in result_text
         assert "技術" in result_text or "ユーザー" in result_text
 
@@ -49,11 +50,11 @@ class TestMCPServer:
     async def test_prompt_requirements_tool(self):
         """Test prompt_requirements MCP tool."""
         result = await handle_prompt_requirements(
-            {"projectDescription": "Test project", "scope": "Limited scope", "constraints": "Python constraints"}
+            "Test project", "Limited scope", "Python constraints", Language.JAPANESE
         )
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "requirements.md" in result_text
         assert "Test project" in result_text
         assert "Limited scope" in result_text
@@ -62,77 +63,76 @@ class TestMCPServer:
     @pytest.mark.asyncio
     async def test_validate_requirements_tool_file_not_found(self):
         """Test validate_requirements with missing file."""
-        result = await handle_validate_requirements({"requirementsPath": "nonexistent.md"})
+        result = await handle_validate_requirements(Path("nonexistent.md"), Language.JAPANESE)
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "エラー" in result_text
         assert "見つかりません" in result_text
 
     @pytest.mark.asyncio
     async def test_prompt_design_tool_file_not_found(self):
         """Test prompt_design with missing requirements file."""
-        result = await handle_prompt_design({"requirementsPath": "nonexistent.md"})
+        result = await handle_prompt_design(Path("nonexistent.md"), Language.JAPANESE)
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "エラー" in result_text
 
     @pytest.mark.asyncio
     async def test_validate_design_tool_files_not_found(self):
         """Test validate_design with missing files."""
         result = await handle_validate_design(
-            {"designPath": "nonexistent_design.md", "requirementsPath": "nonexistent_requirements.md"}
+            Path("nonexistent_design.md"), Path("nonexistent_requirements.md"), Language.JAPANESE
         )
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "エラー" in result_text
 
     @pytest.mark.asyncio
     async def test_prompt_tasks_tool_files_not_found(self):
         """Test prompt_tasks with missing files."""
         result = await handle_prompt_tasks(
-            {"designPath": "nonexistent_design.md", "requirementsPath": "nonexistent_requirements.md"}
+            Path("nonexistent_design.md"), Path("nonexistent_requirements.md"), Language.JAPANESE
         )
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "エラー" in result_text
 
     @pytest.mark.asyncio
     async def test_validate_tasks_tool_file_not_found(self):
         """Test validate_tasks with missing file."""
-        result = await handle_validate_tasks({"tasksPath": "nonexistent.md"})
+        result = await handle_validate_tasks(Path("nonexistent.md"), Language.JAPANESE)
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "エラー" in result_text
 
     @pytest.mark.asyncio
     async def test_prompt_code_tool_files_not_found(self):
         """Test prompt_code with missing files."""
         result = await handle_prompt_code(
-            {
-                "tasksPath": "nonexistent_tasks.md",
-                "requirementsPath": "nonexistent_requirements.md",
-                "designPath": "nonexistent_design.md",
-            }
+            Path("nonexistent_tasks.md"),
+            Path("nonexistent_requirements.md"),
+            Path("nonexistent_design.md"),
+            Language.JAPANESE,
         )
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "エラー" in result_text
 
     @pytest.mark.asyncio
     async def test_analyze_changes_tool(self):
         """Test analyze_changes MCP tool."""
         result = await handle_analyze_changes(
-            {"changedFile": "specs/requirements.md", "changeDescription": "Added REQ-05 for new authentication feature"}
+            Path("specs/requirements.md"), "Added REQ-05 for new authentication feature", Language.JAPANESE
         )
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "変更影響分析" in result_text
         assert "REQ-05" in result_text
         assert "requirements.md" in result_text
@@ -141,15 +141,11 @@ class TestMCPServer:
     async def test_get_traceability_tool_no_files(self):
         """Test get_traceability with missing files."""
         result = await handle_get_traceability(
-            {
-                "requirementsPath": "nonexistent_req.md",
-                "designPath": "nonexistent_design.md",
-                "tasksPath": "nonexistent_tasks.md",
-            }
+            Path("nonexistent_req.md"), Path("nonexistent_design.md"), Path("nonexistent_tasks.md"), Language.JAPANESE
         )
 
-        assert isinstance(result, dict)
-        result_text = result["content"][0]["text"]
+        assert result.content
+        result_text = result.content[0].text
         assert "トレーサビリティレポート" in result_text
         assert "要件数: 0" in result_text
 
@@ -247,15 +243,15 @@ class TestMCPServerIntegration:
 
         try:
             # Test validate_requirements with valid file
-            result = await handle_validate_requirements({"requirementsPath": str(req_file)})
-            result_text = result["content"][0]["text"]
+            result = await handle_validate_requirements(req_file, Language.JAPANESE)
+            result_text = result.content[0].text
 
             assert "✅" in result_text
             assert "要件数: 2" in result_text
 
             # Test prompt_design with valid requirements
-            design_result = await handle_prompt_design({"requirementsPath": str(req_file)})
-            design_text = design_result["content"][0]["text"]
+            design_result = await handle_prompt_design(req_file, Language.JAPANESE)
+            design_text = design_result.content[0].text
 
             assert "design.md" in design_text
             assert req_content in design_text
@@ -267,28 +263,32 @@ class TestMCPServerIntegration:
     async def test_tool_parameter_defaults(self):
         """Test that MCP tools use correct default parameters."""
         # Test default paths - these should succeed since spec files exist
-        req_result = await handle_validate_requirements({})
-        req_text = req_result["content"][0]["text"]
+        req_result = await handle_validate_requirements(Path("specs/requirements.md"), Language.JAPANESE)
+        req_text = req_result.content[0].text
         assert "specs/requirements.md" in req_text or "エラー" in req_text or "検証に成功しました" in req_text
 
-        design_result = await handle_prompt_design({})
-        design_text = design_result["content"][0]["text"]
+        design_result = await handle_prompt_design(Path("specs/requirements.md"), Language.JAPANESE)
+        design_text = design_result.content[0].text
         assert "specs/requirements.md" in design_text or "エラー" in design_text
 
-        design_val_result = await handle_validate_design({})
-        design_val_text = design_val_result["content"][0]["text"]
+        design_val_result = await handle_validate_design(
+            Path("specs/design.md"), Path("specs/requirements.md"), Language.JAPANESE
+        )
+        design_val_text = design_val_result.content[0].text
         assert (
             "specs/design.md" in design_val_text
             or "エラー" in design_val_text
             or "検証に成功しました" in design_val_text
         )
 
-        tasks_result = await handle_prompt_tasks({})
-        tasks_text = tasks_result["content"][0]["text"]
+        tasks_result = await handle_prompt_tasks(
+            Path("specs/design.md"), Path("specs/requirements.md"), Language.JAPANESE
+        )
+        tasks_text = tasks_result.content[0].text
         assert "specs/design.md" in tasks_text or "エラー" in tasks_text
 
-        tasks_val_result = await handle_validate_tasks({})
-        tasks_val_text = tasks_val_result["content"][0]["text"]
+        tasks_val_result = await handle_validate_tasks(Path("specs/tasks.md"), Language.JAPANESE)
+        tasks_val_text = tasks_val_result.content[0].text
         assert (
             "specs/tasks.md" in tasks_val_text
             or "エラー" in tasks_val_text
@@ -296,8 +296,10 @@ class TestMCPServerIntegration:
             or "修正が必要です" in tasks_val_text
         )
 
-        trace_result = await handle_get_traceability({})
-        trace_text = trace_result["content"][0]["text"]
+        trace_result = await handle_get_traceability(
+            Path("specs/requirements.md"), Path("specs/design.md"), Path("specs/tasks.md"), Language.JAPANESE
+        )
+        trace_text = trace_result.content[0].text
         assert "トレーサビリティレポート" in trace_text
 
     @pytest.mark.asyncio
@@ -312,19 +314,18 @@ class TestMCPServerIntegration:
         ]
 
         for test_input in test_cases:
-            result = await handle_check_completeness({"userInput": test_input})
-            result_text = result["content"][0]["text"]
+            result = await handle_check_completeness(test_input, Language.JAPANESE)
+            result_text = result.content[0].text
             assert isinstance(result_text, str)
             assert len(result_text) > 0  # Should return some response
 
         # Test analyze_changes with edge cases
         change_result = await handle_analyze_changes(
-            {
-                "changedFile": "test.md",  # Valid file path
-                "changeDescription": "",  # Empty description
-            }
+            Path("test.md"),  # Valid file path
+            "",  # Empty description
+            Language.JAPANESE,
         )
-        change_text = change_result["content"][0]["text"]
+        change_text = change_result.content[0].text
         assert isinstance(change_text, str)
         assert "変更影響分析" in change_text
 
@@ -343,7 +344,7 @@ class TestMCPServerPerformance:
 
         # Benchmark check_completeness performance
         async def check_completeness_test():
-            return await handle_check_completeness({"userInput": "Performance test project"})
+            return await handle_check_completeness("Performance test project", Language.JAPANESE)
 
         result = await benchmark.benchmark_async(
             check_completeness_test,
@@ -356,13 +357,13 @@ class TestMCPServerPerformance:
 
         # Verify response quality
         test_result = await check_completeness_test()
-        result_text = test_result["content"][0]["text"]
+        result_text = test_result.content[0].text
         assert len(result_text) > MIN_RESPONSE_LENGTH
 
         # Benchmark analyze_changes performance
         async def analyze_changes_test():
             return await handle_analyze_changes(
-                {"changedFile": "specs/requirements.md", "changeDescription": "Performance test change"}
+                Path("specs/requirements.md"), "Performance test change", Language.JAPANESE
             )
 
         result = await benchmark.benchmark_async(
@@ -386,10 +387,8 @@ class TestMCPServerPerformance:
             # Create multiple concurrent tasks
             tasks = []
             for i in range(5):
-                task1 = handle_check_completeness({"userInput": f"Concurrent test project {i}"})
-                task2 = handle_analyze_changes(
-                    {"changedFile": f"test{i}.md", "changeDescription": f"Concurrent change {i}"}
-                )
+                task1 = handle_check_completeness(f"Concurrent test project {i}", Language.JAPANESE)
+                task2 = handle_analyze_changes(Path(f"test{i}.md"), f"Concurrent change {i}", Language.JAPANESE)
                 tasks.extend([task1, task2])
 
             # Execute all tasks concurrently
@@ -408,8 +407,8 @@ class TestMCPServerPerformance:
         test_results = await concurrent_test()
         assert len(test_results) == EXPECTED_TOOL_COUNT
         for test_result in test_results:
-            assert isinstance(test_result, dict)
-            result_text = test_result["content"][0]["text"]
+            assert hasattr(test_result, "content")
+            result_text = test_result.content[0].text
             assert len(result_text) > 0
 
     @pytest.mark.asyncio
@@ -422,9 +421,9 @@ class TestMCPServerPerformance:
 
         # Run many iterations to test memory stability
         for i in range(20):
-            result = await handle_check_completeness({"userInput": f"Memory test iteration {i}"})
-            assert isinstance(result, dict)
-            result_text = result["content"][0]["text"]
+            result = await handle_check_completeness(f"Memory test iteration {i}", Language.JAPANESE)
+            assert result.content
+            result_text = result.content[0].text
             assert len(result_text) > 0
 
             # Force garbage collection every few iterations

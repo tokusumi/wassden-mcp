@@ -1,5 +1,7 @@
 """Unit tests for generate_review_prompt functionality."""
 
+from unittest.mock import Mock
+
 from wassden.handlers.code_analysis import (
     _extract_file_structure_from_design,
     _extract_interfaces_from_design,
@@ -126,7 +128,8 @@ class TestRequirementExtraction:
         """Test formatting requirements list."""
         requirements = ["**REQ-01**: First requirement", "**REQ-02**: Second requirement"]
 
-        result = _format_requirements_list(requirements)
+        mock_i18n = Mock()
+        result = _format_requirements_list(requirements, mock_i18n)
 
         assert "- **REQ-01**: First requirement" in result
         assert "- **REQ-02**: Second requirement" in result
@@ -135,7 +138,9 @@ class TestRequirementExtraction:
         """Test formatting empty requirements list."""
         requirements = []
 
-        result = _format_requirements_list(requirements)
+        mock_i18n = Mock()
+        mock_i18n.t.return_value = "なし"
+        result = _format_requirements_list(requirements, mock_i18n)
 
         assert result == "なし"
 
@@ -155,7 +160,9 @@ class TestDesignExtraction:
 - Database module for data persistence
 """
 
-        result = _extract_file_structure_from_design(design_content)
+        mock_i18n = Mock()
+        mock_i18n.t.return_value = ["ファイル", "file", "モジュール", "module", "構成"]
+        result = _extract_file_structure_from_design(design_content, mock_i18n)
 
         assert "ファイル構成" in result
         # The function extracts lines containing file-related keywords
@@ -169,7 +176,12 @@ class TestDesignExtraction:
 Simple architecture
 """
 
-        result = _extract_file_structure_from_design(design_content)
+        mock_i18n = Mock()
+        mock_i18n.t.side_effect = lambda key: {
+            "code_prompts.helpers.search_keywords.file_structure": ["ファイル", "file", "モジュール", "module", "構成"],
+            "code_prompts.helpers.file_structure_not_found": "設計書から構成情報を確認してください",
+        }[key]
+        result = _extract_file_structure_from_design(design_content, mock_i18n)
 
         assert result == "設計書から構成情報を確認してください"
 
@@ -187,7 +199,9 @@ REST API endpoints
 - validateUser(): boolean
 """
 
-        result = _extract_interfaces_from_design(design_content)
+        mock_i18n = Mock()
+        mock_i18n.t.return_value = ["api", "インターフェース", "interface", "関数", "function", "メソッド", "method"]
+        result = _extract_interfaces_from_design(design_content, mock_i18n)
 
         assert "API設計" in result
         assert "インターフェース仕様" in result
@@ -200,7 +214,20 @@ REST API endpoints
 Table schemas
 """
 
-        result = _extract_interfaces_from_design(design_content)
+        mock_i18n = Mock()
+        mock_i18n.t.side_effect = lambda key: {
+            "code_prompts.helpers.search_keywords.interfaces": [
+                "api",
+                "インターフェース",
+                "interface",
+                "関数",
+                "function",
+                "メソッド",
+                "method",
+            ],
+            "code_prompts.helpers.interfaces_not_found": "設計書からインターフェース情報を確認してください",
+        }[key]
+        result = _extract_interfaces_from_design(design_content, mock_i18n)
 
         assert result == "設計書からインターフェース情報を確認してください"
 

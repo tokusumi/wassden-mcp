@@ -1,0 +1,25 @@
+{
+  "error": {
+    "requirements_not_found": "❌ Error: Requirements file not found: {path}\n\nPlease create requirements.md first."
+  },
+  "prompt": {
+    "intro": "Please create a design.md file based on the following requirements.md:",
+    "requirements_content": "## Requirements Content",
+    "file_to_create": "## File to Create\nFilename: specs/design.md",
+    "required_structure": "## Required Structure\nPlease follow this chapter structure:",
+    "sections": {
+      "architecture": "### 1. Architecture Overview\n- **Context/Dependencies/Constraints**: System positioning and limitations\n- **Overall Diagram**: Overview of components/data flow/sequences\n[Requirements: REQ-XX, REQ-YY, ...]",
+      "components": "### 2. Component Design\n- **component-name**:\n  - **Role**: Component responsibilities\n  - **Requirements**: [REQ-XX, REQ-YY]\n  - **Input/Output**: Interface definitions\n  - **Exceptions/Retry**: Error handling approach\n  - **Observability**: Logs, metrics, traces",
+      "data": "### 3. Data Model\nDefinition of data structures and relationships",
+      "api": "### 4. API/Interfaces\n- **tool_name**:\n  - **Overview**: Function description\n  - **Endpoint**: URL/Path\n  - **Request/Response**: Format and examples\n  - **Errors**: Error codes and handling\n  - **Module Boundaries**: Responsibility boundaries",
+      "non_functional": "### 5. Non-Functional/Quality\n- **Performance**: Details [NFR-XX]\n- **Security**: Details [NFR-XX]\n- **Availability**: Details [NFR-XX]",
+      "testing": "### 6. Testing Strategy\n- **Unit/Integration/E2E Role Distribution**: Verification content at each level\n- **test-scenario**: Important test cases\n  - **Test Data Approach**: Test data preparation method\n  - **Observable Pass/Fail Criteria**: Success/failure determination criteria",
+      "traceability": "### 7. Traceability (Required)\n- REQ-XX ⇔ **component-name**\n- TR-XX ⇔ **test-scenario**",
+      "flow": "### 8. Flow Design\n- **Main Sequences**: Normal processing flows\n- **State Transitions**: State management and transitions\n- **Backpressure/Queue Processing**: Load control mechanisms",
+      "edge_cases": "### 9. Failures/Edge Cases\n- **Failure Patterns**: Expected failures\n- **Fallback**: Alternative processing\n- **Timeout/Retry Policy**: Time limits and retry strategies",
+      "security": "### 10. Security & Compliance\n- **Authentication/Authorization**: Access control methods\n- **Data Protection**: Encryption, masking\n- **Audit Logs**: Recording targets and retention periods\n- **Secret Management**: Secret handling",
+      "risks": "### 11. Risks and Responses (Optional)\n- **Risk**: Description → Mitigation"
+    },
+    "instructions": "## Creation Instructions\n1. Clearly state related REQ-IDs in [REQ-XX] format for each chapter\n2. Record technical implementation approaches specifically\n3. Clarify correspondence with non-functional requirements (NFR)\n4. Word count: approximately 3000-6000 characters\n5. Ensure all requirements are mentioned somewhere in the design\n\nFollowing this prompt, please create a high-quality design.md with ensured traceability."
+  }
+}

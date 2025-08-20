@@ -68,8 +68,8 @@ def extract_test_scenarios(content: str) -> set[str]:
     scenarios = set()
 
     # Look for test scenarios in the form: **test-scenario**:
-    # Find the test strategy section (Section 6)
-    test_section_match = re.search(r"## \d*\.?\s*テスト戦略.*?(?=## |$)", content, re.DOTALL)
+    # Find the test strategy section (Section 6) - support both Japanese and English
+    test_section_match = re.search(r"## \d*\.?\s*(テスト戦略|Test Strategy).*?(?=## |$)", content, re.DOTALL)
     if test_section_match:
         test_section = test_section_match.group(0)
         # Extract test scenarios from the test section

@@ -1,0 +1,56 @@
+{
+  "requirements": {
+    "success": {
+      "title": "✅ requirements.md の検証に成功しました！",
+      "stats": "## 検証結果\n- 要件数: {totalRequirements}\n- NFR数: {totalNFRs}\n- KPI数: {totalKPIs}",
+      "structure": "## 構造チェック",
+      "next_step": "要件は正しい形式で記載されています。次のステップ（design.md の作成）に進むことができます。"
+    },
+    "error": {
+      "title": "⚠️ requirements.md に修正が必要です：",
+      "detected_issues": "## 検出された問題",
+      "fix_instructions": "## 修正手順\n以下の指示に従って requirements.md を修正してください：",
+      "verify_after_fix": "## 修正後の確認\n修正が完了したら、再度 validate_requirements を実行して検証してください。"
+    },
+    "file_error": {
+      "not_found": "❌ エラー: {path} が見つかりません。\n\nまず prompt_requirements または check_completeness を使用して requirements.md を作成してください。",
+      "general_error": "❌ エラーが発生しました: {error}"
+    }
+  },
+  "design": {
+    "success": {
+      "title": "✅ design.md の検証に成功しました！",
+      "stats": "## 検証結果\n- 設計要素数: {totalDesignElements}\n- コンポーネント数: {totalComponents}\n- 参照要件数: {reqCoverage}",
+      "structure": "## 構造チェック",
+      "next_step": "設計は正しい形式で記載され、要件が適切にカバーされています。次のステップ（tasks.md の作成）に進むことができます。"
+    },
+    "error": {
+      "title": "⚠️ design.md に修正が必要です：",
+      "detected_issues": "## 検出された問題",
+      "fix_instructions": "## 修正手順\n以下の指示に従って design.md を修正してください：",
+      "verify_after_fix": "## 修正後の確認\n修正が完了したら、再度 validate_design を実行して検証してください。"
+    },
+    "file_error": {
+      "not_found": "❌ エラー: {path} が見つかりません。\n\nまず prompt_design を使用して design.md を作成してください。",
+      "general_error": "❌ エラーが発生しました: {error}"
+    }
+  },
+  "tasks": {
+    "success": {
+      "title": "✅ tasks.md の検証に成功しました！",
+      "stats": "## 検証結果\n- タスク数: {totalTasks}\n- 推定時間: {totalEstimatedHours}\n- 依存関係数: {totalDependencies}",
+      "structure": "## 構造チェック",
+      "next_step": "タスクは正しい形式で記載され、依存関係が適切に定義されています。実装フェーズに進むことができます。"
+    },
+    "error": {
+      "title": "⚠️ tasks.md に修正が必要です：",
+      "detected_issues": "## 検出された問題",
+      "fix_instructions": "## 修正手順\n以下の指示に従って tasks.md を修正してください：",
+      "verify_after_fix": "## 修正後の確認\n修正が完了したら、再度 validate_tasks を実行して検証してください。"
+    },
+    "file_error": {
+      "not_found": "❌ エラー: {path} が見つかりません。\n\nまず prompt_tasks を使用して tasks.md を作成してください。",
+      "general_error": "❌ エラーが発生しました: {error}"
+    }
+  }
+}

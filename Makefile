@@ -1,4 +1,4 @@
-.PHONY: format lint typecheck test check ci help
+.PHONY: format lint typecheck test check ci validate-examples help
 
 # Individual commands
 format:
@@ -12,6 +12,9 @@ typecheck:
 
 test:
 	uv run pytest --cov=wassden
+
+validate-examples:
+	uv run pytest tests/integration/test_spec_examples.py -v
 
 # Composite commands
 check: format lint typecheck test
@@ -32,3 +35,4 @@ help:
 	@echo "  test      - Run tests with coverage"
 	@echo "  check     - Run format, lint, typecheck, and test with coverage"
 	@echo "  ci        - Run CI checks (format --check, lint, typecheck, test with coverage)"
+	@echo "  validate-examples - Run integration tests for spec examples (Japanese and English)"

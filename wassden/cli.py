@@ -24,10 +24,29 @@ from .handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
+from .lib import fs_utils
+from .lib.language_detection import determine_language
 from .server import main as run_server_with_transport
+from .types import Language
 
 # Initialize colorama for cross-platform colored output
 init(autoreset=True)
+
+
+def _determine_language_for_user_input(language: Language | None, user_input: str = "") -> Language:
+    """Determine language from CLI input and user text."""
+    return determine_language(explicit_language=language, user_input=user_input)
+
+
+async def _determine_language_for_file(
+    language: Language | None, file_path: str, is_spec_document: bool = True
+) -> Language:
+    """Determine language from CLI input and file content."""
+    try:
+        content = await fs_utils.read_file(Path(file_path))
+        return determine_language(explicit_language=language, content=content, is_spec_document=is_spec_document)
+    except FileNotFoundError:
+        return determine_language(explicit_language=language)
 
 
 def _supports_color() -> bool:
@@ -108,6 +127,24 @@ async def run_handler(handler: Any, args: dict[str, Any]) -> None:
         sys.exit(1)
 
 
+async def run_handler_typed(handler: Any, *args: Any) -> None:
+    """Run a typed handler and print the result."""
+    try:
+        result = await handler(*args)
+        # Convert Pydantic model to dict if needed
+        result_dict = result.model_dump() if hasattr(result, "model_dump") else result
+
+        content = result_dict.get("content", [])
+        if content and len(content) > 0:
+            text = content[0].get("text", "")
+            typer.echo(text)
+        else:
+            print_warning("No content returned from handler")
+    except Exception as e:
+        print_error(f"Error: {e!s}")
+        sys.exit(1)
+
+
 app = typer.Typer(
     help="wassden - MCP-based Spec-Driven Development toolkit.",
     rich_markup_mode="markdown" if _supports_color() else None,
@@ -133,10 +170,12 @@ def start_mcp_server(
 @app.command()
 def check_completeness(
     userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
+    language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
 ) -> None:
     """Analyze user input for completeness."""
     print_info("Analyzing input completeness...")
-    asyncio.run(run_handler(handle_check_completeness, {"userInput": userinput}))
+    determined_language = _determine_language_for_user_input(language, userinput)
+    asyncio.run(run_handler_typed(handle_check_completeness, userinput, determined_language))
 
 
 @app.command()
@@ -144,17 +183,18 @@ def prompt_requirements(
     projectdescription: Annotated[str, typer.Option("--projectDescription", "-p", help="Project description")],
     scope: Annotated[str, typer.Option("--scope", "-s", help="Project scope")] = "",
     constraints: Annotated[str, typer.Option("--constraints", "-c", help="Technical constraints")] = "",
+    language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
 ) -> None:
     """Generate prompt for creating requirements.md."""
     print_info("Generating requirements prompt...")
+    determined_language = _determine_language_for_user_input(language, projectdescription)
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_prompt_requirements,
-            {
-                "projectDescription": projectdescription,
-                "scope": scope,
-                "constraints": constraints,
-            },
+            projectdescription,
+            scope,
+            constraints,
+            determined_language,
         )
     )
 
@@ -167,12 +207,12 @@ def validate_requirements(
 ) -> None:
     """Validate requirements.md document."""
     print_info(f"Validating {requirementspath}...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(requirementspath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_validate_requirements,
-            {
-                "requirementsPath": str(requirementspath),
-            },
+            requirementspath,
+            determined_language,
         )
     )
 
@@ -185,12 +225,12 @@ def prompt_design(
 ) -> None:
     """Generate prompt for creating design.md."""
     print_info("Generating design prompt...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(requirementspath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_prompt_design,
-            {
-                "requirementsPath": str(requirementspath),
-            },
+            requirementspath,
+            determined_language,
         )
     )
 
@@ -204,13 +244,13 @@ def validate_design(
 ) -> None:
     """Validate design.md document."""
     print_info(f"Validating {designpath}...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(designpath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_validate_design,
-            {
-                "designPath": str(designpath),
-                "requirementsPath": str(requirementspath),
-            },
+            designpath,
+            requirementspath,
+            determined_language,
         )
     )
 
@@ -224,13 +264,13 @@ def prompt_tasks(
 ) -> None:
     """Generate prompt for creating tasks.md."""
     print_info("Generating tasks prompt...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(designpath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_prompt_tasks,
-            {
-                "designPath": str(designpath),
-                "requirementsPath": str(requirementspath),
-            },
+            designpath,
+            requirementspath,
+            determined_language,
         )
     )
 
@@ -241,12 +281,12 @@ def validate_tasks(
 ) -> None:
     """Validate tasks.md document."""
     print_info(f"Validating {taskspath}...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(taskspath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_validate_tasks,
-            {
-                "tasksPath": str(taskspath),
-            },
+            taskspath,
+            determined_language,
         )
     )
 
@@ -261,14 +301,14 @@ def prompt_code(
 ) -> None:
     """Generate implementation prompt."""
     print_info("Generating implementation prompt...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(taskspath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_prompt_code,
-            {
-                "tasksPath": str(taskspath),
-                "requirementsPath": str(requirementspath),
-                "designPath": str(designpath),
-            },
+            taskspath,
+            requirementspath,
+            designpath,
+            determined_language,
         )
     )
 
@@ -280,13 +320,13 @@ def analyze_changes(
 ) -> None:
     """Analyze impact of changes to spec files."""
     print_info(f"Analyzing changes to {changedfile}...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(changedfile)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_analyze_changes,
-            {
-                "changedFile": str(changedfile),
-                "changeDescription": changedescription,
-            },
+            changedfile,
+            changedescription,
+            determined_language,
         )
     )
 
@@ -301,14 +341,14 @@ def get_traceability(
 ) -> None:
     """Generate traceability report."""
     print_info("Generating traceability report...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(requirementspath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_get_traceability,
-            {
-                "requirementsPath": str(requirementspath),
-                "designPath": str(designpath),
-                "tasksPath": str(taskspath),
-            },
+            requirementspath,
+            designpath,
+            taskspath,
+            determined_language,
         )
     )
 
@@ -324,15 +364,15 @@ def generate_review_prompt(
 ) -> None:
     """Generate implementation review prompt for specific TASK-ID to validate implementation quality."""
     print_info(f"Generating review prompt for {task_id}...")
+    determined_language = asyncio.run(_determine_language_for_file(None, str(taskspath)))
     asyncio.run(
-        run_handler(
+        run_handler_typed(
             handle_generate_review_prompt,
-            {
-                "taskId": task_id,
-                "tasksPath": str(taskspath),
-                "requirementsPath": str(requirementspath),
-                "designPath": str(designpath),
-            },
+            task_id,
+            taskspath,
+            requirementspath,
+            designpath,
+            determined_language,
         )
     )
 
