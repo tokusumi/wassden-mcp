@@ -4,9 +4,18 @@
 [![Tests](https://img.shields.io/badge/tests-passing-green)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 
-A powerful MCP-based Spec-Driven Development (SDD) toolkit that transforms any LLM into a comprehensive development agent with structured specification generation and validation capabilities.
+A powerful **READ-ONLY** MCP-based Spec-Driven Development (SDD) toolkit that transforms any LLM into a comprehensive development agent with structured specification generation and validation capabilities.
 
 > "Spec-first development made intelligent and systematic"
+
+## 🔒 Security Guarantee
+
+**wassden is a completely READ-ONLY MCP server** with the following security guarantees:
+
+- ✅ **No file writing capabilities** - Cannot create, modify, or delete any files
+- ✅ **Analysis only** - Reads existing files for validation and traceability analysis  
+- ✅ **Prompt generation** - Generates structured prompts for agents to create specifications
+- ✅ **Safe integration** - Zero risk of unintended filesystem modifications
 
 ## 🎯 Core Philosophy
 
@@ -198,7 +207,7 @@ claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp w
 | `prompt-code`         | Generate implementation prompt              | All spec paths    | Implementation guide prompt                 |
 | `generate-review-prompt` | Generate TASK-specific review prompt      | Task ID + spec paths | Quality review prompt with guardrails    |
 
-### ✅ Validation Tools  
+### ✅ Validation Tools
 *These tools validate agent-generated documents for quality and consistency*
 
 | Tool                    | Purpose                       | Input             | Output            |
