@@ -6,7 +6,7 @@ from pathlib import Path
 FILE_NOT_FOUND_MSG = "File not found: {}"
 
 
-async def read_file(file_path: str) -> str:
+async def read_file(file_path: str | Path) -> str:
     """Read a file asynchronously."""
     path = Path(file_path)
     if not path.exists():
@@ -14,19 +14,19 @@ async def read_file(file_path: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
-async def write_file(file_path: str, content: str) -> None:
+async def write_file(file_path: str | Path, content: str) -> None:
     """Write a file asynchronously."""
     path = Path(file_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
 
-async def file_exists(file_path: str) -> bool:
+async def file_exists(file_path: str | Path) -> bool:
     """Check if a file exists."""
     return Path(file_path).exists()
 
 
-async def ensure_dir(dir_path: str) -> None:
+async def ensure_dir(dir_path: str | Path) -> None:
     """Ensure a directory exists."""
     Path(dir_path).mkdir(parents=True, exist_ok=True)
 
@@ -48,7 +48,7 @@ def get_project_root() -> Path:
     return Path.cwd()
 
 
-def resolve_path(file_path: str) -> Path:
+def resolve_path(file_path: str | Path) -> Path:
     """Resolve a path relative to the project root."""
     path = Path(file_path)
     if path.is_absolute():
