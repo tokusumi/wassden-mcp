@@ -17,6 +17,7 @@
 - **Lint code**: `make lint` - Lint code with ruff check
 - **Type check**: `make typecheck` - Type check with mypy
 - **Run tests**: `make test` - Run tests with coverage using pytest
+- **Validate examples**: `make validate-examples` - Run integration tests for spec examples in both Japanese and English
 - **Help**: `make help` - Show all available make commands
 
 ### CLI Testing Commands
@@ -50,7 +51,7 @@
 
 ### Development Setup
 - **Install deps**: `uv sync` - Install all dependencies including dev dependencies
-- **Pre-commit**: `pre-commit install` - Install pre-commit hooks (runs `make check` before commits)
+- **Pre-commit**: `pre-commit install` - Install pre-commit hooks (runs `make check` and validates spec examples)
 
 ## Code Quality Standards
 - All code must pass linting without warnings (ruff with extensive rule set)
@@ -59,6 +60,13 @@
 - Code formatting must be consistent (ruff format with 120 char line length)
 - No exceptions to quality standards without explicit user permission
 - Pre-commit hooks automatically enforce quality standards
+- Spec examples must pass validation for both Japanese and English versions
+
+## CI/CD Pipeline
+- **Main CI**: Runs `make check` on code changes (format, lint, typecheck, test)
+- **Spec Examples CI**: Validates multi-language documentation when docs or core code changes
+- **Pre-commit hooks**: Run quality checks and spec validation before commits
+- **Automated validation**: GitHub Actions ensures spec examples remain consistent across languages
 
 ## Project Information
 - **Package name**: wassden

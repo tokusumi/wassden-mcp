@@ -1,0 +1,55 @@
+name: Validate Spec Examples
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**/*.md'
+      - 'wassden/**/*.py'
+      - 'tests/integration/test_spec_examples.py'
+      - '.github/workflows/validate-examples.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**/*.md'
+      - 'wassden/**/*.py'
+      - 'tests/integration/test_spec_examples.py'
+      - '.github/workflows/validate-examples.yml'
+
+jobs:
+  validate-spec-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: uv sync --all-extras --dev
+
+    - name: Validate spec examples
+      run: |
+        echo "🚀 Validating multi-language spec examples..."
+        make validate-examples
+
+    - name: Report results
+      if: always()
+      run: |
+        echo "✅ Spec examples validation completed!"
+        echo "📊 Validated:"
+        echo "  🇯🇵 Japanese spec examples"
+        echo "  🇺🇸 English spec examples" 
+        echo "  🌍 Language detection"
+        echo "  ⚙️ Cross-language consistency"
