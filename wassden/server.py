@@ -1,4 +1,11 @@
-"""MCP server implementation for wassden."""
+"""MCP server implementation for wassden.
+
+This is a READ-ONLY MCP server that provides spec-driven development tools.
+All tools analyze existing files and generate prompts/reports without modifying any files.
+
+Security guarantee: This server has no file writing capabilities and cannot
+modify your filesystem. It only reads files and generates analysis/prompts.
+"""
 
 from pathlib import Path
 
@@ -25,10 +32,10 @@ from .types import Language
 mcp = FastMCP("wassden")
 
 
-async def _determine_language_for_file(file_path: str, is_spec_document: bool = True) -> Language:
+async def _determine_language_for_file(file_path: Path, is_spec_document: bool = True) -> Language:
     """Determine language from file content, with fallback to Japanese."""
     try:
-        content = await fs_utils.read_file(Path(file_path))
+        content = await fs_utils.read_file(file_path)
         return determine_language(content=content, is_spec_document=is_spec_document)
     except FileNotFoundError:
         return determine_language()
@@ -37,8 +44,8 @@ async def _determine_language_for_file(file_path: str, is_spec_document: bool = 
 # Register all tools
 @mcp.tool(
     name="check_completeness",
-    description="Analyze user input for completeness and either generate clarifying questions "
-    "or create requirements.md directly",
+    description="[READ-ONLY] Analyze user input for completeness and either generate clarifying questions "
+    "or create requirements.md directly (generates prompts only, does not modify files)",
 )
 async def check_completeness(user_input: str) -> str:
     """Analyze user input for completeness."""
@@ -49,8 +56,8 @@ async def check_completeness(user_input: str) -> str:
 
 @mcp.tool(
     name="prompt_requirements",
-    description="Generate prompt for agent to create requirements.md in EARS format "
-    "(deprecated - use check_completeness instead)",
+    description="[READ-ONLY] Generate prompt for agent to create requirements.md in EARS format "
+    "(deprecated - use check_completeness instead) (generates prompts only, does not modify files)",
 )
 async def prompt_requirements(
     project_description: str,
@@ -65,10 +72,11 @@ async def prompt_requirements(
 
 @mcp.tool(
     name="validate_requirements",
-    description="Validate requirements.md and generate fix instructions if needed",
+    description="[READ-ONLY] Validate requirements.md and generate fix instructions if needed "
+    "(analyzes files only, does not modify files)",
 )
 async def validate_requirements(
-    requirements_path: str = "specs/requirements.md",
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Validate requirements document."""
     language = await _determine_language_for_file(requirements_path)
@@ -78,10 +86,11 @@ async def validate_requirements(
 
 @mcp.tool(
     name="prompt_design",
-    description="Generate prompt for agent to create design.md from requirements.md",
+    description="[READ-ONLY] Generate prompt for agent to create design.md from requirements.md "
+    "(generates prompts only, does not modify files)",
 )
 async def prompt_design(
-    requirements_path: str = "specs/requirements.md",
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Generate design prompt."""
     language = await _determine_language_for_file(requirements_path)
@@ -91,11 +100,12 @@ async def prompt_design(
 
 @mcp.tool(
     name="validate_design",
-    description="Validate design.md structure and traceability, generate fix instructions if needed",
+    description="[READ-ONLY] Validate design.md structure and traceability, generate fix instructions if needed "
+    "(analyzes files only, does not modify files)",
 )
 async def validate_design(
-    design_path: str = "specs/design.md",
-    requirements_path: str = "specs/requirements.md",
+    design_path: Path = Path("specs/design.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Validate design document."""
     language = await _determine_language_for_file(design_path)
@@ -105,11 +115,12 @@ async def validate_design(
 
 @mcp.tool(
     name="prompt_tasks",
-    description="Generate prompt for agent to create tasks.md (WBS) from design.md",
+    description="[READ-ONLY] Generate prompt for agent to create tasks.md (WBS) from design.md "
+    "(generates prompts only, does not modify files)",
 )
 async def prompt_tasks(
-    design_path: str = "specs/design.md",
-    requirements_path: str = "specs/requirements.md",
+    design_path: Path = Path("specs/design.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
 ) -> str:
     """Generate tasks prompt."""
     language = await _determine_language_for_file(design_path)
@@ -119,10 +130,11 @@ async def prompt_tasks(
 
 @mcp.tool(
     name="validate_tasks",
-    description="Validate tasks.md structure and dependencies, generate fix instructions if needed",
+    description="[READ-ONLY] Validate tasks.md structure and dependencies, generate fix instructions if needed "
+    "(analyzes files only, does not modify files)",
 )
 async def validate_tasks(
-    tasks_path: str = "specs/tasks.md",
+    tasks_path: Path = Path("specs/tasks.md"),
 ) -> str:
     """Validate tasks document."""
     language = await _determine_language_for_file(tasks_path)
@@ -132,12 +144,13 @@ async def validate_tasks(
 
 @mcp.tool(
     name="prompt_code",
-    description="Generate prompt for agent to implement code step by step with important guidelines",
+    description="[READ-ONLY] Generate prompt for agent to implement code step by step with important guidelines "
+    "(generates prompts only, does not modify files)",
 )
 async def prompt_code(
-    tasks_path: str = "specs/tasks.md",
-    requirements_path: str = "specs/requirements.md",
-    design_path: str = "specs/design.md",
+    tasks_path: Path = Path("specs/tasks.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
 ) -> str:
     """Generate implementation prompt."""
     language = await _determine_language_for_file(tasks_path)
@@ -147,26 +160,28 @@ async def prompt_code(
 
 @mcp.tool(
     name="analyze_changes",
-    description="Analyze changes to specs and generate prompts for dependent modifications",
+    description="[READ-ONLY] Analyze changes to specs and generate prompts for dependent modifications "
+    "(analyzes files only, does not modify files)",
 )
 async def analyze_changes(
-    changed_file: str,
+    changed_file: Path,
     change_description: str,
 ) -> str:
     """Analyze impact of changes."""
     language = await _determine_language_for_file(changed_file)
-    result = await handle_analyze_changes(Path(changed_file), change_description, language)
+    result = await handle_analyze_changes(changed_file, change_description, language)
     return str(result.content[0].text)
 
 
 @mcp.tool(
     name="get_traceability",
-    description="Generate current traceability report showing REQ↔DESIGN↔TASK mappings",
+    description="[READ-ONLY] Generate current traceability report showing REQ↔DESIGN↔TASK mappings "
+    "(analyzes files only, does not modify files)",
 )
 async def get_traceability(
-    requirements_path: str = "specs/requirements.md",
-    design_path: str = "specs/design.md",
-    tasks_path: str = "specs/tasks.md",
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
+    tasks_path: Path = Path("specs/tasks.md"),
 ) -> str:
     """Generate traceability report."""
     language = await _determine_language_for_file(requirements_path)
@@ -176,13 +191,14 @@ async def get_traceability(
 
 @mcp.tool(
     name="generate_review_prompt",
-    description="Generate implementation review prompt for specific TASK-ID to validate implementation quality",
+    description="[READ-ONLY] Generate implementation review prompt for specific TASK-ID to validate quality "
+    "(generates prompts only, does not modify files)",
 )
 async def generate_review_prompt(
     task_id: str,
-    tasks_path: str = "specs/tasks.md",
-    requirements_path: str = "specs/requirements.md",
-    design_path: str = "specs/design.md",
+    tasks_path: Path = Path("specs/tasks.md"),
+    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path = Path("specs/design.md"),
 ) -> str:
     """Generate review prompt for specific TASK-ID."""
     language = await _determine_language_for_file(tasks_path)

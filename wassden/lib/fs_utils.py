@@ -13,12 +13,6 @@ async def read_file(file_path: Path) -> str:
     return file_path.read_text(encoding="utf-8")
 
 
-async def write_file(file_path: Path, content: str) -> None:
-    """Write a file asynchronously."""
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    file_path.write_text(content, encoding="utf-8")
-
-
 async def file_exists(file_path: Path) -> bool:
     """Check if a file exists."""
     return file_path.exists()

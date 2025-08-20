@@ -133,118 +133,6 @@ class TestFileReadOperations:
         assert result == spaced_content
 
 
-class TestFileWriteOperations:
-    """Detailed file write operation tests."""
-
-    def setup_method(self):
-        """Set up test environment for each test."""
-        self.temp_dir = Path(tempfile.mkdtemp())
-        self.original_cwd = Path.cwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up test environment after each test."""
-        os.chdir(self.original_cwd)
-        shutil.rmtree(self.temp_dir)
-
-    @pytest.mark.asyncio
-    async def test_write_new_file(self):
-        """Test writing to a new file."""
-        new_file = self.temp_dir / "new.txt"
-        content = "New file content"
-
-        await fs_utils.write_file(new_file, content)
-
-        assert new_file.exists()
-        assert new_file.read_text() == content
-
-    @pytest.mark.asyncio
-    async def test_overwrite_existing_file(self):
-        """Test overwriting an existing file."""
-        existing_file = self.temp_dir / "existing.txt"
-        original_content = "Original content"
-        new_content = "New content"
-
-        existing_file.write_text(original_content)
-        await fs_utils.write_file(existing_file, new_content)
-
-        assert existing_file.read_text() == new_content
-
-    @pytest.mark.asyncio
-    async def test_write_empty_content(self):
-        """Test writing empty content to file."""
-        empty_file = self.temp_dir / "empty_write.txt"
-
-        await fs_utils.write_file(empty_file, "")
-
-        assert empty_file.exists()
-        assert empty_file.read_text() == ""
-
-    @pytest.mark.asyncio
-    async def test_write_large_content(self):
-        """Test writing large content to file."""
-        large_file = self.temp_dir / "large_write.txt"
-        large_content = "B" * 50000  # 50KB of 'B's
-
-        await fs_utils.write_file(large_file, large_content)
-
-        assert large_file.exists()
-        assert large_file.read_text() == large_content
-        assert len(large_file.read_text()) == VERY_LARGE_FILE_SIZE
-
-    @pytest.mark.asyncio
-    async def test_write_special_characters(self):
-        """Test writing special characters to file."""
-        special_file = self.temp_dir / "special_write.txt"
-        special_content = "Special: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"
-
-        await fs_utils.write_file(special_file, special_content)
-
-        assert special_file.read_text() == special_content
-
-    @pytest.mark.asyncio
-    async def test_write_unicode_content(self):
-        """Test writing Unicode content to file."""
-        unicode_file = self.temp_dir / "unicode_write.txt"
-        unicode_content = "Unicode writing: 日本語テスト, 한국어 테스트"
-
-        await fs_utils.write_file(unicode_file, unicode_content)
-
-        assert unicode_file.read_text(encoding="utf-8") == unicode_content
-
-    @pytest.mark.asyncio
-    async def test_write_multiline_content(self):
-        """Test writing multiline content to file."""
-        multiline_file = self.temp_dir / "multiline_write.txt"
-        multiline_content = "Line 1\nLine 2\nLine 3\nLine 4"
-
-        await fs_utils.write_file(multiline_file, multiline_content)
-
-        assert multiline_file.read_text() == multiline_content
-
-    @pytest.mark.asyncio
-    async def test_write_to_nested_directory(self):
-        """Test writing to file in nested directory."""
-        nested_dir = self.temp_dir / "level1" / "level2"
-        nested_file = nested_dir / "nested.txt"
-        content = "Nested directory content"
-
-        await fs_utils.write_file(nested_file, content)
-
-        assert nested_file.exists()
-        assert nested_file.read_text() == content
-
-    @pytest.mark.asyncio
-    async def test_write_with_relative_path(self):
-        """Test writing with relative path."""
-        relative_content = "Relative write content"
-
-        await fs_utils.write_file(Path("relative_write.txt"), relative_content)
-
-        assert Path("relative_write.txt").exists()
-        assert Path("relative_write.txt").read_text() == relative_content
-
-
 class TestFileExistsOperations:
     """Detailed file existence check tests."""
 
@@ -511,22 +399,23 @@ class TestAsyncFileOperationsConcurrency:
             assert result == files_data[path]
 
     @pytest.mark.asyncio
-    async def test_concurrent_file_writes(self):
-        """Test concurrent writing to multiple files."""
+    async def test_concurrent_file_reads_more(self):
+        """Test more concurrent reading to replace removed write tests."""
         # Prepare file data
         files_data = {}
         for i in range(10):
             file_path = self.temp_dir / f"concurrent_write_{i}.txt"
             content = f"Concurrent write content {i}"
             files_data[file_path] = content
+            file_path.write_text(content)
 
-        # Write all files concurrently
-        tasks = [fs_utils.write_file(path, content) for path, content in files_data.items()]
-        await asyncio.gather(*tasks)
+        # Read all files concurrently
+        tasks = [fs_utils.read_file(path) for path in files_data]
+        results = await asyncio.gather(*tasks)
 
-        # Verify all files were written correctly
-        for path, expected_content in files_data.items():
-            assert Path(path).read_text() == expected_content
+        # Verify all files were read correctly
+        for path, result in zip(files_data.keys(), results, strict=False):
+            assert result == files_data[path]
 
     @pytest.mark.asyncio
     async def test_concurrent_file_existence_checks(self):
@@ -563,25 +452,24 @@ class TestAsyncFileOperationsConcurrency:
         read_file = self.temp_dir / "to_read.txt"
         read_file.write_text("Read this content")
 
-        # Prepare for writing
-        write_file = self.temp_dir / "to_write.txt"
-        write_content = "Written content"
-
-        # Prepare for existence check
+        # Prepare for checking
         check_file = self.temp_dir / "to_check.txt"
         check_file.write_text("Check this")
 
+        check_file2 = self.temp_dir / "to_check2.txt"
+        check_file2.write_text("Check content")
+
         # Run mixed operations concurrently
         read_task = fs_utils.read_file(read_file)
-        write_task = fs_utils.write_file(write_file, write_content)
         exists_task = fs_utils.file_exists(check_file)
+        exists_task2 = fs_utils.file_exists(check_file2)
 
-        read_result, _, exists_result = await asyncio.gather(read_task, write_task, exists_task)
+        read_result, exists_result, exists_result2 = await asyncio.gather(read_task, exists_task, exists_task2)
 
         # Verify results
         assert read_result == "Read this content"
-        assert write_file.read_text() == write_content
         assert exists_result is True
+        assert exists_result2 is True
 
 
 class TestErrorHandlingInFileOperations:
@@ -615,24 +503,6 @@ class TestErrorHandlingInFileOperations:
             restricted_file.chmod(0o644)  # Restore permissions for cleanup
 
     @pytest.mark.asyncio
-    async def test_write_file_permission_error(self):
-        """Test writing file with permission error."""
-        if os.name == "nt":  # Windows
-            pytest.skip("Permission tests not reliable on Windows")
-
-        restricted_dir = self.temp_dir / "restricted_dir"
-        restricted_dir.mkdir()
-        restricted_dir.chmod(0o444)  # Read-only directory
-
-        restricted_file = restricted_dir / "cannot_write.txt"
-
-        try:
-            with pytest.raises(PermissionError):
-                await fs_utils.write_file(restricted_file, "Cannot write this")
-        finally:
-            restricted_dir.chmod(0o755)  # Restore permissions for cleanup
-
-    @pytest.mark.asyncio
     async def test_read_file_is_directory_error(self):
         """Test reading when path points to a directory."""
         test_dir = self.temp_dir / "is_directory"
@@ -652,7 +522,7 @@ class TestErrorHandlingInFileOperations:
 
             # Should handle invalid characters gracefully
             try:
-                await fs_utils.write_file(invalid_path, "test")
+                Path(str(invalid_path)).write_text("test")
                 await fs_utils.read_file(invalid_path)
             except (OSError, ValueError):
                 # Expected on some platforms
