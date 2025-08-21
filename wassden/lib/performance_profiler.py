@@ -9,6 +9,7 @@ Implements: REQ-02, TASK-02-02
 import asyncio
 import gc
 import inspect
+import tempfile
 import time
 import tracemalloc
 from collections.abc import Callable
@@ -346,3 +347,125 @@ class PerformanceProfiler:
                 )
 
         return results
+
+    async def profile_operation(
+        self,
+        operation_name: str,
+        rounds: int = 5,
+        warmup: int = 2,
+        memory_profiling: bool = True,
+    ) -> PerformanceReport:
+        """Profile a predefined operation by name.
+
+        Args:
+            operation_name: Name of predefined operation to profile
+            rounds: Number of measurement rounds
+            warmup: Number of warmup rounds
+            memory_profiling: Whether to enable memory profiling
+
+        Returns:
+            Performance report for the operation
+
+        Raises:
+            ProfilingError: If operation not found or profiling fails
+
+        Implements: REQ-02 - 名前指定による定義済み操作のプロファイリング
+        """
+        # Define predefined operations
+        predefined_operations = {
+            "default_operation": self._default_operation,
+            "memory_allocation": self._memory_allocation_operation,
+            "cpu_intensive": self._cpu_intensive_operation,
+            "file_io": self._file_io_operation,
+        }
+
+        if operation_name not in predefined_operations:
+            available_ops = list(predefined_operations.keys())
+            raise ProfilingError(f"Unknown operation '{operation_name}'. Available: {available_ops}")
+
+        operation = predefined_operations[operation_name]
+
+        return await self.profile_custom_operation(
+            operation,
+            operation_name,
+            rounds=rounds,
+            warmup=warmup,
+            memory_profiling=memory_profiling,
+        )
+
+    async def profile_custom_operation(
+        self,
+        operation: Callable[..., Any],
+        _operation_name: str,
+        rounds: int = 5,
+        warmup: int = 2,
+        memory_profiling: bool = True,
+    ) -> PerformanceReport:
+        """Profile a custom operation function.
+
+        Args:
+            operation: Custom operation function to profile
+            operation_name: Name for the operation
+            rounds: Number of measurement rounds
+            warmup: Number of warmup rounds
+            memory_profiling: Whether to enable memory profiling
+
+        Returns:
+            Performance report for the operation
+
+        Raises:
+            ProfilingError: If profiling fails
+
+        Implements: REQ-02 - カスタム操作のプロファイリング
+        """
+        try:
+            # Warmup rounds
+            for _ in range(warmup):
+                try:
+                    if asyncio.iscoroutinefunction(operation):
+                        await operation()
+                    else:
+                        operation()
+                except Exception:
+                    pass  # Ignore warmup errors
+
+            # Force garbage collection before measurement
+            gc.collect()
+
+            # Measurement rounds
+            return await self.measure_performance(
+                operation,
+                rounds=rounds,
+                memory_profiling=memory_profiling,
+            )
+
+        except Exception as e:
+            raise ProfilingError(f"Custom operation profiling failed: {e}") from e
+
+    # Predefined operation implementations
+
+    def _default_operation(self) -> str:
+        """Default operation for testing."""
+        time.sleep(0.001)  # 1ms delay
+        return "default_operation_completed"
+
+    def _memory_allocation_operation(self) -> list[int]:
+        """Memory allocation test operation."""
+        # Allocate approximately 1MB of memory
+        return list(range(250000))  # ~1MB of integers
+
+    def _cpu_intensive_operation(self) -> int:
+        """CPU intensive test operation."""
+        # Calculate sum of squares
+        return sum(i * i for i in range(10000))
+
+    def _file_io_operation(self) -> str:
+        """File I/O test operation."""
+        # Create temporary file and write/read data
+        with tempfile.NamedTemporaryFile(mode="w+", delete=True) as tmp:
+            data = "test data for file I/O operation\n" * 100
+            tmp.write(data)
+            tmp.seek(0)
+            result = tmp.read()
+
+        return result[:50]  # Return first 50 chars
