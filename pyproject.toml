@@ -29,6 +29,8 @@ dependencies = [
     "pydantic>=2.11.7",
     "pycld2>=0.42",
     "markdown>=3.5.0",
+    "numpy>=2.3.2",
+    "scipy>=1.16.1",
 ]
 
 [project.optional-dependencies]
@@ -57,6 +59,7 @@ dev-dependencies = [
     "pre-commit>=4.3.0",
     "psutil>=6.1.1",
     "types-psutil>=6.1.0",
+    "types-pyyaml>=6.0.12.20250809",
 ]
 
 [tool.ruff]
@@ -65,7 +68,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C", "N", "I", "UP", "B", "A", "C4", "ICN", "PIE", "PT", "Q", "RSE", "RET", "SIM", "TID", "TCH", "ARG", "PTH", "PL", "TRY", "PERF", "LOG", "RUF"]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300", "TRY003"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004"]  # Ignore magic value comparisons in test files

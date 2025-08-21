@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -141,8 +142,8 @@ async def test_validate_tasks_handler_with_traceability_issues(temp_dir, incorre
 
 @pytest.mark.asyncio
 async def test_validate_tasks_handler_success_case(temp_dir, correct_requirements, correct_design, correct_tasks):
-    """Test tasks validation handler - should pass with complete traceability (success case)."""
-    # Create files using correct fixtures
+    """Test tasks validation handler - should pass with valid documents (success case)."""
+    # Create files in temp_dir for testing
     req_path = temp_dir / "requirements.md"
     design_path = temp_dir / "design.md"
     tasks_path = temp_dir / "tasks.md"
@@ -151,16 +152,27 @@ async def test_validate_tasks_handler_success_case(temp_dir, correct_requirement
     design_path.write_text(correct_design)
     tasks_path.write_text(correct_tasks)
 
-    # Test with all files present for complete traceability validation
-    result = await tasks.handle_validate_tasks(tasks_path, Language.JAPANESE)
+    # Mock the file reading to use our temp files instead of hardcoded specs/ paths
+    async def mock_read_file(path):
+        path_str = str(path)
+        if "requirements.md" in path_str:
+            return correct_requirements
+        if "design.md" in path_str:
+            return correct_design
+        if "tasks.md" in path_str:
+            return correct_tasks
+        raise FileNotFoundError(f"Mock: {path} not found")
+
+    with patch("wassden.lib.fs_utils.read_file", side_effect=mock_read_file):
+        result = await tasks.handle_validate_tasks(tasks_path, Language.JAPANESE)
 
     assert result.content
     text = result.content[0].text
 
-    # Should show validation warnings due to missing requirements/design files in specs/ directory
-    # The handler looks for files in specs/ directory, not in temp_dir
-    assert "⚠️" in text  # Should show warnings about missing traceability
-    assert "requirements.md is missing" in text or "design.md is missing" in text
+    # For a success case with valid test fixtures, should pass validation
+    assert "✅" in text  # Should show success
+    assert "tasks.md" in text
+    assert "検証に成功" in text  # Should indicate validation success
 
 
 @pytest.mark.asyncio

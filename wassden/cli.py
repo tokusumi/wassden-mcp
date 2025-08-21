@@ -25,6 +25,8 @@ from .handlers import (
     handle_validate_tasks,
 )
 from .lib import fs_utils
+from .lib.experiment import ExperimentType, OutputFormat
+from .lib.experiment_manager import ExperimentManager
 from .lib.language_detection import determine_language
 from .server import main as run_server_with_transport
 from .types import Language
@@ -150,6 +152,142 @@ app = typer.Typer(
     rich_markup_mode="markdown" if _supports_color() else None,
     pretty_exceptions_enable=_supports_color(),
 )
+
+# Create experiment subcommand group
+experiment_app = typer.Typer(
+    help="Experiment runner commands for validation framework testing.",
+    rich_markup_mode="markdown" if _supports_color() else None,
+)
+app.add_typer(experiment_app, name="experiment")
+
+
+# Experiment CLI commands
+@experiment_app.command()
+def run(
+    experiment_type: Annotated[ExperimentType, typer.Argument(help="Type of experiment to run")],
+    config_name: Annotated[str, typer.Option("--config", "-c", help="Configuration name to use")] = "",
+    output_format: Annotated[list[OutputFormat] | None, typer.Option("--format", "-f", help="Output format(s)")] = None,
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 600,
+    memory_limit: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB")] = 100,
+) -> None:
+    """Run an experiment with specified configuration."""
+    print_info(f"Running {experiment_type.value} experiment...")
+
+    if output_format is None:
+        output_format = [OutputFormat.JSON]
+
+    manager = ExperimentManager()
+
+    try:
+        # Load or create configuration
+        if config_name:
+            config = manager.load_config(config_name)
+        else:
+            config = manager.create_default_config(experiment_type)
+            config.timeout_seconds = timeout
+            config.memory_limit_mb = memory_limit
+            config.output_format = output_format
+
+        # Run experiment
+        result = asyncio.run(manager.run_experiment(config))
+
+        print_success(f"Experiment completed: {result.experiment_id}")
+        print_info(f"Status: {result.status.value}")
+        print_info(f"Duration: {result.duration_seconds:.2f}s")
+
+        if result.error_message:
+            print_error(f"Error: {result.error_message}")
+
+    except Exception as e:
+        print_error(f"Experiment failed: {e}")
+        sys.exit(1)
+
+
+@experiment_app.command()
+def save_config(
+    experiment_type: Annotated[ExperimentType, typer.Argument(help="Type of experiment")],
+    name: Annotated[str, typer.Argument(help="Configuration name")],
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 600,
+    memory_limit: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB")] = 100,
+) -> None:
+    """Save experiment configuration to file."""
+    print_info(f"Saving {experiment_type.value} configuration as '{name}'...")
+
+    manager = ExperimentManager()
+
+    try:
+        config = manager.create_default_config(experiment_type)
+        config.timeout_seconds = timeout
+        config.memory_limit_mb = memory_limit
+
+        config_path = manager.save_config(config, name)
+        print_success(f"Configuration saved to: {config_path}")
+
+    except Exception as e:
+        print_error(f"Failed to save configuration: {e}")
+        sys.exit(1)
+
+
+@experiment_app.command()
+def load_config(
+    name: Annotated[str, typer.Argument(help="Configuration name to load")],
+) -> None:
+    """Load and display experiment configuration."""
+    print_info(f"Loading configuration '{name}'...")
+
+    manager = ExperimentManager()
+
+    try:
+        config = manager.load_config(name)
+
+        print_success("Configuration loaded successfully:")
+        exp_type = (
+            config.experiment_type.value if hasattr(config.experiment_type, "value") else str(config.experiment_type)
+        )
+        print_info(f"Type: {exp_type}")
+        print_info(f"Timeout: {config.timeout_seconds}s")
+        print_info(f"Memory limit: {config.memory_limit_mb}MB")
+        output_formats = [fmt.value if hasattr(fmt, "value") else str(fmt) for fmt in config.output_format]
+        print_info(f"Output formats: {output_formats}")
+        print_info(f"Parameters: {config.parameters}")
+
+    except Exception as e:
+        print_error(f"Failed to load configuration: {e}")
+        sys.exit(1)
+
+
+@experiment_app.command()
+def list_configs() -> None:
+    """List available experiment configurations."""
+    print_info("Available configurations:")
+
+    manager = ExperimentManager()
+    configs = manager.list_configs()
+
+    if not configs:
+        print_warning("No configurations found")
+        return
+
+    for config_name in configs:
+        print_info(f"  - {config_name}")
+
+
+@experiment_app.command()
+def status() -> None:
+    """Show status of active experiments."""
+    print_info("Active experiments:")
+
+    manager = ExperimentManager()
+    experiments = manager.list_active_experiments()
+
+    if not experiments:
+        print_warning("No active experiments")
+        return
+
+    for exp in experiments:
+        print_info(f"  {exp.experiment_id}: {exp.status.value} ({exp.config.experiment_type.value})")
+        if exp.duration_seconds > 0:
+            print_info(f"    Duration: {exp.duration_seconds:.2f}s")
 
 
 @app.command()
