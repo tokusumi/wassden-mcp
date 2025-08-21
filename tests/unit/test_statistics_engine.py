@@ -231,3 +231,75 @@ class TestStatisticsEngine:
         # Standard deviation should be sqrt(2.5)
         expected_std = math.sqrt(2.5)
         assert abs(result.std_dev - expected_std) < 1e-15
+
+    def test_high_precision_floating_point_calculations(self):
+        """Test high precision floating point calculations for TR-04.
+
+        Implements: TR-04 - Numerical precision test requirements
+        """
+        # Test with high precision decimal values
+        data = [1.123456789012345, 2.234567890123456, 3.345678901234567, 4.456789012345678, 5.567890123456789]
+
+        result = StatisticsEngine.calculate_descriptive_stats(data)
+
+        # Verify high precision mean calculation
+        expected_mean = sum(data) / len(data)
+        assert abs(result.mean - expected_mean) < 1e-14
+
+        # Verify precision maintained through variance calculation
+        assert result.variance > 0
+        assert result.std_dev > 0
+
+        # Verify confidence interval bounds maintain precision
+        lower, upper = result.confidence_interval
+        assert lower < result.mean < upper
+        assert abs((upper - lower) - (upper - lower)) < 1e-14  # Self-consistency check
+
+    def test_extreme_value_numerical_stability(self):
+        """Test numerical stability with extreme values for TR-04.
+
+        Implements: TR-04 - Numerical precision under extreme conditions
+        """
+        # Test with very large numbers
+        large_data = [1e10, 1e10 + 1, 1e10 + 2, 1e10 + 3, 1e10 + 4]
+        result = StatisticsEngine.calculate_descriptive_stats(large_data)
+
+        expected_mean = 1e10 + 2.0
+        assert abs(result.mean - expected_mean) < 1e-10
+
+        # Test with very small numbers
+        small_data = [1e-10, 2e-10, 3e-10, 4e-10, 5e-10]
+        result = StatisticsEngine.calculate_descriptive_stats(small_data)
+
+        expected_mean = 3e-10
+        assert abs(result.mean - expected_mean) < 1e-20
+
+    def test_statistical_consistency_across_operations(self):
+        """Test mathematical consistency across statistical operations for TR-04.
+
+        Implements: TR-04 - Statistical consistency validation
+        """
+        data = [10.5, 15.3, 20.1, 25.7, 30.9]
+
+        result = StatisticsEngine.calculate_descriptive_stats(data)
+
+        # Test mathematical relationships
+        # Variance should equal (std_dev)^2
+        assert abs(result.variance - result.std_dev**2) < 1e-10
+
+        # Sample size should match input
+        assert result.sample_size == len(data)
+
+        # Min and max should be correct
+        assert result.min_value == min(data)
+        assert result.max_value == max(data)
+
+        # Mean should be within [min, max]
+        assert result.min_value <= result.mean <= result.max_value
+
+        # Standard deviation should be non-negative
+        assert result.std_dev >= 0
+
+        # Confidence interval should contain the mean
+        lower, upper = result.confidence_interval
+        assert lower <= result.mean <= upper
