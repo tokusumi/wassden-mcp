@@ -140,6 +140,44 @@ class LanguageDetectionReport(BaseModel):
     statistics: StatisticalSummary = Field(description="Confidence score statistics")
 
 
+class StatisticalComparison(BaseModel):
+    """Statistical comparison between two groups of data."""
+
+    baseline_mean: float = Field(description="Mean of baseline group")
+    comparison_mean: float = Field(description="Mean of comparison group")
+    baseline_std: float = Field(description="Standard deviation of baseline group")
+    comparison_std: float = Field(description="Standard deviation of comparison group")
+    t_statistic: float = Field(description="T-test statistic")
+    p_value: float = Field(description="P-value from statistical test")
+    degrees_of_freedom: int = Field(description="Degrees of freedom")
+    effect_size: float = Field(description="Cohen's d effect size")
+    is_significant: bool = Field(description="Whether difference is statistically significant (p < 0.05)")
+    confidence_interval_lower: float = Field(description="Lower bound of 95% confidence interval for difference")
+    confidence_interval_upper: float = Field(description="Upper bound of 95% confidence interval for difference")
+
+
+class ComparisonResult(BaseModel):
+    """Result of comparison between two experiments."""
+
+    baseline_experiment_id: str = Field(description="ID of baseline experiment")
+    comparison_experiment_id: str = Field(description="ID of comparison experiment")
+    metric_name: str = Field(description="Name of compared metric")
+    baseline_values: list[float] = Field(description="Values from baseline experiment")
+    comparison_values: list[float] = Field(description="Values from comparison experiment")
+    statistical_comparison: StatisticalComparison = Field(description="Statistical analysis results")
+    improvement_percentage: float = Field(description="Percentage improvement (negative if worse)")
+
+
+class ComparativeExperimentReport(BaseModel):
+    """Report of comparative experiment analysis."""
+
+    baseline_experiment: "ExperimentResult" = Field(description="Baseline experiment result")
+    comparison_experiments: list["ExperimentResult"] = Field(description="Comparison experiment results")
+    comparisons: list[ComparisonResult] = Field(description="Statistical comparison results")
+    summary_statistics: dict[str, Any] = Field(description="Overall summary statistics")
+    recommendations: list[str] = Field(default_factory=list, description="Analysis recommendations")
+
+
 class ExperimentResult(BaseModel):
     """Result of experiment execution."""
 

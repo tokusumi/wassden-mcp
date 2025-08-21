@@ -8,10 +8,10 @@ This module provides the core API functions required by TASK-02-05:
 Implements: REQ-08, TASK-02-05
 """
 
-import asyncio
 from pathlib import Path
 from typing import Any
 
+from wassden.lib.comparative_analyzer import ComparativeAnalyzer
 from wassden.lib.ears_analyzer import EARSAnalyzer
 from wassden.lib.experiment import (
     EARSCoverageReport,
@@ -370,14 +370,59 @@ async def _run_comparative_experiment(config: ExperimentConfig, manager: Experim
     try:
         manager.update_experiment_status(result.experiment_id, ExperimentStatus.RUNNING)
 
-        # This is a placeholder for comparative experiments
-        # Full implementation would require statistical comparison logic
-        await asyncio.sleep(0.1)  # Simulate work
+        # Extract parameters
+        baseline_experiment_id = config.parameters.get("baseline_experiment_id")
+        comparison_experiment_ids = config.parameters.get("comparison_experiment_ids", [])
+        metrics_to_compare = config.parameters.get("metrics_to_compare")
+
+        # Validate parameters
+        _validate_baseline_experiment_id(baseline_experiment_id)
+        _validate_comparison_experiment_ids(comparison_experiment_ids)
+
+        # Get experiment results from manager
+        baseline_exp = manager.get_experiment_result(str(baseline_experiment_id))
+        _validate_experiment_exists(str(baseline_experiment_id), baseline_exp)
+
+        comparison_exps = []
+        for comp_id in comparison_experiment_ids:
+            comp_exp = manager.get_experiment_result(comp_id)
+            _validate_experiment_exists(comp_id, comp_exp)
+            comparison_exps.append(comp_exp)
+
+        # Ensure all experiments are non-None before analysis
+        _validate_baseline_experiment_exists(str(baseline_experiment_id), baseline_exp)
+        _validate_comparison_experiments_exist(comparison_exps)
+
+        # Type assertion after validation
+        assert baseline_exp is not None
+        valid_comparison_exps = [comp_exp for comp_exp in comparison_exps if comp_exp is not None]
+
+        # Run comparative analysis
+        analyzer = ComparativeAnalyzer()
+        comparative_report = analyzer.compare_experiments(
+            baseline_experiment=baseline_exp,
+            comparison_experiments=valid_comparison_exps,
+            metrics_to_compare=metrics_to_compare,
+        )
+
+        # Format output if requested
+        formatter = OutputFormatter()
+        formatted_outputs = {}
+        for fmt in config.output_format:
+            if fmt == OutputFormat.JSON:
+                formatted_outputs["json"] = formatter.format_to_json(comparative_report)
+            elif fmt == OutputFormat.CSV:
+                formatted_outputs["csv"] = formatter.format_to_csv(comparative_report)
 
         metadata = {
-            "experiment_type": "comparative",
-            "status": "implemented_as_placeholder",
-            "note": "Full comparative analysis implementation pending",
+            "comparative_report": comparative_report.model_dump(),
+            "formatted_outputs": formatted_outputs,
+            "baseline_experiment_id": baseline_experiment_id,
+            "comparison_experiment_ids": comparison_experiment_ids,
+            "total_comparisons": len(comparative_report.comparisons),
+            "significant_differences": len(
+                [c for c in comparative_report.comparisons if c.statistical_comparison.is_significant]
+            ),
         }
 
         manager.update_experiment_status(result.experiment_id, ExperimentStatus.COMPLETED, metadata=metadata)
@@ -426,6 +471,37 @@ def _validate_test_documents_parameter(test_documents: list[dict[str, Any]]) -> 
     """Validate test_documents parameter for experiments."""
     if not test_documents:
         raise InvalidParametersError("test_documents parameter is required for language detection experiment")
+
+
+def _validate_baseline_experiment_id(baseline_experiment_id: str | None) -> None:
+    """Validate baseline experiment ID parameter."""
+    if not baseline_experiment_id:
+        raise InvalidParametersError("baseline_experiment_id parameter is required for comparative experiment")
+
+
+def _validate_comparison_experiment_ids(comparison_experiment_ids: list[str]) -> None:
+    """Validate comparison experiment IDs parameter."""
+    if not comparison_experiment_ids:
+        raise InvalidParametersError("comparison_experiment_ids parameter is required for comparative experiment")
+
+
+def _validate_experiment_exists(experiment_id: str, experiment: ExperimentResult | None) -> None:
+    """Validate that an experiment result exists."""
+    if not experiment:
+        raise InvalidParametersError(f"Experiment not found: {experiment_id}")
+
+
+def _validate_baseline_experiment_exists(baseline_experiment_id: str, baseline_exp: ExperimentResult | None) -> None:
+    """Validate that baseline experiment exists."""
+    if baseline_exp is None:
+        raise InvalidParametersError(f"Baseline experiment not found: {baseline_experiment_id}")
+
+
+def _validate_comparison_experiments_exist(comparison_exps: list[ExperimentResult | None]) -> None:
+    """Validate that all comparison experiments exist."""
+    for comp_exp in comparison_exps:
+        if comp_exp is None:
+            raise InvalidParametersError("One or more comparison experiments not found")
 
 
 def _raise_unsupported_experiment_type(experiment_type: ExperimentType) -> None:

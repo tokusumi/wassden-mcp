@@ -437,6 +437,56 @@ def measure_performance_cmd(
         sys.exit(1)
 
 
+@experiment_app.command(name="compare")
+def compare_experiments_cmd(
+    baseline_id: Annotated[str, typer.Argument(help="Baseline experiment ID")],
+    comparison_ids: Annotated[list[str], typer.Argument(help="Comparison experiment IDs")],
+    metrics: Annotated[list[str] | None, typer.Option("--metrics", "-m", help="Metrics to compare")] = None,
+    output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format")] = OutputFormat.JSON,
+) -> None:
+    """Compare experiments with statistical analysis - implements REQ-07."""
+    print_info(f"Comparing experiments: {baseline_id} vs {comparison_ids}")
+
+    try:
+        # Prepare parameters
+        parameters = {
+            "baseline_experiment_id": baseline_id,
+            "comparison_experiment_ids": comparison_ids,
+        }
+        if metrics:
+            parameters["metrics_to_compare"] = metrics
+
+        # Run comparative experiment
+        result = asyncio.run(
+            run_experiment(
+                experiment_type=ExperimentType.COMPARATIVE,
+                parameters=parameters,
+                output_format=[output_format],
+            )
+        )
+
+        print_success("Comparative analysis completed")
+        print_info(f"Experiment ID: {result.experiment_id}")
+        print_info(f"Status: {result.status.value}")
+
+        # Display summary from metadata
+        if result.metadata:
+            total_comparisons = result.metadata.get("total_comparisons", 0)
+            significant_differences = result.metadata.get("significant_differences", 0)
+            print_info(f"Total comparisons: {total_comparisons}")
+            print_info(f"Significant differences: {significant_differences}")
+
+            # Display formatted output
+            formatted_outputs = result.metadata.get("formatted_outputs", {})
+            if output_format.value in formatted_outputs:
+                print_info(f"\n--- {output_format.value.upper()} Report ---")
+                typer.echo(formatted_outputs[output_format.value])
+
+    except Exception as e:
+        print_error(f"Comparative analysis failed: {e}")
+        sys.exit(1)
+
+
 @app.command()
 def start_mcp_server(
     transport: Annotated[TransportType, typer.Option(help="Transport type")] = TransportType.STDIO,

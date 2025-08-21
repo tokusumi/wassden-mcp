@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from wassden.lib.experiment import (
+    ComparativeExperimentReport,
     EARSCoverageReport,
     ExperimentResult,
     LanguageDetectionReport,
@@ -372,4 +373,40 @@ class OutputFormatter:
         if format_type == OutputFormat.CSV:
             data = report.model_dump()
             return self.format_to_csv(data)
+        raise FormatConversionError(f"Unsupported format: {format_type}")
+
+    def format_comparative_experiment_report(
+        self, report: ComparativeExperimentReport, format_type: OutputFormat
+    ) -> str:
+        """Format ComparativeExperimentReport to specified format.
+
+        Args:
+            report: Comparative experiment report to format
+            format_type: Output format type
+
+        Returns:
+            Formatted string
+        """
+        if format_type == OutputFormat.JSON:
+            return self.format_to_json(report)
+        if format_type == OutputFormat.CSV:
+            # For CSV, focus on the comparison results as the most important data
+            comparison_data = []
+            for comparison in report.comparisons:
+                row = {
+                    "metric_name": comparison.metric_name,
+                    "baseline_experiment_id": comparison.baseline_experiment_id,
+                    "comparison_experiment_id": comparison.comparison_experiment_id,
+                    "baseline_mean": comparison.statistical_comparison.baseline_mean,
+                    "comparison_mean": comparison.statistical_comparison.comparison_mean,
+                    "improvement_percentage": comparison.improvement_percentage,
+                    "p_value": comparison.statistical_comparison.p_value,
+                    "is_significant": comparison.statistical_comparison.is_significant,
+                    "effect_size": comparison.statistical_comparison.effect_size,
+                    "confidence_interval_lower": comparison.statistical_comparison.confidence_interval_lower,
+                    "confidence_interval_upper": comparison.statistical_comparison.confidence_interval_upper,
+                }
+                comparison_data.append(row)
+
+            return self.format_to_csv(comparison_data)
         raise FormatConversionError(f"Unsupported format: {format_type}")

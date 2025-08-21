@@ -8,6 +8,7 @@ modify your filesystem. It only reads files and generates analysis/prompts.
 """
 
 from pathlib import Path
+from typing import Literal
 
 from fastmcp import FastMCP
 
@@ -209,7 +210,7 @@ async def generate_review_prompt(
 
 
 def main(
-    transport: str = "stdio",
+    transport: Literal["stdio", "sse", "streamable-http"] = "stdio",
     host: str = "127.0.0.1",
     port: int = 3001,
 ) -> None:
@@ -223,7 +224,7 @@ def main(
     if transport == "stdio":
         mcp.run()
     elif transport in ["sse", "streamable-http"]:
-        mcp.run(transport=transport, host=host, port=port)  # type: ignore[arg-type]
+        mcp.run(transport=transport, host=host, port=port)
     else:
         msg = f"Invalid transport: {transport}"
         raise ValueError(msg)
