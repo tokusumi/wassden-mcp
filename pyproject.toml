@@ -28,6 +28,14 @@ dependencies = [
     "typing-extensions>=4.14.1",
     "pydantic>=2.11.7",
     "pycld2>=0.42",
+    "markdown>=3.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "language-tool-python>=2.8",
+    "pandas>=2.1.0",
+    "rich>=13.0.0",
 ]
 
 [project.urls]
@@ -41,6 +49,7 @@ wassden = "wassden.cli:app"
 dev-dependencies = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "types-Markdown>=3.5.0",
     "pytest-asyncio>=1.1.0",
     "ruff>=0.12.9",
     "mypy>=1.17.1",

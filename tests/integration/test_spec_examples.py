@@ -77,7 +77,8 @@ class TestSpecExamples:
             ],
         )
         assert success, f"{lang_name} traceability check failed: {output}"
-        assert "トレーサビリティレポート" in output, f"{lang_name} should generate traceability report"
+        expected_title = "トレーサビリティレポート" if lang == "ja" else "Traceability Report"
+        assert expected_title in output, f"{lang_name} should generate traceability report"
 
     @pytest.mark.parametrize(
         ("input_text", "expected_lang"),
@@ -162,7 +163,8 @@ class TestSpecExamplesIntegration:
         assert success, f"Traceability check failed for {lang}"
 
         # Verify traceability coverage
-        assert "要件カバレッジ: 100.0%" in output, f"Requirements coverage should be 100% for {lang}"
+        expected_coverage = "要件カバレッジ: 100.0%" if lang == "ja" else "Requirements coverage: 100.0%"
+        assert expected_coverage in output, f"Requirements coverage should be 100% for {lang}"
 
     def test_cross_language_consistency(self, base_dir):
         """Test that Japanese and English examples have consistent structure."""
@@ -198,7 +200,7 @@ class TestSpecExamplesIntegration:
 
         # Both should have 100% requirements coverage
         assert "要件カバレッジ: 100.0%" in ja_output, "Japanese should have 100% requirements coverage"
-        assert "要件カバレッジ: 100.0%" in en_output, "English should have 100% requirements coverage"
+        assert "Requirements coverage: 100.0%" in en_output, "English should have 100% requirements coverage"
 
         # Extract requirement counts (should be the same)
 

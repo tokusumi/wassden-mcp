@@ -37,7 +37,7 @@ async def handle_validate_requirements(
     try:
         content = await fs_utils.read_file(requirements_path)
         i18n = get_i18n(language)
-        validation_result = validate.validate_requirements(content)
+        validation_result = validate.validate_requirements(content, language)
 
         if validation_result["isValid"]:
             stats = validation_result["stats"]

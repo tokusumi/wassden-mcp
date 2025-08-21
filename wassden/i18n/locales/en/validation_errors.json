@@ -26,6 +26,15 @@
       "milestones": "Milestones"
     }
   },
+  "ears": {
+    "missing_system_prefix_ja": "「システムは」または「本システムは」で始まっていません",
+    "missing_action_suffix_ja": "「すること」または「する」で終わっていません",
+    "pattern_mismatch_ja": "Ubiquitousパターンに適合していません",
+    "missing_system_prefix_en": "Not starting with 'The system'",
+    "missing_shall_en": "Missing 'shall' after 'The system'",
+    "missing_period_en": "Not ending with period",
+    "pattern_mismatch_en": "Does not match Ubiquitous pattern"
+  },
   "errors": {
     "missing_section": "Missing required section: {section}",
     "invalid_req_id": "Invalid REQ-ID format: {id}",

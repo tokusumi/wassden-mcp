@@ -3,6 +3,9 @@
 import re
 from typing import Any
 
+from wassden.types import Language
+
+from .validate_ears import validate_ears_in_content
 from .validation_common import (
     check_circular_dependencies,
     check_design_coverage_with_threshold,
@@ -281,9 +284,15 @@ def validate_spec_structure(spec_type: str, content: str) -> dict[str, Any]:
     return {"isValid": len(errors) == 0, "errors": errors}
 
 
-def validate_requirements(content: str) -> dict[str, Any]:
+def validate_requirements(content: str, language: Language = Language.JAPANESE) -> dict[str, Any]:
     """Validate requirements document."""
     errors = validate_requirements_structure(content)
+
+    # EARS validation
+    ears_result = validate_ears_in_content(content, language)
+    if ears_result.rate < 1.0:  # If not all requirements match EARS pattern
+        for violation in ears_result.violations:
+            errors.append(f"EARS violation (line {violation.line}): {violation.reason}")
 
     # Count stats
     req_ids = list(extract_req_ids(content))
@@ -326,6 +335,7 @@ def validate_requirements(content: str) -> dict[str, Any]:
             "totalTRs": len(set(tr_ids)),
         },
         "foundSections": found_sections,
+        "ears": ears_result.to_dict()["ears"],
     }
 
 
