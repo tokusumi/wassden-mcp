@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from wassden.cli import app
+from wassden.clis.core import app
 
 
 class TestCLICommands:
