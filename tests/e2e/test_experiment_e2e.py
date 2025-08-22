@@ -7,6 +7,7 @@ Tests for TASK-03-03 requirements:
 Implements: TASK-03-03 - End-to-end testing requirements
 """
 
+import asyncio
 import json
 import tempfile
 from pathlib import Path
@@ -61,15 +62,25 @@ def test_performance_function():
         full_command = ["uv", "run", "--active", "wassden", *command]
         return run(full_command, capture_output=True, text=True, check=check, cwd=Path.cwd())
 
-    def test_cli_help_commands(self):
-        """Test TR-06: CLI help commands work end-to-end."""
-        # Test main help
+    async def run_cli_command_async(self, command: list[str]) -> tuple[str, int, str]:
+        """Run CLI command asynchronously and return (command, returncode, stdout)."""
+        full_command = ["uv", "run", "--active", "wassden", *command]
+        proc = await asyncio.create_subprocess_exec(
+            *full_command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=Path.cwd()
+        )
+        stdout, _ = await proc.communicate()
+        return command[0] if command else "unknown", proc.returncode or 0, stdout.decode()
+
+    @pytest.mark.asyncio
+    async def test_cli_help_commands(self):
+        """Test TR-06: CLI help commands work end-to-end (async parallel version)."""
+        # Test main help first
         result = self.run_cli_command(["--help"])
         assert result.returncode == 0
         assert "wassden" in result.stdout
         assert "Usage:" in result.stdout
 
-        # Test subcommand help
+        # Test subcommand help in parallel
         subcommands = [
             "check-completeness",
             "validate-requirements",
@@ -85,11 +96,28 @@ def test_performance_function():
             "start-mcp-server",
         ]
 
-        for cmd in subcommands:
-            result = self.run_cli_command([cmd, "--help"], check=False)
-            # Some commands may not exist or may have different help structures
-            if result.returncode == 0:
-                assert "Usage:" in result.stdout or "help" in result.stdout.lower()
+        # Run all subcommand help tests concurrently
+        help_commands = [[cmd, "--help"] for cmd in subcommands]
+        results = await asyncio.gather(
+            *[self.run_cli_command_async(cmd) for cmd in help_commands], return_exceptions=True
+        )
+
+        # Verify results
+        successful_commands = 0
+        for result in results:
+            if isinstance(result, Exception):
+                # Log error but don't fail test - some commands might not exist
+                continue
+
+            cmd, returncode, stdout = result
+            if returncode == 0:
+                successful_commands += 1
+                assert "Usage:" in stdout or "help" in stdout.lower(), f"Command {cmd} help should contain usage info"
+
+        # At least half of the commands should work
+        assert successful_commands >= len(subcommands) // 2, (
+            f"Expected at least {len(subcommands) // 2} commands to work, got {successful_commands}"
+        )
 
     def test_cli_basic_functionality(self):
         """Test TR-06: Basic CLI functionality end-to-end."""
