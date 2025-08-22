@@ -1,4 +1,4 @@
-.PHONY: format lint typecheck test check ci validate-examples help
+.PHONY: format lint typecheck test test-core test-dev check ci ci-core validate-examples help
 
 # Individual commands
 format:
@@ -13,11 +13,18 @@ typecheck:
 test:
 	uv run --active pytest --cov=wassden
 
+test-core:
+	uv run --active pytest --cov=wassden -m "not dev"
+
+test-dev:
+	uv run --active pytest --cov=wassden -m "dev"
+
 validate-examples:
 	uv run --active pytest tests/integration/test_spec_examples.py -v
 
 # Composite commands
 check: format lint typecheck test
+	@scripts/verify-dev-cli.sh
 	@echo "✅ All checks passed!"
 
 ci:
@@ -25,14 +32,26 @@ ci:
 	uv run ruff check
 	uv run mypy wassden
 	uv run pytest --cov=wassden
-	@echo "✅ All CI checks passed!"
+	@scripts/verify-dev-cli.sh
+	@echo "✅ CI checks passed!"
+
+ci-core:
+	uv run ruff format --check
+	uv run ruff check
+	uv run mypy wassden
+	uv run pytest --cov=wassden -m "not dev"
+	@scripts/verify-core-cli.sh
+	@echo "✅ Core CI checks passed!"
 
 help:
 	@echo "Available commands:"
-	@echo "  format    - Format code with ruff"
-	@echo "  lint      - Lint code with ruff"
-	@echo "  typecheck - Type check with mypy"
-	@echo "  test      - Run tests with coverage"
-	@echo "  check     - Run format, lint, typecheck, and test with coverage"
-	@echo "  ci        - Run CI checks (format --check, lint, typecheck, test with coverage)"
+	@echo "  format          - Format code with ruff"
+	@echo "  lint            - Lint code with ruff"
+	@echo "  typecheck       - Type check with mypy"
+	@echo "  test            - Run all tests with coverage"
+	@echo "  test-core       - Run core tests only (no dev dependencies)"
+	@echo "  test-dev        - Run dev tests only (requires dev dependencies)"
+	@echo "  check           - Run all checks with dev CLI verification (local dev)"
+	@echo "  ci              - Run CI checks for dev mode"
+	@echo "  ci-core         - Run CI checks for core functionality"
 	@echo "  validate-examples - Run integration tests for spec examples (Japanese and English)"

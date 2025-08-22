@@ -20,7 +20,10 @@ from wassden.lib.experiment_manager import (
     ExperimentManagerError,
 )
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestExperimentManagerExecution:
     """Test experiment execution management functionality."""
 
@@ -118,6 +121,7 @@ class TestExperimentManagerExecution:
         assert isinstance(error, ExperimentManagerError)
 
 
+@pytest.mark.dev
 class TestExperimentManagerAdvanced:
     """Test advanced ExperimentManager functionality."""
 
@@ -221,6 +225,7 @@ class TestExperimentManagerAdvanced:
                 assert loaded_config.experiment_type == exp_type
 
 
+@pytest.mark.dev
 class TestExperimentManagerInit:
     """Test ExperimentManager initialization."""
 
@@ -245,6 +250,7 @@ class TestExperimentManagerInit:
         assert manager._active_experiments == {}
 
 
+@pytest.mark.dev
 class TestExperimentManagerSaveConfig:
     """Test save_config method with real file operations."""
 
@@ -338,6 +344,7 @@ class TestExperimentManagerSaveConfig:
             assert saved_data["timeout_seconds"] == 200
 
 
+@pytest.mark.dev
 class TestExperimentManagerLoadConfig:
     """Test load_config method."""
 
@@ -375,6 +382,7 @@ class TestExperimentManagerLoadConfig:
                 manager.load_config("nonexistent")
 
 
+@pytest.mark.dev
 class TestExperimentManagerCreateDefaultConfig:
     """Test create_default_config method."""
 
@@ -419,6 +427,7 @@ class TestExperimentManagerCreateDefaultConfig:
         assert OutputFormat.JSON in config.output_format
 
 
+@pytest.mark.dev
 class TestExperimentManagerListConfigs:
     """Test list_configs method."""
 
@@ -480,6 +489,7 @@ class TestExperimentManagerListConfigs:
             assert configs == ["valid_config"]
 
 
+@pytest.mark.dev
 class TestExperimentManagerBasicFunctionality:
     """Test basic experiment manager functionality that is implemented."""
 
@@ -502,6 +512,7 @@ class TestExperimentManagerBasicFunctionality:
             assert loaded_config.memory_limit_mb == 150
 
 
+@pytest.mark.dev
 class TestExperimentManagerAsyncExecution:
     """Test asynchronous experiment execution functionality."""
 

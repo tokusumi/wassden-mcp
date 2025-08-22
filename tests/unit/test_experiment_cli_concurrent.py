@@ -22,7 +22,10 @@ from wassden.lib.experiment import (
     ExperimentType,
 )
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestExperimentCLIConcurrentPatterns:
     """Test multiple experiment execution and error handling patterns."""
 

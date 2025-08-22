@@ -17,7 +17,10 @@ from wassden.lib.experiment_api import InvalidParametersError
 from wassden.lib.language_detection import determine_language
 from wassden.lib.statistics_engine import StatisticsEngine
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestExperimentIntegrationCore:
     """Core integration tests for experiment functionality."""
 
@@ -251,6 +254,7 @@ class TestExperimentIntegrationCore:
         print(f"Precision test passed: mean={stats_summary.mean:.15f}")
 
 
+@pytest.mark.dev
 class TestIntegrationAcceptanceCriteria:
     """Test specific acceptance criteria from TASK-03-02."""
 

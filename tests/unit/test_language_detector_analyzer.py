@@ -17,7 +17,10 @@ from wassden.lib.language_detector_analyzer import (
 )
 from wassden.types import Language
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestLanguageDetectorAnalyzer:
     """Test cases for LanguageDetectorAnalyzer."""
 

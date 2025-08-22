@@ -5,7 +5,6 @@ and should be enabled based on optional dependencies installation.
 """
 
 import importlib.util
-from importlib import metadata
 
 
 def is_dev_mode() -> bool:
@@ -15,24 +14,20 @@ def is_dev_mode() -> bool:
         bool: True if development mode dependencies are installed, False otherwise.
     """
     try:
-        # Check for dev-specific packages that are only installed with [dev]
-        dev_packages = ["language-tool-python", "pandas", "rich"]
+        # Check for scipy specifically since it's the main blocker for experiment features
+        scipy_spec = importlib.util.find_spec("scipy")
+        if scipy_spec is None:
+            return False
 
-        for package in dev_packages:
-            try:
-                importlib.util.find_spec(package)
-            except (ImportError, AttributeError, ValueError):
+        # Also check for other critical dev packages
+        critical_dev_packages = ["pandas", "language_tool_python"]
+
+        for package in critical_dev_packages:
+            spec = importlib.util.find_spec(package)
+            if spec is None:
                 return False
 
-        # Additional check: verify wassden was installed with [dev] extra
-        try:
-            metadata.distribution("wassden")
-            # If we can import the dev packages and wassden is installed,
-            # we consider dev mode available
-            return True
-        except metadata.PackageNotFoundError:
-            # If wassden is not found in metadata, assume development installation
-            return True
+        return True
 
     except Exception:
         return False

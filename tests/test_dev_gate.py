@@ -2,9 +2,13 @@
 
 from unittest.mock import patch
 
+import pytest
 from typer.testing import CliRunner
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestDevGate:
     """Test development mode gating functionality."""
 

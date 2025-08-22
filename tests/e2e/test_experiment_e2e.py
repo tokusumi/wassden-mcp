@@ -14,7 +14,10 @@ from subprocess import CompletedProcess, run
 
 import pytest
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestExperimentE2E:
     """End-to-end tests for experiment functionality."""
 
@@ -45,6 +48,7 @@ class TestExperimentE2E:
     def performance_function_code(self):
         """Create sample performance function code."""
         return """
+@pytest.mark.dev
 def test_performance_function():
     total = 0
     for i in range(10000):
@@ -328,6 +332,7 @@ def test_performance_function():
             sample_markdown_file.unlink()
 
 
+@pytest.mark.dev
 class TestExperimentFileOutputFormats:
     """Specific tests for experiment file output formats (TR-05)."""
 

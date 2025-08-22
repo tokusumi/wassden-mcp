@@ -36,7 +36,10 @@ from wassden.lib.experiment_api import (
     run_experiment,
 )
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestExperimentAPIExceptions:
     """Test experiment API exception classes with meaningful scenarios."""
 
@@ -61,6 +64,7 @@ class TestExperimentAPIExceptions:
         assert execution_error.__cause__ == original_error
 
 
+@pytest.mark.dev
 class TestRunExperiment:
     """Test run_experiment function with realistic scenarios."""
 
@@ -158,6 +162,7 @@ class TestRunExperiment:
         assert "csv" in result.metadata["formatted_outputs"]
 
 
+@pytest.mark.dev
 class TestExperimentAPIBoundaryValues:
     """Test boundary values and edge cases for experiment API."""
 
@@ -442,6 +447,7 @@ class TestExperimentAPIBoundaryValues:
             assert config_used.memory_limit_mb == 200
 
 
+@pytest.mark.dev
 class TestExperimentAPIValidation:
     """Test validation functions with complex scenarios."""
 
@@ -674,6 +680,7 @@ class TestExperimentAPIValidation:
         mock_run_lang.assert_called_once()
 
 
+@pytest.mark.dev
 class TestMeasureEarsCoverage:
     """Test measure_ears_coverage function directly."""
 
@@ -773,6 +780,7 @@ class TestMeasureEarsCoverage:
             await measure_ears_coverage([test_file])
 
 
+@pytest.mark.dev
 class TestMeasurePerformance:
     """Test measure_performance function directly."""
 
@@ -856,6 +864,7 @@ class TestMeasurePerformance:
             await measure_performance("test_operation")
 
 
+@pytest.mark.dev
 class TestValidationHelpers:
     """Test validation helper functions directly."""
 
@@ -918,6 +927,7 @@ class TestValidationHelpers:
             _raise_unsupported_experiment_type(unsupported_type)
 
 
+@pytest.mark.dev
 class TestExperimentRunners:
     """Test internal experiment runner functions."""
 

@@ -16,7 +16,10 @@ from wassden.lib.performance_profiler import (
     ProfilingError,
 )
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestPerformanceProfiler:
     """Test cases for PerformanceProfiler."""
 

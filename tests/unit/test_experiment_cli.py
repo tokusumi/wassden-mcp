@@ -23,6 +23,8 @@ from wassden.lib.experiment import (
     OutputFormat,
 )
 
+pytestmark = pytest.mark.dev
+
 
 @pytest.fixture
 def temp_config_path():
@@ -49,6 +51,7 @@ def reset_all_mocks():
     patch.stopall()
 
 
+@pytest.mark.dev
 class TestExperimentCLIRunCommand:
     """Test run command with realistic scenarios using actual async patterns."""
 
@@ -213,6 +216,7 @@ class TestExperimentCLIRunCommand:
         assert "Experiment failed: Experiment timeout" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLISaveConfig:
     """Test save-config command functionality."""
 
@@ -278,6 +282,7 @@ class TestExperimentCLISaveConfig:
         # Simply verify that save_config was called - the exact parameters are implementation details
 
 
+@pytest.mark.dev
 class TestExperimentCLILoadConfig:
     """Test load-config command functionality."""
 
@@ -322,6 +327,7 @@ class TestExperimentCLILoadConfig:
         mock_manager.load_config.assert_called_once_with("ears_test_config")
 
 
+@pytest.mark.dev
 class TestExperimentCLIListConfigs:
     """Test list-configs command functionality."""
 
@@ -356,6 +362,7 @@ class TestExperimentCLIListConfigs:
         assert "Available configurations:" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLIEdgeCases:
     """Test edge cases and error conditions with async patterns."""
 
@@ -462,6 +469,7 @@ class TestExperimentCLIEdgeCases:
         assert call_args.args[4] == temp_config_path  # config_path
 
 
+@pytest.mark.dev
 class TestExperimentCLIImportConfig:
     """Test import-config command functionality."""
 
@@ -554,6 +562,7 @@ class TestExperimentCLIImportConfig:
         assert "Invalid JSON in configuration file" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLIStatus:
     """Test status command functionality."""
 
@@ -614,6 +623,7 @@ class TestExperimentCLIStatus:
         assert "No active experiments" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLIRunExperimentCommand:
     """Test run-experiment command functionality."""
 
@@ -702,6 +712,7 @@ class TestExperimentCLIRunExperimentCommand:
         assert "Experiment failed: API error" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLIMeasureEarsCoverage:
     """Test measure-ears-coverage command functionality."""
 
@@ -773,6 +784,7 @@ class TestExperimentCLIMeasureEarsCoverage:
         assert "EARS coverage measurement failed: Analysis error" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLIMeasurePerformance:
     """Test measure-performance command functionality."""
 
@@ -842,6 +854,7 @@ class TestExperimentCLIMeasurePerformance:
         assert "Performance measurement failed: Performance error" in result.output
 
 
+@pytest.mark.dev
 class TestExperimentCLICompareExperiments:
     """Test compare command functionality."""
 

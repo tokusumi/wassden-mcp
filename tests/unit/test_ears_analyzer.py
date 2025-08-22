@@ -19,7 +19,10 @@ from wassden.lib.experiment import EARSCoverageReport, EARSViolationDetail
 from wassden.lib.validate_ears import EARSValidationResult, EARSViolation
 from wassden.types import Language
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestEARSAnalyzer:
     """Test cases for EARSAnalyzer."""
 

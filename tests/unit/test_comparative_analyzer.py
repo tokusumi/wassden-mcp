@@ -23,7 +23,10 @@ from wassden.lib.experiment import (
     StatisticalComparison,
 )
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestComparativeAnalyzer:
     """Test cases for ComparativeAnalyzer with numerical precision focus."""
 

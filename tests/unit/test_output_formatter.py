@@ -29,7 +29,10 @@ from wassden.lib.output_formatter import (
     OutputFormatter,
 )
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestOutputFormatter:
     """Test cases for OutputFormatter."""
 

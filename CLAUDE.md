@@ -11,12 +11,15 @@
 ## Commands
 
 ### Development Commands
-- **All checks**: `make check` - Runs format, lint, typecheck, and test with coverage in sequence
-- **CI checks**: `make ci` - Runs all checks without modifying files (format --check mode)
+- **All checks**: `make check` - Runs format, lint, typecheck, test, and CLI verification for dev mode
+- **CI dev mode**: `make ci` - Runs all checks for dev mode in CI (format --check, with dev dependencies)
+- **CI core mode**: `make ci-core` - Runs checks for core functionality only (no dev dependencies)
 - **Format code**: `make format` - Format code with ruff
 - **Lint code**: `make lint` - Lint code with ruff check
 - **Type check**: `make typecheck` - Type check with mypy
-- **Run tests**: `make test` - Run tests with coverage using pytest
+- **Run all tests**: `make test` - Run all tests with coverage using pytest
+- **Run core tests**: `make test-core` - Run core tests only (excludes dev-marked tests)
+- **Run dev tests**: `make test-dev` - Run dev tests only (requires dev dependencies)
 - **Validate examples**: `make validate-examples` - Run integration tests for spec examples in both Japanese and English
 - **Help**: `make help` - Show all available make commands
 
@@ -37,7 +40,7 @@
 - **Default Fallback**: Defaults to Japanese (`ja`) when detection is uncertain
 
 ### Experiment Framework Commands (Dev Mode Only)
-**⚠️ NOTE: These commands require development installation with `uv sync` and are only available when dev dependencies are installed.**
+**⚠️ NOTE: These commands require development installation with `uv sync --extra dev` and are only available when dev dependencies are installed.**
 
 #### Running Experiments
 - **Run experiment**: `uv run wassden experiment run <type>` - Execute validation experiments
@@ -76,7 +79,8 @@
 - **concurrent_20_tools**: 0.26ms mean (excellent concurrency performance)
 
 ### Development Setup
-- **Install deps**: `uv sync` - Install all dependencies including dev dependencies
+- **Install core deps**: `uv sync` - Install core dependencies only
+- **Install with dev deps**: `uv sync --extra dev` - Install all dependencies including dev dependencies
 - **Pre-commit**: `pre-commit install` - Install pre-commit hooks (runs `make check` and validates spec examples)
 
 ## Code Quality Standards
@@ -89,7 +93,8 @@
 - Spec examples must pass validation for both Japanese and English versions
 
 ## CI/CD Pipeline
-- **Main CI**: Runs `make check` on code changes (format, lint, typecheck, test)
+- **Dev CI (ci.yml)**: Runs `make ci` with dev dependencies - tests all functionality including experiments
+- **Core CI (ci-mcp.yml)**: Runs `make ci-core` without dev dependencies - tests core MCP functionality only
 - **Spec Examples CI**: Validates multi-language documentation when docs or core code changes
 - **Pre-commit hooks**: Run quality checks and spec validation before commits
 - **Automated validation**: GitHub Actions ensures spec examples remain consistent across languages
@@ -199,7 +204,13 @@ def test_experiment_mocked(mock_run):  # Avoid this pattern
 
 ## Development Workflow
 1. Make changes to code
-2. Run `make check` to ensure all quality standards are met
+2. Run `make check` to ensure all quality standards are met (dev mode)
 3. Pre-commit hooks will automatically run `make check` before commits
-4. All CI/CD runs the same checks via `make ci`
+4. CI runs either `make ci` (dev mode) or `make ci-core` (core only) based on environment
 5. 405+ tests must pass including MCP integration tests
+
+## Test Organization
+- **pytest markers**: Tests marked with `@pytest.mark.dev` require dev dependencies
+- **Core tests**: Run with `make test-core` or `-m "not dev"` - excludes dev-dependent tests
+- **Dev tests**: Run with `make test-dev` or `-m dev` - requires `uv sync --extra dev`
+- **CLI verification**: `scripts/verify-core-cli.sh` and `scripts/verify-dev-cli.sh` test CLI entry points

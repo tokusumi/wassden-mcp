@@ -27,7 +27,10 @@ from wassden.lib.experiment import (
 )
 from wassden.types import Language
 
+pytestmark = pytest.mark.dev
 
+
+@pytest.mark.dev
 class TestExperimentAsyncImplementations:
     """Test async implementations directly using proper async testing patterns."""
 

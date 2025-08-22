@@ -7,6 +7,44 @@ from pathlib import Path
 import pytest
 
 
+def pytest_collection_modifyitems(config, items):
+    """Skip dev-only tests when running in core mode."""
+    # Check if we're running with "-m 'not dev'" filter
+    markexpr = config.getoption("-m", default="")
+    if "not dev" in markexpr:
+        # Remove items that have dev marker
+        items[:] = [item for item in items if "dev" not in [mark.name for mark in item.iter_markers()]]
+
+
+def pytest_ignore_collect(collection_path, config):
+    """Completely ignore dev-only test files when running in core mode."""
+    # Check if we're running with "-m 'not dev'" filter
+    markexpr = config.getoption("-m", default="")
+    if "not dev" in markexpr:
+        # List of files that require dev dependencies
+        dev_only_files = [
+            "test_experiment_api.py",
+            "test_experiment_cli.py",
+            "test_experiment_cli_async.py",
+            "test_experiment_cli_concurrent.py",
+            "test_experiment_manager.py",
+            "test_experiment_integration.py",
+            "test_experiment_e2e.py",
+            "test_comparative_analyzer.py",
+            "test_ears_analyzer.py",
+            "test_language_detector_analyzer.py",
+            "test_output_formatter.py",
+            "test_performance_profiler.py",
+            "test_statistics_engine.py",
+            "test_cli_detailed.py",
+            "test_dev_gate.py",
+        ]
+
+        if collection_path.name in dev_only_files:
+            return True
+    return False
+
+
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for testing."""
