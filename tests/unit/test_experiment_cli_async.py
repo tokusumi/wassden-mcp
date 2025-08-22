@@ -67,6 +67,21 @@ class TestExperimentAsyncImplementations:
         print(f"DEBUG: Expected 'async-test-123', got '{result.experiment_id}'")
         print(f"DEBUG: Mock called: {mock_run_experiment.called}")
         print(f"DEBUG: Mock call count: {mock_run_experiment.call_count}")
+        print(f"DEBUG: Mock object: {mock_run_experiment}")
+        print(f"DEBUG: Mock ID: {id(mock_run_experiment)}")
+
+        # Check if the actual function is mocked
+        from wassden.clis.experiment import run_experiment  # noqa: PLC0415
+
+        print(f"DEBUG: run_experiment function: {run_experiment}")
+        print(f"DEBUG: run_experiment is mock: {run_experiment is mock_run_experiment}")
+
+        # Check module state
+        import wassden.clis.experiment as exp_module  # noqa: PLC0415
+
+        print(f"DEBUG: Module run_experiment: {getattr(exp_module, 'run_experiment', 'NOT_FOUND')}")
+        module_func_is_mock = getattr(exp_module, "run_experiment", None) is mock_run_experiment
+        print(f"DEBUG: Module run_experiment is mock: {module_func_is_mock}")
 
         # Verify result
         assert result.experiment_id == "async-test-123"
