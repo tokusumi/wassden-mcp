@@ -63,6 +63,11 @@ class TestExperimentAsyncImplementations:
             config_path=tmp_path / "test_config",
         )
 
+        # Debug info
+        print(f"DEBUG: Expected 'async-test-123', got '{result.experiment_id}'")
+        print(f"DEBUG: Mock called: {mock_run_experiment.called}")
+        print(f"DEBUG: Mock call count: {mock_run_experiment.call_count}")
+
         # Verify result
         assert result.experiment_id == "async-test-123"
         assert result.status == ExperimentStatus.COMPLETED
