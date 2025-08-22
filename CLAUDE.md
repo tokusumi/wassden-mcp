@@ -36,6 +36,32 @@
 - **MCP Server**: All MCP tools automatically detect language from content without parameters
 - **Default Fallback**: Defaults to Japanese (`ja`) when detection is uncertain
 
+### Experiment Framework Commands (Dev Mode Only)
+**⚠️ NOTE: These commands require development installation with `uv sync` and are only available when dev dependencies are installed.**
+
+#### Running Experiments
+- **Run experiment**: `uv run wassden experiment run <type>` - Execute validation experiments
+  - Types: `ears`, `performance`, `language`, `comprehensive`
+  - Options: `--output-format [json|csv]`, `--timeout <seconds>`, `--memory-limit <bytes>`
+  - Example: `uv run wassden experiment run performance --output-format json`
+
+#### Configuration Management
+- **Save config**: `uv run wassden experiment save-config <type> [name]` - Save experiment configuration
+- **Load config**: `uv run wassden experiment load-config <name>` - Display saved configuration
+- **Import config**: `uv run wassden experiment import-config <json-file>` - Import from JSON
+- **List configs**: `uv run wassden experiment list-configs` - Show all saved configurations
+- **Show status**: `uv run wassden experiment status` - Display active experiments
+
+#### Analysis & Comparison
+- **Compare experiments**: `uv run wassden experiment compare <exp1> <exp2>` - Statistical comparison
+- **Run from config**: `uv run wassden experiment run-experiment <config-name>` - Execute saved config
+
+#### Test Coverage
+- **Unit tests**: `pytest tests/unit/test_experiment*.py -v` - Run experiment framework tests
+- **Integration tests**: `pytest tests/integration/test_experiment_integration.py -v`
+- **E2E tests**: `pytest tests/e2e/test_experiment_e2e.py -v`
+- **Dev gate tests**: `pytest tests/test_dev_gate.py -v` - Test dev mode detection
+
 ### Performance & Benchmarking Commands
 - **Run all benchmarks**: `python benchmarks/run_all.py` - Comprehensive performance benchmarks with statistical analysis
 - **Performance tests**: `pytest tests/e2e/test_mcp_server.py::TestMCPServerPerformance -v` - Run reproducible performance tests
@@ -73,20 +99,30 @@
 - **Version**: 0.1.0
 - **Python version**: 3.12+
 - **License**: MIT
-- **Description**: MCP-based Spec-Driven Development toolkit with automated Claude Code integration testing and multi-language support
+- **Description**: MCP-based Spec-Driven Development toolkit with automated Claude Code integration testing, multi-language support, and experimental validation framework
 - **Main module**: wassden.cli:app (Typer CLI application)
 - **Repository**: https://github.com/tokusumi/wassden-mcp
 - **Test coverage**: 405+ comprehensive tests with full MCP integration testing
 - **Languages**: Full Japanese and English support with i18n framework
 - **Performance**: Sub-millisecond response times for all core operations
+- **Dev Features**: Experiment framework for validation and benchmarking (requires dev installation)
 
 ## Key Dependencies
+
+### Core Dependencies
 - **FastMCP**: High-performance MCP server framework (>=2.11.3)
 - **Typer**: Modern CLI framework with enhanced type safety (>=0.12.5)
 - **pycld2**: Compact Language Detector v2 for automatic language detection
 - **pytest**: Testing framework with asyncio and coverage support
 - **ruff**: Fast Python linter and formatter
 - **mypy**: Static type checker
+
+### Development Dependencies (Dev Mode Only)
+- **language-tool-python**: Language validation and analysis
+- **pandas**: Data analysis for experiment results
+- **rich**: Enhanced terminal output for development tools
+- **scipy**: Statistical analysis for experiment comparisons
+- **numpy**: Numerical computing for performance metrics
 
 ## Internationalization (i18n) Features
 - **Supported Languages**: Japanese (ja) and English (en)
@@ -126,6 +162,39 @@ wassden/i18n/locales/
     ├── prompts.json
     ├── traceability.json
     └── ...
+```
+
+## Async Testing Best Practices (pytest-asyncio v1.0+)
+- **Use real async tests**: NEVER mock `asyncio.run` - test actual async behavior
+- **Leverage loop_scope**: Use `@pytest.mark.asyncio(loop_scope="class")` for performance
+- **Async fixtures**: Use `@pytest_asyncio.fixture(loop_scope="session")` with proper context managers
+- **Concurrent testing**: Test parallel operations with `asyncio.gather()` 
+- **Timeout testing**: Use `asyncio.wait_for()` to test actual timeout behavior
+- **Race condition testing**: Use `asyncio.Event` objects for controlled execution order
+- **Resource management**: Always use async context managers in fixtures
+- **Configuration**: Set `asyncio_default_fixture_loop_scope = "function"` in pytest config
+
+### Async Test Patterns
+```python
+# ✅ Good - Real async testing
+@pytest.mark.asyncio
+async def test_experiment_execution():
+    result = await run_experiment(config)
+    assert result.status == ExperimentStatus.COMPLETED
+
+# ✅ Good - Concurrent testing  
+@pytest.mark.asyncio
+async def test_concurrent_experiments():
+    results = await asyncio.gather(
+        run_experiment(config1),
+        run_experiment(config2),
+        return_exceptions=True
+    )
+    assert all(r.status == ExperimentStatus.COMPLETED for r in results)
+
+# ❌ Bad - Mocking async behavior
+@patch("asyncio.run")
+def test_experiment_mocked(mock_run):  # Avoid this pattern
 ```
 
 ## Development Workflow

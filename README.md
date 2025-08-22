@@ -293,6 +293,56 @@ wassden-py/
 - **Standards**: EARS format, WBS structure, 100% Traceability matrices
 - **Internationalization**: Namespace-based translation system with automatic language detection
 
+## 🧪 Development Mode Features (Experimental)
+
+### Experiment Framework (Dev Mode Only)
+
+**⚠️ NOTE: These features are only available in development mode and require installation with dev dependencies.**
+
+The experiment framework provides validation and benchmarking capabilities for the wassden toolkit itself:
+
+```bash
+# Install with dev dependencies
+git clone https://github.com/tokusumi/wassden-mcp
+cd wassden-py
+uv sync  # Installs all dependencies including dev extras
+
+# Experiment CLI commands (dev mode only)
+uv run wassden experiment run <type>           # Run experiments
+uv run wassden experiment save-config <type>   # Save experiment config
+uv run wassden experiment load-config <name>   # Load experiment config  
+uv run wassden experiment list-configs         # List available configs
+uv run wassden experiment compare <exp1> <exp2> # Compare experiment results
+```
+
+#### Available Experiment Types
+
+- **ears**: EARS pattern compliance validation (REQ-01)
+- **performance**: Performance benchmarking (REQ-02)
+- **language**: Language detection accuracy testing (REQ-03)
+- **comprehensive**: Full validation suite
+
+#### Key Features
+
+- **Statistical Analysis**: Mean, variance, std deviation, 95% confidence intervals (REQ-04)
+- **Structured Output**: JSON/CSV export formats (REQ-05)
+- **Configuration Management**: YAML-based experiment configs (REQ-06)
+- **Comparative Analysis**: Statistical significance testing between experiments (REQ-07)
+- **Resource Constraints**: 10-minute timeout, 100MB memory limit (NFR-01, NFR-02)
+
+#### Example Usage
+
+```bash
+# Run EARS validation experiment
+uv run wassden experiment run ears --output-format json
+
+# Run performance benchmark with custom config
+uv run wassden experiment run performance --config-path ./my-config.yaml
+
+# Compare two experiment results
+uv run wassden experiment compare exp-001 exp-002 --output-format csv
+```
+
 ## 🎯 Use Cases
 
 ### For Development Teams
