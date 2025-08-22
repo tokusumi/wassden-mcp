@@ -69,7 +69,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C", "N", "I", "UP", "B", "A", "C4", "ICN", "PIE", "PT", "Q", "RSE", "RET", "SIM", "TID", "TCH", "ARG", "PTH", "PL", "TRY", "PERF", "LOG", "RUF"]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300", "TRY003", "PLR0913"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300", "TRY003", "PLR0913", "SIM108"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004"]  # Ignore magic value comparisons in test files

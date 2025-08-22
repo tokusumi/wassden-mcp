@@ -3,6 +3,7 @@
 import asyncio
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -229,12 +230,13 @@ class TestExperimentManagerAdvanced:
 class TestExperimentManagerInit:
     """Test ExperimentManager initialization."""
 
-    def test_init_default_config_dir(self):
+    def test_init_default_config_dir(self, tmp_path):
         """Test initialization with default config directory."""
-        manager = ExperimentManager()
-        expected_dir = Path.cwd() / ".wassden" / "experiments"
-        assert manager.config_dir == expected_dir
-        assert manager.config_dir.exists()
+        with patch("wassden.lib.experiment_manager.Path.cwd", return_value=tmp_path):
+            manager = ExperimentManager()
+            expected_dir = tmp_path / ".wassden" / "experiments"
+            assert manager.config_dir == expected_dir
+            assert manager.config_dir.exists()
 
     def test_init_custom_config_dir(self):
         """Test initialization with custom config directory."""
@@ -244,10 +246,11 @@ class TestExperimentManagerInit:
             assert manager.config_dir == custom_dir
             assert manager.config_dir.exists()
 
-    def test_init_active_experiments_empty(self):
+    def test_init_active_experiments_empty(self, tmp_path):
         """Test initialization with empty active experiments."""
-        manager = ExperimentManager()
-        assert manager._active_experiments == {}
+        with patch("wassden.lib.experiment_manager.Path.cwd", return_value=tmp_path):
+            manager = ExperimentManager()
+            assert manager._active_experiments == {}
 
 
 @pytest.mark.dev
@@ -386,9 +389,9 @@ class TestExperimentManagerLoadConfig:
 class TestExperimentManagerCreateDefaultConfig:
     """Test create_default_config method."""
 
-    def test_create_default_config_performance(self):
+    def test_create_default_config_performance(self, tmp_path):
         """Test creating default performance config."""
-        manager = ExperimentManager()
+        manager = ExperimentManager(config_dir=tmp_path)
         config = manager.create_default_config(ExperimentType.PERFORMANCE)
 
         assert config.experiment_type == ExperimentType.PERFORMANCE
@@ -396,9 +399,9 @@ class TestExperimentManagerCreateDefaultConfig:
         assert config.memory_limit_mb == 100
         assert OutputFormat.JSON in config.output_format
 
-    def test_create_default_config_ears_coverage(self):
+    def test_create_default_config_ears_coverage(self, tmp_path):
         """Test creating default EARS coverage config."""
-        manager = ExperimentManager()
+        manager = ExperimentManager(config_dir=tmp_path)
         config = manager.create_default_config(ExperimentType.EARS_COVERAGE)
 
         assert config.experiment_type == ExperimentType.EARS_COVERAGE
@@ -406,9 +409,9 @@ class TestExperimentManagerCreateDefaultConfig:
         assert config.memory_limit_mb == 100
         assert OutputFormat.JSON in config.output_format
 
-    def test_create_default_config_language_detection(self):
+    def test_create_default_config_language_detection(self, tmp_path):
         """Test creating default language detection config."""
-        manager = ExperimentManager()
+        manager = ExperimentManager(config_dir=tmp_path)
         config = manager.create_default_config(ExperimentType.LANGUAGE_DETECTION)
 
         assert config.experiment_type == ExperimentType.LANGUAGE_DETECTION
@@ -416,9 +419,9 @@ class TestExperimentManagerCreateDefaultConfig:
         assert config.memory_limit_mb == 100
         assert OutputFormat.JSON in config.output_format
 
-    def test_create_default_config_comparative(self):
+    def test_create_default_config_comparative(self, tmp_path):
         """Test creating default comparative config."""
-        manager = ExperimentManager()
+        manager = ExperimentManager(config_dir=tmp_path)
         config = manager.create_default_config(ExperimentType.COMPARATIVE)
 
         assert config.experiment_type == ExperimentType.COMPARATIVE

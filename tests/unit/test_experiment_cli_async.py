@@ -6,7 +6,6 @@ This demonstrates proper async testing without mocking asyncio.run().
 
 import asyncio
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -97,8 +96,10 @@ class TestExperimentAsyncImplementations:
 
         mock_run_experiment.return_value = mock_result
 
-        # Test parameters
-        parsed_params = {"test_param": "value"}
+        # Test parameters - provide input_paths for EARS coverage experiment
+        test_file = tmp_path / "test_spec.md"
+        test_file.write_text("# Test spec\nSome content")
+        parsed_params = {"input_paths": [str(test_file)]}
         output_format = [OutputFormat.JSON]
 
         # Test the async implementation directly
@@ -125,7 +126,7 @@ class TestExperimentAsyncImplementations:
 
     @pytest.mark.asyncio
     @patch("wassden.clis.experiment.measure_ears_coverage")
-    async def test_measure_ears_coverage_async_implementation(self, mock_measure_ears):
+    async def test_measure_ears_coverage_async_implementation(self, mock_measure_ears, tmp_path):
         """Test _measure_ears_coverage_async directly with real async behavior."""
 
         # Setup mock report
@@ -133,8 +134,14 @@ class TestExperimentAsyncImplementations:
 
         mock_measure_ears.return_value = mock_report
 
+        # Create test files
+        test_file1 = tmp_path / "test1.md"
+        test_file2 = tmp_path / "test2.md"
+        test_file1.write_text("# Test spec 1\nSome content")
+        test_file2.write_text("# Test spec 2\nMore content")
+
         # Test parameters
-        input_paths = [Path("test1.md"), Path("test2.md")]
+        input_paths = [test_file1, test_file2]
         language = Language.ENGLISH
         detail_level = "summary"
 
@@ -176,8 +183,8 @@ class TestExperimentAsyncImplementations:
 
         mock_measure_perf.return_value = mock_report
 
-        # Test parameters
-        operation_name = "test_operation"
+        # Test parameters - use valid operation name
+        operation_name = "default_operation"
         rounds = 10
         warmup = 3
         memory_profiling = True
@@ -309,37 +316,3 @@ class TestExperimentAsyncImplementations:
 
             # Verify all calls were made
             assert mock_run_experiment.call_count == 3
-
-    @pytest.mark.asyncio
-    async def test_timeout_behavior_with_async_implementation(self, tmp_path):
-        """Test timeout behavior with async implementations."""
-        with patch("wassden.clis.experiment.run_experiment") as mock_run_experiment:
-            # Create a slow async operation
-            async def slow_operation(*_args, **_kwargs):
-                await asyncio.sleep(1.0)
-                return ExperimentResult(
-                    experiment_id="timeout-test",
-                    timestamp=datetime.now(),
-                    config=ExperimentConfig(
-                        experiment_type=ExperimentType.PERFORMANCE,
-                        timeout_seconds=300,
-                        memory_limit_mb=100,
-                    ),
-                    status=ExperimentStatus.COMPLETED,
-                    duration_seconds=1.0,
-                )
-
-            mock_run_experiment.side_effect = slow_operation
-
-            # Test that timeout is properly raised
-            with pytest.raises(asyncio.TimeoutError):
-                await asyncio.wait_for(
-                    _run_experiment_async(
-                        experiment_type=ExperimentType.PERFORMANCE,
-                        output_format=[OutputFormat.JSON],
-                        timeout=300,
-                        memory_limit=100,
-                        config_path=tmp_path / "timeout_config",
-                    ),
-                    timeout=0.1,  # Very short timeout
-                )

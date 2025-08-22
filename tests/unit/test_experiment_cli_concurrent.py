@@ -34,7 +34,7 @@ class TestExperimentCLIConcurrentPatterns:
         self.runner = CliRunner()
 
     @patch("wassden.clis.experiment._run_experiment_async", new_callable=AsyncMock)
-    def test_multiple_experiment_execution(self, mock_run_experiment_async):
+    def test_multiple_experiment_execution(self, mock_run_experiment_async, tmp_path):
         """Test multiple experiment execution patterns."""
         # Mock multiple experiment results
         results = [
@@ -55,10 +55,13 @@ class TestExperimentCLIConcurrentPatterns:
         # Mock async implementation to return results sequentially
         mock_run_experiment_async.side_effect = results
 
-        # Run multiple experiments
+        # Run multiple experiments with config path
         experiment_results = []
         for _i in range(3):
-            result = self.runner.invoke(experiment_app, ["run", "performance", "--timeout", "300", "--memory", "128"])
+            result = self.runner.invoke(
+                experiment_app,
+                ["run", "performance", "--timeout", "300", "--memory", "128", "--config-path", str(tmp_path)],
+            )
             experiment_results.append(result)
 
         # Verify all experiments completed successfully
@@ -70,7 +73,7 @@ class TestExperimentCLIConcurrentPatterns:
         assert mock_run_experiment_async.call_count == 3
 
     @patch("wassden.clis.experiment._run_experiment_async", new_callable=AsyncMock)
-    def test_experiment_failure_handling(self, mock_run_experiment_async):
+    def test_experiment_failure_handling(self, mock_run_experiment_async, tmp_path):
         """Test experiment failure handling patterns."""
         # Mock one success and one failure
         success_result = ExperimentResult(
@@ -89,12 +92,12 @@ class TestExperimentCLIConcurrentPatterns:
         mock_run_experiment_async.side_effect = [success_result, Exception("Experiment failed")]
 
         # Run successful experiment
-        success_result = self.runner.invoke(experiment_app, ["run", "performance"])
+        success_result = self.runner.invoke(experiment_app, ["run", "performance", "--config-path", str(tmp_path)])
         assert success_result.exit_code == 0
         assert "Experiment completed successfully" in success_result.output
 
         # Run failing experiment
-        failure_result = self.runner.invoke(experiment_app, ["run", "performance"])
+        failure_result = self.runner.invoke(experiment_app, ["run", "performance", "--config-path", str(tmp_path)])
         assert failure_result.exit_code == 1
         assert "Experiment failed: Experiment failed" in failure_result.output
 

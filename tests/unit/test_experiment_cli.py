@@ -4,6 +4,7 @@ Tests focus on realistic scenarios using actual async testing patterns.
 Follows pytest-asyncio v1.0+ best practices for authentic async behavior.
 """
 
+import asyncio
 import json
 import tempfile
 import traceback
@@ -923,3 +924,40 @@ class TestExperimentCLICompareExperiments:
         # Verify error handling
         assert result.exit_code == 1
         assert "Comparative analysis failed: Comparison error" in result.output
+
+    @patch("wassden.clis.experiment._run_experiment_async", new_callable=AsyncMock)
+    def test_timeout_behavior_with_cli_command(self, mock_async, temp_config_path):
+        """Test timeout behavior with top-level CLI command."""
+
+        # Mock a slow operation that will timeout
+        async def slow_operation(*_args, **_kwargs):
+            await asyncio.sleep(2.0)  # Longer than CLI timeout
+            return ExperimentResult(
+                experiment_id="timeout-test",
+                timestamp=datetime.now(),
+                config=ExperimentConfig(
+                    experiment_type=ExperimentType.PERFORMANCE,
+                    timeout_seconds=1,
+                    memory_limit_mb=100,
+                ),
+                status=ExperimentStatus.COMPLETED,
+                duration_seconds=1.0,
+            )
+
+        mock_async.side_effect = slow_operation
+
+        # Test CLI timeout behavior
+        result = self.runner.invoke(
+            experiment_app,
+            [
+                "run",
+                "performance",
+                "--timeout",
+                "1",  # Very short timeout
+                "--config-path",
+                str(temp_config_path),
+            ],
+        )
+
+        # Should handle timeout gracefully or return error
+        assert result.exit_code != 0

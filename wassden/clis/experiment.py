@@ -71,8 +71,12 @@ def run(
     print_info(f"Starting {experiment_type.value} experiment")
 
     try:
-        # Thin sync wrapper - call async implementation
-        result = asyncio.run(_run_experiment_async(experiment_type, output_format, timeout, memory_limit, config_path))
+        # Thin sync wrapper - call async implementation with timeout (if positive)
+        async_task = _run_experiment_async(experiment_type, output_format, timeout, memory_limit, config_path)
+        if timeout > 0:
+            result = asyncio.run(asyncio.wait_for(async_task, timeout=timeout))
+        else:
+            result = asyncio.run(async_task)
 
         # Display results
         print_success("Experiment completed successfully")
