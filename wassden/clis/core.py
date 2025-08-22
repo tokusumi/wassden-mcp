@@ -88,6 +88,13 @@ def start_mcp_server(
     run_server_with_transport(transport=transport.value, host=host, port=port)
 
 
+# Async implementation
+async def _check_completeness_async(userinput: str, language: Language | None) -> None:
+    """Async implementation for completeness check."""
+    determined_language = _determine_language_for_user_input(language, userinput)
+    await run_handler_typed(handle_check_completeness, userinput, determined_language)
+
+
 @app.command()
 def check_completeness(
     userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
@@ -95,8 +102,22 @@ def check_completeness(
 ) -> None:
     """Analyze user input for completeness."""
     print_info("Analyzing input completeness...")
-    determined_language = _determine_language_for_user_input(language, userinput)
-    asyncio.run(run_handler_typed(handle_check_completeness, userinput, determined_language))
+    asyncio.run(_check_completeness_async(userinput, language))
+
+
+# Async implementation
+async def _prompt_requirements_async(
+    projectdescription: str, scope: str, constraints: str, language: Language | None
+) -> None:
+    """Async implementation for requirements prompt generation."""
+    determined_language = _determine_language_for_user_input(language, projectdescription)
+    await run_handler_typed(
+        handle_prompt_requirements,
+        projectdescription,
+        scope,
+        constraints,
+        determined_language,
+    )
 
 
 @app.command()
@@ -108,15 +129,17 @@ def prompt_requirements(
 ) -> None:
     """Generate prompt for creating requirements.md."""
     print_info("Generating requirements prompt...")
-    determined_language = _determine_language_for_user_input(language, projectdescription)
-    asyncio.run(
-        run_handler_typed(
-            handle_prompt_requirements,
-            projectdescription,
-            scope,
-            constraints,
-            determined_language,
-        )
+    asyncio.run(_prompt_requirements_async(projectdescription, scope, constraints, language))
+
+
+# Async implementation
+async def _validate_requirements_async(requirementspath: Path) -> None:
+    """Async implementation for requirements validation."""
+    determined_language = await _determine_language_for_file(None, str(requirementspath))
+    await run_handler_typed(
+        handle_validate_requirements,
+        requirementspath,
+        determined_language,
     )
 
 
@@ -128,13 +151,17 @@ def validate_requirements(
 ) -> None:
     """Validate requirements.md document."""
     print_info(f"Validating {requirementspath}...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(requirementspath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_validate_requirements,
-            requirementspath,
-            determined_language,
-        )
+    asyncio.run(_validate_requirements_async(requirementspath))
+
+
+# Async implementation
+async def _prompt_design_async(requirementspath: Path) -> None:
+    """Async implementation for design prompt generation."""
+    determined_language = await _determine_language_for_file(None, str(requirementspath))
+    await run_handler_typed(
+        handle_prompt_design,
+        requirementspath,
+        determined_language,
     )
 
 
@@ -146,13 +173,18 @@ def prompt_design(
 ) -> None:
     """Generate prompt for creating design.md."""
     print_info("Generating design prompt...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(requirementspath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_prompt_design,
-            requirementspath,
-            determined_language,
-        )
+    asyncio.run(_prompt_design_async(requirementspath))
+
+
+# Async implementation
+async def _validate_design_async(designpath: Path, requirementspath: Path) -> None:
+    """Async implementation for design validation."""
+    determined_language = await _determine_language_for_file(None, str(designpath))
+    await run_handler_typed(
+        handle_validate_design,
+        designpath,
+        requirementspath,
+        determined_language,
     )
 
 
@@ -165,14 +197,18 @@ def validate_design(
 ) -> None:
     """Validate design.md document."""
     print_info(f"Validating {designpath}...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(designpath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_validate_design,
-            designpath,
-            requirementspath,
-            determined_language,
-        )
+    asyncio.run(_validate_design_async(designpath, requirementspath))
+
+
+# Async implementation
+async def _prompt_tasks_async(designpath: Path, requirementspath: Path) -> None:
+    """Async implementation for tasks prompt generation."""
+    determined_language = await _determine_language_for_file(None, str(designpath))
+    await run_handler_typed(
+        handle_prompt_tasks,
+        designpath,
+        requirementspath,
+        determined_language,
     )
 
 
@@ -185,14 +221,17 @@ def prompt_tasks(
 ) -> None:
     """Generate prompt for creating tasks.md."""
     print_info("Generating tasks prompt...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(designpath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_prompt_tasks,
-            designpath,
-            requirementspath,
-            determined_language,
-        )
+    asyncio.run(_prompt_tasks_async(designpath, requirementspath))
+
+
+# Async implementation
+async def _validate_tasks_async(taskspath: Path) -> None:
+    """Async implementation for tasks validation."""
+    determined_language = await _determine_language_for_file(None, str(taskspath))
+    await run_handler_typed(
+        handle_validate_tasks,
+        taskspath,
+        determined_language,
     )
 
 
@@ -202,13 +241,19 @@ def validate_tasks(
 ) -> None:
     """Validate tasks.md document."""
     print_info(f"Validating {taskspath}...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(taskspath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_validate_tasks,
-            taskspath,
-            determined_language,
-        )
+    asyncio.run(_validate_tasks_async(taskspath))
+
+
+# Async implementation
+async def _prompt_code_async(taskspath: Path, requirementspath: Path, designpath: Path) -> None:
+    """Async implementation for code prompt generation."""
+    determined_language = await _determine_language_for_file(None, str(taskspath))
+    await run_handler_typed(
+        handle_prompt_code,
+        taskspath,
+        requirementspath,
+        designpath,
+        determined_language,
     )
 
 
@@ -222,15 +267,18 @@ def prompt_code(
 ) -> None:
     """Generate implementation prompt."""
     print_info("Generating implementation prompt...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(taskspath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_prompt_code,
-            taskspath,
-            requirementspath,
-            designpath,
-            determined_language,
-        )
+    asyncio.run(_prompt_code_async(taskspath, requirementspath, designpath))
+
+
+# Async implementation
+async def _analyze_changes_async(changedfile: Path, changedescription: str) -> None:
+    """Async implementation for change analysis."""
+    determined_language = await _determine_language_for_file(None, str(changedfile))
+    await run_handler_typed(
+        handle_analyze_changes,
+        changedfile,
+        changedescription,
+        determined_language,
     )
 
 
@@ -241,14 +289,19 @@ def analyze_changes(
 ) -> None:
     """Analyze impact of changes to spec files."""
     print_info(f"Analyzing changes to {changedfile}...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(changedfile)))
-    asyncio.run(
-        run_handler_typed(
-            handle_analyze_changes,
-            changedfile,
-            changedescription,
-            determined_language,
-        )
+    asyncio.run(_analyze_changes_async(changedfile, changedescription))
+
+
+# Async implementation
+async def _get_traceability_async(requirementspath: Path, designpath: Path, taskspath: Path) -> None:
+    """Async implementation for traceability report generation."""
+    determined_language = await _determine_language_for_file(None, str(requirementspath))
+    await run_handler_typed(
+        handle_get_traceability,
+        requirementspath,
+        designpath,
+        taskspath,
+        determined_language,
     )
 
 
@@ -262,15 +315,22 @@ def get_traceability(
 ) -> None:
     """Generate traceability report."""
     print_info("Generating traceability report...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(requirementspath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_get_traceability,
-            requirementspath,
-            designpath,
-            taskspath,
-            determined_language,
-        )
+    asyncio.run(_get_traceability_async(requirementspath, designpath, taskspath))
+
+
+# Async implementation
+async def _generate_review_prompt_async(
+    task_id: str, taskspath: Path, requirementspath: Path, designpath: Path
+) -> None:
+    """Async implementation for review prompt generation."""
+    determined_language = await _determine_language_for_file(None, str(taskspath))
+    await run_handler_typed(
+        handle_generate_review_prompt,
+        task_id,
+        taskspath,
+        requirementspath,
+        designpath,
+        determined_language,
     )
 
 
@@ -285,17 +345,7 @@ def generate_review_prompt(
 ) -> None:
     """Generate implementation review prompt for specific TASK-ID to validate implementation quality."""
     print_info(f"Generating review prompt for {task_id}...")
-    determined_language = asyncio.run(_determine_language_for_file(None, str(taskspath)))
-    asyncio.run(
-        run_handler_typed(
-            handle_generate_review_prompt,
-            task_id,
-            taskspath,
-            requirementspath,
-            designpath,
-            determined_language,
-        )
-    )
+    asyncio.run(_generate_review_prompt_async(task_id, taskspath, requirementspath, designpath))
 
 
 def version_callback(value: bool) -> None:

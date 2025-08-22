@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import ValidationError
 
 from wassden.lib.experiment import (
     ExperimentConfig,
@@ -60,19 +59,15 @@ class ExperimentManager:
         Raises:
             ConfigurationError: If save operation fails
         """
-        try:
-            config_path = self.config_dir / f"{name}.yaml"
+        config_path = self.config_dir / f"{name}.yaml"
 
-            # Convert pydantic model to dictionary for YAML serialization
-            config_dict = config.model_dump(mode="json")
+        # Convert pydantic model to dictionary for YAML serialization
+        config_dict = config.model_dump(mode="json")
 
-            with config_path.open("w", encoding="utf-8") as f:
-                yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
+        with config_path.open("w", encoding="utf-8") as f:
+            yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
 
-            return config_path
-
-        except (OSError, yaml.YAMLError) as e:
-            raise ConfigurationError(f"Failed to save configuration '{name}': {e}") from e
+        return config_path
 
     def load_config(self, name: str) -> ExperimentConfig:
         """Load experiment configuration from YAML file.
@@ -86,21 +81,15 @@ class ExperimentManager:
         Raises:
             ConfigurationError: If load operation fails
         """
-        try:
-            config_path = self.config_dir / f"{name}.yaml"
+        config_path = self.config_dir / f"{name}.yaml"
 
-            if not config_path.exists():
-                raise ConfigurationError(f"Configuration '{name}' not found at {config_path}")
+        if not config_path.exists():
+            raise ConfigurationError(f"Configuration file '{name}.yaml' not found")
 
-            with config_path.open(encoding="utf-8") as f:
-                config_dict = yaml.safe_load(f)
+        with config_path.open(encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
 
-            return ExperimentConfig(**config_dict)
-
-        except (OSError, yaml.YAMLError) as e:
-            raise ConfigurationError(f"Failed to load configuration '{name}': {e}") from e
-        except ValidationError as e:
-            raise ConfigurationError(f"Invalid configuration format in '{name}': {e}") from e
+        return ExperimentConfig(**config_dict)
 
     def list_configs(self) -> list[str]:
         """List available configuration names.
@@ -108,13 +97,10 @@ class ExperimentManager:
         Returns:
             List of available configuration names
         """
-        try:
-            if not self.config_dir.exists():
-                return []
-
-            return [f.stem for f in self.config_dir.glob("*.yaml") if f.is_file()]
-        except OSError:
+        if not self.config_dir.exists():
             return []
+
+        return [f.stem for f in self.config_dir.glob("*.yaml") if f.is_file()]
 
     def create_experiment_result(self, config: ExperimentConfig) -> ExperimentResult:
         """Create initial experiment result with pending status.

@@ -4,10 +4,9 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
-import yaml
 
 from wassden.clis.utils import (
     _supports_color,
@@ -16,7 +15,8 @@ from wassden.clis.utils import (
     print_success,
     print_warning,
 )
-from wassden.lib.experiment import ExperimentType, OutputFormat
+from wassden.lib.constants import DEFAULT_CONFIG_PATH
+from wassden.lib.experiment import ExperimentResult, ExperimentType, OutputFormat
 from wassden.lib.experiment_api import (
     measure_ears_coverage,
     measure_performance,
@@ -33,84 +33,130 @@ experiment_app = typer.Typer(
 )
 
 
+# Async implementation
+async def _run_experiment_async(
+    experiment_type: ExperimentType,
+    output_format: list[OutputFormat] | None,
+    timeout: int,
+    memory_limit: int,
+    config_path: Path,
+) -> ExperimentResult:
+    """Async implementation for running experiments."""
+    # Prepare experiment parameters
+    parameters = {"timeout_seconds": timeout, "memory_limit_mb": memory_limit}
+
+    # Run experiment
+    return await run_experiment(
+        experiment_type=experiment_type,
+        parameters=parameters,
+        output_format=output_format or [OutputFormat.JSON],
+        timeout_seconds=timeout,
+        memory_limit_mb=memory_limit,
+        config_path=config_path,
+    )
+
+
 # Create experiment subcommand group
 @experiment_app.command()
 def run(
     experiment_type: Annotated[ExperimentType, typer.Argument(help="Type of experiment to run")],
-    config_name: Annotated[str, typer.Option("--config", "-c", help="Configuration name to use")] = "",
     output_format: Annotated[list[OutputFormat] | None, typer.Option("--format", "-f", help="Output format(s)")] = None,
     timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 600,
     memory_limit: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB")] = 100,
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
 ) -> None:
     """Run an experiment of specified type - implements REQ-08."""
     print_info(f"Starting {experiment_type.value} experiment")
 
     try:
-        # Set default config if not specified
-        if not config_name:
-            config_name = f"default_{experiment_type.value}"
-            print_info(f"Using default config: {config_name}")
-
-        # Prepare experiment parameters
-        parameters = {
-            "timeout_seconds": timeout,
-            "memory_limit_mb": memory_limit,
-        }
-
-        # Run experiment
-        result = asyncio.run(
-            run_experiment(
-                experiment_type=experiment_type,
-                parameters=parameters,
-                output_format=output_format or [OutputFormat.JSON],
-                timeout_seconds=timeout,
-                memory_limit_mb=memory_limit,
-            )
-        )
+        # Thin sync wrapper - call async implementation
+        result = asyncio.run(_run_experiment_async(experiment_type, output_format, timeout, memory_limit, config_path))
 
         # Display results
         print_success("Experiment completed successfully")
         print_info(f"Experiment ID: {result.experiment_id}")
-        print_info(f"Status: {result.status.value}")
+        print_info(f"Status: {result.status}")
 
     except Exception as e:
         print_error(f"Experiment failed: {e}")
         sys.exit(1)
 
 
-@experiment_app.command()
+@experiment_app.command(name="save-config")
 def save_config(
     experiment_type: Annotated[ExperimentType, typer.Argument(help="Type of experiment")],
-    name: Annotated[str, typer.Argument(help="Configuration name")],
+    config_name: Annotated[str, typer.Argument(help="Configuration name")],
     timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 600,
     memory_limit: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB")] = 100,
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
 ) -> None:
     """Save experiment configuration to file."""
-    print_info(f"Saving {experiment_type.value} configuration as '{name}'...")
 
-    manager = ExperimentManager()
+    manager = ExperimentManager(config_dir=config_path)
 
     try:
+        print_info(f"Saving {experiment_type.value} configuration as '{config_name}'...")
+
         config = manager.create_default_config(experiment_type)
         config.timeout_seconds = timeout
         config.memory_limit_mb = memory_limit
 
-        config_path = manager.save_config(config, name)
-        print_success(f"Configuration saved to: {config_path}")
+        saved_path = manager.save_config(config, config_name)
+        print_success(f"Configuration saved to: {saved_path}")
 
     except Exception as e:
         print_error(f"Failed to save configuration: {e}")
         sys.exit(1)
 
 
+@experiment_app.command(name="import-config")
+def import_config(
+    config_name: Annotated[str, typer.Argument(help="Configuration name to save as")],
+    json_file: Annotated[Path, typer.Argument(help="JSON configuration file path")],
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
+) -> None:
+    """Import experiment configuration from JSON file."""
+
+    manager = ExperimentManager(config_dir=config_path)
+
+    try:
+        if not json_file.exists():
+            print_error(f"Configuration file '{json_file}' not found")
+            sys.exit(1)
+
+        print_info(f"Importing configuration from '{json_file}' as '{config_name}'...")
+
+        with json_file.open() as f:
+            config_data = json.load(f)
+
+        saved_path = manager.save_config(config_data, config_name)
+        print_success(f"Configuration '{config_name}' imported successfully to: {saved_path}")
+
+    except json.JSONDecodeError:
+        print_error("Invalid JSON in configuration file")
+        sys.exit(1)
+    except Exception as e:
+        print_error(f"Failed to import configuration: {e}")
+        sys.exit(1)
+
+
 @experiment_app.command()
 def load_config(
     name: Annotated[str, typer.Argument(help="Configuration name to load")],
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
 ) -> None:
     """Load and display experiment configuration."""
     print_info(f"Loading configuration '{name}'...")
 
-    manager = ExperimentManager()
+    manager = ExperimentManager(config_dir=config_path)
 
     try:
         config = manager.load_config(name)
@@ -132,11 +178,15 @@ def load_config(
 
 
 @experiment_app.command()
-def list_configs() -> None:
+def list_configs(
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
+) -> None:
     """List available experiment configurations."""
     print_info("Available configurations:")
 
-    manager = ExperimentManager()
+    manager = ExperimentManager(config_dir=config_path)
     configs = manager.list_configs()
 
     if not configs:
@@ -148,11 +198,15 @@ def list_configs() -> None:
 
 
 @experiment_app.command()
-def status() -> None:
+def status(
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
+) -> None:
     """Show status of active experiments."""
     print_info("Active experiments:")
 
-    manager = ExperimentManager()
+    manager = ExperimentManager(config_dir=config_path)
     experiments = manager.list_active_experiments()
 
     if not experiments:
@@ -165,41 +219,25 @@ def status() -> None:
             print_info(f"    Duration: {exp.duration_seconds:.2f}s")
 
 
-@experiment_app.command()
-def create_config(
-    name: Annotated[str, typer.Argument(help="Configuration name")],
-    experiment_type: Annotated[
-        ExperimentType, typer.Option("--type", "-t", help="Experiment type")
-    ] = ExperimentType.EARS_COVERAGE,
-    description: Annotated[str, typer.Option("--desc", "-d", help="Configuration description")] = "",
-    iterations: Annotated[int, typer.Option("--iterations", "-i", help="Number of iterations")] = 1,
-) -> None:
-    """Create experiment configuration - implements REQ-06."""
-    print_info(f"Creating configuration: {name}")
-
-    try:
-        manager = ExperimentManager()
-
-        # Create config with specified parameters
-        config_data = {
-            "experiment_type": experiment_type.value,
-            "description": description or f"Configuration for {experiment_type.value} experiments",
-            "iterations": iterations,
-        }
-
-        # Save configuration
-        config_path = manager.config_dir / f"{name}.yaml"
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with config_path.open("w", encoding="utf-8") as f:
-            yaml.dump(config_data, f, default_flow_style=False, allow_unicode=True)
-
-        print_success(f"Configuration '{name}' created successfully")
-        print_info(f"Config file: {config_path}")
-
-    except Exception as e:
-        print_error(f"Configuration creation failed: {e}")
-        sys.exit(1)
+# Async implementation
+async def _run_experiment_cmd_async(
+    experiment_type: ExperimentType,
+    parsed_params: dict,
+    output_format: list[OutputFormat],
+    config_path: Path,
+    *,
+    timeout: int = 600,
+    memory_limit: int = 100,
+) -> ExperimentResult:
+    """Async implementation for running experiment command."""
+    return await run_experiment(
+        experiment_type=experiment_type,
+        parameters=parsed_params,
+        output_format=output_format,
+        timeout_seconds=timeout,
+        memory_limit_mb=memory_limit,
+        config_path=config_path,
+    )
 
 
 # Core API commands - Implements REQ-08 and TASK-02-05
@@ -210,6 +248,9 @@ def run_experiment_cmd(
     output_format: Annotated[list[OutputFormat] | None, typer.Option("--format", "-f", help="Output format(s)")] = None,
     timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds")] = 600,
     memory_limit: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB")] = 100,
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
 ) -> None:
     """Run experiment using the core API - implements REQ-08."""
 
@@ -222,14 +263,10 @@ def run_experiment_cmd(
         # Parse parameters JSON
         parsed_params = json.loads(parameters)
 
-        # Run experiment via API
+        # Thin sync wrapper - call async implementation
         result = asyncio.run(
-            run_experiment(
-                experiment_type=experiment_type,
-                parameters=parsed_params,
-                output_format=output_format,
-                timeout_seconds=timeout,
-                memory_limit_mb=memory_limit,
+            _run_experiment_cmd_async(
+                experiment_type, parsed_params, output_format, config_path, timeout=timeout, memory_limit=memory_limit
             )
         )
 
@@ -255,10 +292,24 @@ def run_experiment_cmd(
         sys.exit(1)
 
 
+# Async implementation
+async def _measure_ears_coverage_async(
+    input_paths: list[Path],
+    language: Language,
+    detail_level: str,
+) -> Any:
+    """Async implementation for EARS coverage measurement."""
+    return await measure_ears_coverage(
+        input_paths=input_paths,
+        _language=language,
+        _output_detail_level=detail_level,
+    )
+
+
 @experiment_app.command(name="measure-ears-coverage")
 def measure_ears_coverage_cmd(
     input_paths: Annotated[list[Path], typer.Argument(help="Paths to markdown documents")],
-    language: Annotated[Language | None, typer.Option("--language", "-l", help="Analysis language")] = None,
+    language: Annotated[Language, typer.Option("--language", "-l", help="Analysis language")] = Language.JAPANESE,
     detail_level: Annotated[str, typer.Option("--detail", "-d", help="Output detail level")] = "summary",
     output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format")] = OutputFormat.JSON,
 ) -> None:
@@ -266,14 +317,8 @@ def measure_ears_coverage_cmd(
     print_info(f"Measuring EARS coverage for {len(input_paths)} document(s)...")
 
     try:
-        # Run EARS coverage measurement via API
-        report = asyncio.run(
-            measure_ears_coverage(
-                input_paths=input_paths,
-                _language=language,
-                _output_detail_level=detail_level,
-            )
-        )
+        # Thin sync wrapper - call async implementation
+        report = asyncio.run(_measure_ears_coverage_async(input_paths, language, detail_level))
 
         print_success("EARS coverage analysis completed")
         print_info(f"Total requirements: {report.total_requirements}")
@@ -296,6 +341,22 @@ def measure_ears_coverage_cmd(
         sys.exit(1)
 
 
+# Async implementation
+async def _measure_performance_async(
+    operation_name: str,
+    rounds: int,
+    warmup: int,
+    memory_profiling: bool,
+) -> Any:
+    """Async implementation for performance measurement."""
+    return await measure_performance(
+        operation_name=operation_name,
+        measurement_rounds=rounds,
+        warmup_rounds=warmup,
+        memory_profiling=memory_profiling,
+    )
+
+
 @experiment_app.command(name="measure-performance")
 def measure_performance_cmd(
     operation_name: Annotated[str, typer.Argument(help="Name of operation to measure")],
@@ -308,15 +369,8 @@ def measure_performance_cmd(
     print_info(f"Measuring performance for operation: {operation_name}")
 
     try:
-        # Run performance measurement via API
-        report = asyncio.run(
-            measure_performance(
-                operation_name=operation_name,
-                measurement_rounds=rounds,
-                warmup_rounds=warmup,
-                memory_profiling=memory_profiling,
-            )
-        )
+        # Thin sync wrapper - call async implementation
+        report = asyncio.run(_measure_performance_async(operation_name, rounds, warmup, memory_profiling))
 
         print_success("Performance measurement completed")
         print_info(f"Total executions: {report.total_executions}")
@@ -341,32 +395,49 @@ def measure_performance_cmd(
         sys.exit(1)
 
 
+# Async implementation
+async def _compare_experiments_async(
+    baseline_id: str,
+    comparison_ids: list[str],
+    metrics: list[str] | None,
+    output_format: OutputFormat,
+    config_path: Path,
+) -> ExperimentResult:
+    """Async implementation for experiment comparison."""
+    # Prepare parameters
+    parameters = {
+        "baseline_experiment_id": baseline_id,
+        "comparison_experiment_ids": comparison_ids,
+    }
+    if metrics:
+        parameters["metrics_to_compare"] = metrics
+
+    # Run comparative experiment
+    return await run_experiment(
+        experiment_type=ExperimentType.COMPARATIVE,
+        parameters=parameters,
+        output_format=[output_format],
+        config_path=config_path,
+    )
+
+
 @experiment_app.command(name="compare")
 def compare_experiments_cmd(
     baseline_id: Annotated[str, typer.Argument(help="Baseline experiment ID")],
     comparison_ids: Annotated[list[str], typer.Argument(help="Comparison experiment IDs")],
     metrics: Annotated[list[str] | None, typer.Option("--metrics", "-m", help="Metrics to compare")] = None,
     output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format")] = OutputFormat.JSON,
+    config_path: Annotated[
+        Path, typer.Option("--config-path", help="Configuration directory path")
+    ] = DEFAULT_CONFIG_PATH,
 ) -> None:
     """Compare experiments with statistical analysis - implements REQ-07."""
     print_info(f"Comparing experiments: {baseline_id} vs {comparison_ids}")
 
     try:
-        # Prepare parameters
-        parameters = {
-            "baseline_experiment_id": baseline_id,
-            "comparison_experiment_ids": comparison_ids,
-        }
-        if metrics:
-            parameters["metrics_to_compare"] = metrics
-
-        # Run comparative experiment
+        # Thin sync wrapper - call async implementation
         result = asyncio.run(
-            run_experiment(
-                experiment_type=ExperimentType.COMPARATIVE,
-                parameters=parameters,
-                output_format=[output_format],
-            )
+            _compare_experiments_async(baseline_id, comparison_ids, metrics, output_format, config_path)
         )
 
         print_success("Comparative analysis completed")

@@ -2,19 +2,19 @@
 
 # Individual commands
 format:
-	uv run ruff format
+	uv run --active ruff format
 
 lint:
-	uv run ruff check
+	uv run --active ruff check
 
 typecheck:
-	uv run mypy wassden
+	uv run --active mypy wassden
 
 test:
-	uv run pytest --cov=wassden
+	uv run --active pytest --cov=wassden
 
 validate-examples:
-	uv run pytest tests/integration/test_spec_examples.py -v
+	uv run --active pytest tests/integration/test_spec_examples.py -v
 
 # Composite commands
 check: format lint typecheck test

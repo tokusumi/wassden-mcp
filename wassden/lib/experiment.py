@@ -7,7 +7,7 @@ performance testing, language detection accuracy, and comparative analysis.
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -48,10 +48,7 @@ class ExperimentConfig(BaseModel):
     timeout_seconds: int = Field(default=600, description="Maximum execution time in seconds")
     memory_limit_mb: int = Field(default=100, description="Memory limit in megabytes")
 
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
+    model_config = {"use_enum_values": True}
 
 
 class StatisticalSummary(BaseModel):
@@ -196,8 +193,4 @@ class ExperimentResult(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     error_message: str | None = Field(default=None, description="Error message if failed")
 
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
-        json_encoders: ClassVar = {datetime: lambda v: v.isoformat(), Path: lambda v: str(v)}
+    model_config = {"use_enum_values": True}

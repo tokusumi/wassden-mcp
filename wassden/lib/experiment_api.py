@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from wassden.lib.comparative_analyzer import ComparativeAnalyzer
+from wassden.lib.constants import DEFAULT_CONFIG_PATH
 from wassden.lib.ears_analyzer import EARSAnalyzer
 from wassden.lib.experiment import (
     EARSCoverageReport,
@@ -48,6 +49,7 @@ async def run_experiment(
     output_format: list[OutputFormat] | None = None,
     timeout_seconds: int = 600,
     memory_limit_mb: int = 100,
+    config_path: Path = DEFAULT_CONFIG_PATH,
 ) -> ExperimentResult:
     """Run experiment with specified configuration.
 
@@ -84,7 +86,7 @@ async def run_experiment(
         )
 
         # Execute experiment based on type
-        manager = ExperimentManager()
+        manager = ExperimentManager(config_dir=config_path)
 
         if experiment_type == ExperimentType.EARS_COVERAGE:
             return await _run_ears_coverage_experiment(config, manager)
@@ -105,7 +107,7 @@ async def run_experiment(
 
 async def measure_ears_coverage(
     input_paths: list[Path],
-    _language: Language | None = None,
+    _language: Language = Language.JAPANESE,
     _output_detail_level: str = "summary",
 ) -> EARSCoverageReport:
     """Measure EARS coverage for specified documents.
@@ -242,6 +244,7 @@ async def _run_ears_coverage_experiment(config: ExperimentConfig, manager: Exper
         # Run analysis
         report = await measure_ears_coverage(
             input_paths=paths,
+            _language=Language.JAPANESE,
             _output_detail_level=config.parameters.get("output_detail_level", "summary"),
         )
 
@@ -280,6 +283,10 @@ async def _run_performance_experiment(config: ExperimentConfig, manager: Experim
         measurement_rounds = config.parameters.get("measurement_rounds", 5)
         warmup_rounds = config.parameters.get("warmup_rounds", 2)
         memory_profiling = config.parameters.get("memory_profiling", True)
+
+        # Validate parameters
+        _validate_measurement_rounds(measurement_rounds)
+        _validate_warmup_rounds(warmup_rounds)
 
         # Run performance measurement
         report = await measure_performance(

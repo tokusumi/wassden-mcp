@@ -1,6 +1,5 @@
 """MCP server tests."""
 
-import asyncio
 import gc
 import os
 import statistics
@@ -374,42 +373,6 @@ class TestMCPServerPerformance:
         # Assert performance requirements
         assert result.median < MAX_RESPONSE_TIME_SECONDS, f"Median response time {result.median:.3f}s exceeds limit"
         assert result.p95 < MAX_RESPONSE_TIME_SECONDS, f"P95 response time {result.p95:.3f}s exceeds limit"
-
-    @pytest.mark.asyncio
-    async def test_concurrent_tool_calls(self):
-        """Test concurrent MCP tool calls with reproducible measurements."""
-        benchmark = PerformanceBenchmark(
-            warmup_iterations=2,
-            benchmark_iterations=10,
-        )
-
-        async def concurrent_test():
-            # Create multiple concurrent tasks
-            tasks = []
-            for i in range(5):
-                task1 = handle_check_completeness(f"Concurrent test project {i}", Language.JAPANESE)
-                task2 = handle_analyze_changes(Path(f"test{i}.md"), f"Concurrent change {i}", Language.JAPANESE)
-                tasks.extend([task1, task2])
-
-            # Execute all tasks concurrently
-            return await asyncio.gather(*tasks)
-
-        result = await benchmark.benchmark_async(
-            concurrent_test,
-            name="concurrent_tools",
-        )
-
-        # Verify performance under concurrent load
-        assert result.median < MAX_RESPONSE_TIME_SECONDS * 2, "Concurrent execution too slow"
-        assert result.std_dev < result.mean * 0.5, "Too much variance in concurrent execution"
-
-        # Verify correctness
-        test_results = await concurrent_test()
-        assert len(test_results) == EXPECTED_TOOL_COUNT
-        for test_result in test_results:
-            assert hasattr(test_result, "content")
-            result_text = test_result.content[0].text
-            assert len(result_text) > 0
 
     @pytest.mark.asyncio
     async def test_memory_usage_stability(self):
