@@ -1,4 +1,4 @@
-# wassden 🎯
+# wassden
 
 [![CI](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/tokusumi/wassden-mcp/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
@@ -119,53 +119,30 @@ uvx --from git+https://github.com/tokusumi/wassden-mcp wassden get-traceability
 
 ## 🧪 Development Mode Features (Experimental)
 
-### Experiment Framework (Dev Mode Only)
+**⚠️ NOTE: Experimental features for internal validation and benchmarking. Requires dev installation.**
 
-**⚠️ NOTE: These features are only available in development mode and require installation with dev dependencies.**
-
-The experiment framework provides validation and benchmarking capabilities for the wassden toolkit itself:
+The experiment framework provides validation and benchmarking capabilities for the wassden toolkit itself. These features are only available in development mode:
 
 ```bash
 # Install with dev dependencies
 git clone https://github.com/tokusumi/wassden-mcp
-cd wassden-py
+cd wassden-mcp
 uv sync  # Installs all dependencies including dev extras
 
-# Experiment CLI commands (dev mode only)
-uv run wassden experiment run <type>           # Run experiments
-uv run wassden experiment save-config <type>   # Save experiment config
-uv run wassden experiment load-config <name>   # Load experiment config  
-uv run wassden experiment list-configs         # List available configs
-uv run wassden experiment compare <exp1> <exp2> # Compare experiment results
+# Run experiments (dev mode only)
+uv run wassden experiment run ears        # EARS pattern validation
+uv run wassden experiment run performance # Performance benchmarking  
+uv run wassden experiment run language    # Language detection testing
 ```
 
-#### Available Experiment Types
+### Key Capabilities
 
-- **ears**: EARS pattern compliance validation (REQ-01)
-- **performance**: Performance benchmarking (REQ-02)
-- **language**: Language detection accuracy testing (REQ-03)
-- **comprehensive**: Full validation suite
-
-#### Key Features
-
-- **Statistical Analysis**: Mean, variance, std deviation, 95% confidence intervals (REQ-04)
-- **Structured Output**: JSON/CSV export formats (REQ-05)
-- **Configuration Management**: YAML-based experiment configs (REQ-06)
-- **Comparative Analysis**: Statistical significance testing between experiments (REQ-07)
+- **Statistical Analysis**: Mean, variance, confidence intervals (REQ-04)
+- **Experiment Management**: Save/load/compare configurations (REQ-05, REQ-06)
+- **Comparative Analysis**: Statistical significance testing (REQ-07)
 - **Resource Constraints**: 10-minute timeout, 100MB memory limit (NFR-01, NFR-02)
 
-#### Example Usage
-
-```bash
-# Run EARS validation experiment
-uv run wassden experiment run ears --output-format json
-
-# Run performance benchmark with custom config
-uv run wassden experiment run performance --config-path ./my-config.yaml
-
-# Compare two experiment results
-uv run wassden experiment compare exp-001 exp-002 --output-format csv
-```
+> 📚 See [Experiment Framework Documentation](docs/experiment-framework.md) for detailed usage
 
 ## 🎯 Use Cases
 
@@ -181,9 +158,8 @@ uv run wassden experiment compare exp-001 exp-002 --output-format csv
 - **[Spec Format Guide](docs/spec-format.md)** - Requirements, design, and tasks format
 - **[Validation Rules](docs/validation/)** - EARS format and traceability requirements
 - **[Development](docs/development.md)** - Development setup and contributing
+- **[Experiment Framework](docs/experiment-framework.md)** - Experimental validation features (dev only)
 - **[Examples](docs/ja/spec-example/)** - Sample specifications (Japanese/English)
-
-
 
 ## 🤝 Contributing
 
