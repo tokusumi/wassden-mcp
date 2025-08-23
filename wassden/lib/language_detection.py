@@ -21,6 +21,15 @@ JAPANESE_SPEC_PATTERNS = [
     "# 仕様書",
     "# 設計書",
     "# タスク一覧",
+    # Numbered versions
+    ". サマリー",
+    ". 用語集",
+    ". スコープ",
+    ". 制約",
+    ". 非機能要件",
+    ". KPI",
+    ". 機能要件",
+    ". テスト要件",
 ]
 
 ENGLISH_SPEC_PATTERNS = [
@@ -39,6 +48,22 @@ ENGLISH_SPEC_PATTERNS = [
     "# Specification",
     "# Design Document",
     "# Task List",
+    "## Summary",
+    "## Glossary",
+    "## Scope",
+    "## Constraints",
+    "## KPI",
+    "## Acceptance Criteria",
+    "## Testing Requirements",
+    # Numbered versions
+    ". Summary",
+    ". Glossary",
+    ". Scope",
+    ". Constraints",
+    ". Non-Functional Requirements",
+    ". KPI",
+    ". Functional Requirements",
+    ". Testing Requirements",
 ]
 
 

@@ -65,16 +65,16 @@ Agent-oriented Spec-Driven Development Support MCP Tool
 
 ## 6. Functional Requirements
 
-- **REQ-01**: The system shall analyze information sufficiency and generate user question prompts for missing information when receiving initial requests from Agents
-- **REQ-02**: The system shall provide Agent prompts for generating EARS format requirements.md when sufficient information is provided
-- **REQ-03**: The system shall verify structure and content and generate correction instruction prompts when receiving requirements.md with defects
-- **REQ-04**: The system shall provide Agent prompts for generating design.md based on valid requirements.md
-- **REQ-05**: The system shall verify structure, content, and traceability and generate correction instruction prompts when receiving design.md with defects
-- **REQ-06**: The system shall provide Agent prompts for generating WBS format tasks.md based on valid design.md
-- **REQ-07**: The system shall verify structure, content, and dependencies and generate correction instruction prompts when receiving tasks.md with defects
-- **REQ-08**: The system shall provide Agent prompts (with precautions) for staged code implementation based on valid tasks.md
-- **REQ-09**: The system shall identify affected items and generate prompts for concurrent modification when any spec changes occur
-- **REQ-10**: The system shall provide current traceability status in report format
+- **REQ-01**: The system shall analyze information sufficiency and generate user question prompts for missing information when receiving initial requests from Agents.
+- **REQ-02**: The system shall provide Agent prompts for generating EARS format requirements.md when sufficient information is provided.
+- **REQ-03**: The system shall verify structure and content and generate correction instruction prompts when receiving requirements.md with defects.
+- **REQ-04**: The system shall provide Agent prompts for generating design.md based on valid requirements.md.
+- **REQ-05**: The system shall verify structure, content, and traceability and generate correction instruction prompts when receiving design.md with defects.
+- **REQ-06**: The system shall provide Agent prompts for generating WBS format tasks.md based on valid design.md.
+- **REQ-07**: The system shall verify structure, content, and dependencies and generate correction instruction prompts when receiving tasks.md with defects.
+- **REQ-08**: The system shall provide Agent prompts (with precautions) for staged code implementation based on valid tasks.md.
+- **REQ-09**: The system shall identify affected items and generate prompts for concurrent modification when any spec changes occur.
+- **REQ-10**: The system shall provide current traceability status in report format.
 
 ## 7. Testing Requirements
 

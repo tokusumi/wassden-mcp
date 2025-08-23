@@ -23,3 +23,11 @@ class HandlerResponse(BaseModel):
     """Standard response structure for all handlers."""
 
     content: list[TextContent]
+
+
+class TransportType(str, Enum):
+    """Available transport types for MCP server."""
+
+    STDIO = "stdio"
+    SSE = "sse"
+    STREAMABLE_HTTP = "streamable-http"

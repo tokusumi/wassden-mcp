@@ -28,6 +28,16 @@ dependencies = [
     "typing-extensions>=4.14.1",
     "pydantic>=2.11.7",
     "pycld2>=0.42",
+    "markdown>=3.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "language-tool-python>=2.8",
+    "pandas>=2.1.0",
+    "rich>=13.0.0",
+    "numpy>=2.3.2",
+    "scipy>=1.16.1",
 ]
 
 [project.urls]
@@ -41,6 +51,7 @@ wassden = "wassden.cli:app"
 dev-dependencies = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "types-Markdown>=3.5.0",
     "pytest-asyncio>=1.1.0",
     "ruff>=0.12.9",
     "mypy>=1.17.1",
@@ -48,6 +59,8 @@ dev-dependencies = [
     "pre-commit>=4.3.0",
     "psutil>=6.1.1",
     "types-psutil>=6.1.0",
+    "types-pyyaml>=6.0.12.20250809",
+    "scipy-stubs>=1.11.0",
 ]
 
 [tool.ruff]
@@ -56,7 +69,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C", "N", "I", "UP", "B", "A", "C4", "ICN", "PIE", "PT", "Q", "RSE", "RET", "SIM", "TID", "TCH", "ARG", "PTH", "PL", "TRY", "PERF", "LOG", "RUF"]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D213", "S101", "RUF001", "TRY300", "TRY003", "PLR0913", "SIM108"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004"]  # Ignore magic value comparisons in test files
@@ -73,14 +86,19 @@ warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --strict-markers"
+addopts = "-ra -q --strict-markers -n auto --dist worksteal"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "dev: marks tests requiring dev dependencies (deselect with '-m \"not dev\"')",
+]
 
 [tool.coverage.run]
 source = ["wassden"]
-omit = ["*/tests/*", "*/__pycache__/*"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/site-packages/*"]
+parallel = true
 
 [tool.coverage.report]
 exclude_lines = [
@@ -91,4 +109,9 @@ exclude_lines = [
     "raise NotImplementedError",
     "pass",
     "except ImportError:",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-xdist>=3.8.0",
 ]

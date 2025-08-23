@@ -5,14 +5,18 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from wassden.cli import app
+
+pytestmark = pytest.mark.dev
 
 # Constants for CLI exit codes
 CLI_USAGE_ERROR_CODE = 2
 
 
+@pytest.mark.dev
 class TestCLIBasicFunctionality:
     """Detailed CLI basic functionality tests."""
 
@@ -83,6 +87,7 @@ class TestCLIBasicFunctionality:
         assert "Usage:" in result.output
 
 
+@pytest.mark.dev
 class TestCheckCompletenessCommand:
     """Detailed check-completeness command tests."""
 
@@ -161,6 +166,7 @@ class TestCheckCompletenessCommand:
         assert result.exit_code == 0
 
 
+@pytest.mark.dev
 class TestPromptRequirementsCommand:
     """Detailed prompt-requirements command tests."""
 
@@ -267,6 +273,7 @@ class TestPromptRequirementsCommand:
         assert result.exit_code == 0
 
 
+@pytest.mark.dev
 class TestValidateRequirementsCommand:
     """Detailed validate-requirements command tests."""
 
@@ -388,6 +395,7 @@ Missing required sections and invalid IDs
             # Should handle empty file gracefully
 
 
+@pytest.mark.dev
 class TestPromptDesignCommand:
     """Detailed prompt-design command tests."""
 
@@ -449,6 +457,7 @@ class TestPromptDesignCommand:
             assert "design.md" in result.output
 
 
+@pytest.mark.dev
 class TestValidateDesignCommand:
     """Detailed validate-design command tests."""
 
@@ -527,6 +536,7 @@ Test strategy
             assert result.exit_code == 0
 
 
+@pytest.mark.dev
 class TestPromptTasksCommand:
     """Detailed prompt-tasks command tests."""
 
@@ -565,6 +575,7 @@ class TestPromptTasksCommand:
             assert "WBS" in result.output
 
 
+@pytest.mark.dev
 class TestValidateTasksCommand:
     """Detailed validate-tasks command tests."""
 
@@ -611,6 +622,7 @@ Milestones
             assert "検証" in result.output
 
 
+@pytest.mark.dev
 class TestPromptCodeCommand:
     """Detailed prompt-code command tests."""
 
@@ -650,6 +662,7 @@ class TestPromptCodeCommand:
             assert "TASK-01-01" in result.output
 
 
+@pytest.mark.dev
 class TestAnalyzeChangesCommand:
     """Detailed analyze-changes command tests."""
 
@@ -716,6 +729,7 @@ class TestAnalyzeChangesCommand:
         assert "変更影響分析" in result.output
 
 
+@pytest.mark.dev
 class TestGetTraceabilityCommand:
     """Detailed get-traceability command tests."""
 
@@ -754,6 +768,7 @@ class TestGetTraceabilityCommand:
             assert "トレーサビリティレポート" in result.output
 
 
+@pytest.mark.dev
 class TestCLIErrorHandling:
     """Test CLI error handling scenarios."""
 
