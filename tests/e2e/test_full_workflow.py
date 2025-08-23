@@ -18,7 +18,7 @@ from wassden.handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
-from wassden.types import Language
+from wassden.types import Language, SpecDocuments
 
 
 class TestFullWorkflow:
@@ -72,8 +72,9 @@ class TestFullWorkflow:
         req_file.write_text(requirements_content)
 
         # Step 3: Validate requirements
-        validation_result = await handle_validate_requirements(req_file, Language.JAPANESE)
-        validation_text = validation_result.content[0].text
+        validation_specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_validate_requirements(validation_specs)
+        validation_text = result.content[0].text
         assert "✅" in validation_text
         assert "要件数: 7" in validation_text
 
@@ -82,8 +83,9 @@ class TestFullWorkflow:
     async def _test_design_phase(self, req_file: Path) -> Path:
         """Test design phase of workflow."""
         # Step 4: Generate design prompt
-        design_prompt_result = await handle_prompt_design(req_file, Language.JAPANESE)
-        design_prompt_text = design_prompt_result.content[0].text
+        design_prompt_specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_prompt_design(design_prompt_specs)
+        design_prompt_text = result.content[0].text
         assert "design.md" in design_prompt_text
         assert "アーキテクチャ" in design_prompt_text
 
@@ -93,8 +95,11 @@ class TestFullWorkflow:
         design_file.write_text(design_content)
 
         # Step 6: Validate design
-        design_validation_result = await handle_validate_design(design_file, req_file, Language.JAPANESE)
-        design_validation_text = design_validation_result.content[0].text
+        design_validation_specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, language=Language.JAPANESE
+        )
+        result = await handle_validate_design(design_validation_specs)
+        design_validation_text = result.content[0].text
         assert "✅" in design_validation_text
         assert "参照要件数: 7" in design_validation_text
 
@@ -103,8 +108,11 @@ class TestFullWorkflow:
     async def _test_tasks_phase(self, req_file: Path, design_file: Path) -> Path:
         """Test tasks phase of workflow."""
         # Step 7: Generate tasks prompt
-        tasks_prompt_result = await handle_prompt_tasks(design_file, req_file, Language.JAPANESE)
-        tasks_prompt_text = tasks_prompt_result.content[0].text
+        tasks_prompt_specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, language=Language.JAPANESE
+        )
+        result = await handle_prompt_tasks(tasks_prompt_specs)
+        tasks_prompt_text = result.content[0].text
         assert "tasks.md" in tasks_prompt_text
         assert "WBS" in tasks_prompt_text
 
@@ -114,8 +122,9 @@ class TestFullWorkflow:
         tasks_file.write_text(tasks_content)
 
         # Step 9: Validate tasks
-        tasks_validation_result = await handle_validate_tasks(tasks_file, Language.JAPANESE)
-        tasks_validation_text = tasks_validation_result.content[0].text
+        tasks_validation_specs = await SpecDocuments.from_paths(tasks_path=tasks_file, language=Language.JAPANESE)
+        result = await handle_validate_tasks(tasks_validation_specs)
+        tasks_validation_text = result.content[0].text
         assert "✅" in tasks_validation_text
         assert "タスク数: 9" in tasks_validation_text
 
@@ -124,14 +133,20 @@ class TestFullWorkflow:
     async def _test_implementation_phase(self, req_file: Path, design_file: Path, tasks_file: Path) -> None:
         """Test implementation phase of workflow."""
         # Step 10: Generate implementation prompt
-        code_prompt_result = await handle_prompt_code(tasks_file, req_file, design_file, Language.JAPANESE)
+        code_prompt_specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, tasks_path=tasks_file, language=Language.JAPANESE
+        )
+        code_prompt_result = await handle_prompt_code(code_prompt_specs)
         code_prompt_text = code_prompt_result.content[0].text
         assert "実装" in code_prompt_text
         assert "TASK-01-01" in code_prompt_text
 
         # Step 11: Get traceability report
-        traceability_result = await handle_get_traceability(req_file, design_file, tasks_file, Language.JAPANESE)
-        traceability_text = traceability_result.content[0].text
+        traceability_specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, tasks_path=tasks_file, language=Language.JAPANESE
+        )
+        result = await handle_get_traceability(traceability_specs)
+        traceability_text = result.content[0].text
         assert "トレーサビリティレポート" in traceability_text
         assert "要件数: 7" in traceability_text
 
@@ -428,9 +443,10 @@ Constraints
         req_file.write_text(invalid_requirements)
 
         # Validate requirements - should fail
-        validation_result = await handle_validate_requirements(req_file, Language.JAPANESE)
+        validation_specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_validate_requirements(validation_specs)
 
-        validation_text = validation_result.content[0].text
+        validation_text = result.content[0].text
         assert "⚠️" in validation_text or "修正が必要" in validation_text
         assert "REQ-001" in validation_text  # Should detect invalid format
         assert "REQ-1" in validation_text
@@ -476,18 +492,24 @@ Test plan
         design_file.write_text(design_content)
 
         # Validate design - should detect missing REQ-03
-        design_validation_result = await handle_validate_design(design_file, req_file, Language.JAPANESE)
+        design_validation_specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, language=Language.JAPANESE
+        )
+        result = await handle_validate_design(design_validation_specs)
 
-        validation_text = design_validation_result.content[0].text
+        validation_text = result.content[0].text
         assert "⚠️" in validation_text or "修正が必要" in validation_text
         assert "REQ-03" in validation_text  # Should detect missing reference
 
         # Get traceability report to show gaps
-        traceability_result = await handle_get_traceability(
-            req_file, design_file, Path("nonexistent.md"), Language.JAPANESE
+        traceability_specs = await SpecDocuments.from_paths(
+            requirements_path=req_file,
+            design_path=design_file,
+            tasks_path=Path("nonexistent.md"),
         )
+        result = await handle_get_traceability(traceability_specs)
 
-        traceability_text = traceability_result.content[0].text
+        traceability_text = result.content[0].text
         assert "設計されていない要件" in traceability_text or "設計参照なし" in traceability_text
 
 
@@ -510,16 +532,22 @@ class TestWorkflowErrorHandling:
     async def test_missing_files_workflow(self):
         """Test workflow with missing prerequisite files."""
         # Try to validate requirements when file doesn't exist
-        validation_result = await handle_validate_requirements(Path("nonexistent/requirements.md"), Language.JAPANESE)
+        validation_specs = await SpecDocuments.from_paths(
+            requirements_path=Path("nonexistent/requirements.md"), language=Language.JAPANESE
+        )
+        result = await handle_validate_requirements(validation_specs)
 
-        validation_text = validation_result.content[0].text
+        validation_text = result.content[0].text
         assert "エラー" in validation_text
         assert "見つかりません" in validation_text
 
         # Try to generate design prompt when requirements don't exist
-        design_prompt_result = await handle_prompt_design(Path("nonexistent/requirements.md"), Language.JAPANESE)
+        design_prompt_specs = await SpecDocuments.from_paths(
+            requirements_path=Path("nonexistent/requirements.md"), language=Language.JAPANESE
+        )
+        result = await handle_prompt_design(design_prompt_specs)
 
-        design_text = design_prompt_result.content[0].text
+        design_text = result.content[0].text
         assert "エラー" in design_text
 
     @pytest.mark.asyncio
@@ -533,8 +561,9 @@ class TestWorkflowErrorHandling:
         corrupted_file.write_text("Completely invalid content with no structure")
 
         # Validation should handle corrupted files gracefully
-        validation_result = await handle_validate_requirements(corrupted_file, Language.JAPANESE)
+        validation_specs = await SpecDocuments.from_paths(requirements_path=corrupted_file, language=Language.JAPANESE)
+        result = await handle_validate_requirements(validation_specs)
 
-        validation_text = validation_result.content[0].text
+        validation_text = result.content[0].text
         # Should either show validation errors or handle gracefully
         assert "修正" in validation_text or "エラー" in validation_text

@@ -31,7 +31,7 @@ class TestSpecExamples:
     def test_requirements_validation(self, base_dir, lang, lang_name):
         """Test requirements.md validation for both languages."""
         success, output = self.run_wassden_command(
-            base_dir, ["validate-requirements", "--requirementsPath", f"docs/{lang}/spec-example/requirements.md"]
+            base_dir, ["validate-requirements", f"docs/{lang}/spec-example/requirements.md"]
         )
         assert success, f"{lang_name} requirements validation failed: {output}"
         assert "✅" in output, f"{lang_name} requirements validation should show success message"
@@ -43,7 +43,6 @@ class TestSpecExamples:
             base_dir,
             [
                 "validate-design",
-                "--designPath",
                 f"docs/{lang}/spec-example/design.md",
                 "--requirementsPath",
                 f"docs/{lang}/spec-example/requirements.md",
@@ -55,9 +54,7 @@ class TestSpecExamples:
     @pytest.mark.parametrize(("lang", "lang_name"), [("ja", "Japanese"), ("en", "English")])
     def test_tasks_validation(self, base_dir, lang, lang_name):
         """Test tasks.md validation for both languages."""
-        success, output = self.run_wassden_command(
-            base_dir, ["validate-tasks", "--tasksPath", f"docs/{lang}/spec-example/tasks.md"]
-        )
+        success, output = self.run_wassden_command(base_dir, ["validate-tasks", f"docs/{lang}/spec-example/tasks.md"])
         assert success, f"{lang_name} tasks validation failed: {output}"
         # Note: tasks validation may not show ✅ due to missing design/requirements context
 
@@ -68,7 +65,6 @@ class TestSpecExamples:
             base_dir,
             [
                 "get-traceability",
-                "--requirementsPath",
                 f"docs/{lang}/spec-example/requirements.md",
                 "--designPath",
                 f"docs/{lang}/spec-example/design.md",
@@ -129,9 +125,7 @@ class TestSpecExamplesIntegration:
         base_path = f"docs/{lang}/spec-example"
 
         # Step 1: Validate requirements
-        success, _ = self.run_wassden_command(
-            base_dir, ["validate-requirements", "--requirementsPath", f"{base_path}/requirements.md"]
-        )
+        success, _ = self.run_wassden_command(base_dir, ["validate-requirements", f"{base_path}/requirements.md"])
         assert success, f"Requirements validation failed for {lang}"
 
         # Step 2: Validate design
@@ -139,7 +133,6 @@ class TestSpecExamplesIntegration:
             base_dir,
             [
                 "validate-design",
-                "--designPath",
                 f"{base_path}/design.md",
                 "--requirementsPath",
                 f"{base_path}/requirements.md",
@@ -152,7 +145,6 @@ class TestSpecExamplesIntegration:
             base_dir,
             [
                 "get-traceability",
-                "--requirementsPath",
                 f"{base_path}/requirements.md",
                 "--designPath",
                 f"{base_path}/design.md",
@@ -173,7 +165,6 @@ class TestSpecExamplesIntegration:
             base_dir,
             [
                 "get-traceability",
-                "--requirementsPath",
                 "docs/ja/spec-example/requirements.md",
                 "--designPath",
                 "docs/ja/spec-example/design.md",
@@ -186,7 +177,6 @@ class TestSpecExamplesIntegration:
             base_dir,
             [
                 "get-traceability",
-                "--requirementsPath",
                 "docs/en/spec-example/requirements.md",
                 "--designPath",
                 "docs/en/spec-example/design.md",

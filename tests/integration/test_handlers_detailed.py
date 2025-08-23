@@ -19,7 +19,7 @@ from wassden.handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
-from wassden.types import HandlerResponse, Language
+from wassden.types import HandlerResponse, Language, SpecDocuments
 
 
 class TestCheckCompletenessHandler:
@@ -241,7 +241,8 @@ class TestValidateRequirementsHandler:
         requirements_file = self.temp_dir / "requirements.md"
         requirements_file.write_text(valid_requirements, encoding="utf-8")
 
-        result = await handle_validate_requirements(requirements_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=requirements_file, language=Language.JAPANESE)
+        result = await handle_validate_requirements(specs)
 
         text = result.content[0].text
         # Should contain validation output with either success or fixes needed
@@ -258,7 +259,8 @@ class TestValidateRequirementsHandler:
         req_file = specs_dir / "requirements.md"
         req_file.write_text("Invalid content without proper structure", encoding="utf-8")
 
-        result = await handle_validate_requirements(req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_validate_requirements(specs)
 
         text = result.content[0].text
         # Should contain validation output with fixes needed
@@ -268,7 +270,10 @@ class TestValidateRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_validate_requirements_nonexistent_file(self):
         """Test validate_requirements handler with non-existent file."""
-        result = await handle_validate_requirements(Path("nonexistent/requirements.md"), Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=Path("nonexistent/requirements.md"), language=Language.JAPANESE
+        )
+        result = await handle_validate_requirements(specs)
 
         text = result.content[0].text
         assert "エラー" in text
@@ -277,7 +282,10 @@ class TestValidateRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_validate_requirements_default_path(self):
         """Test validate_requirements handler with default path."""
-        result = await handle_validate_requirements(Path("specs/requirements.md"), Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=Path("specs/requirements.md"), language=Language.JAPANESE
+        )
+        result = await handle_validate_requirements(specs)
 
         text = result.content[0].text
         assert isinstance(text, str)
@@ -293,7 +301,8 @@ class TestValidateRequirementsHandler:
         req_file = specs_dir / "requirements.md"
         req_file.write_text("", encoding="utf-8")
 
-        result = await handle_validate_requirements(req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_validate_requirements(specs)
 
         text = result.content[0].text
         # Should contain validation output
@@ -333,7 +342,8 @@ class TestPromptDesignHandler:
 """
         req_file.write_text(req_content)
 
-        result = await handle_prompt_design(req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_prompt_design(specs)
 
         text = result.content[0].text
         assert "design.md" in text
@@ -342,7 +352,8 @@ class TestPromptDesignHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_design_nonexistent_requirements(self):
         """Test prompt_design handler with non-existent requirements."""
-        result = await handle_prompt_design(Path("nonexistent/requirements.md"), Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=Path("nonexistent/requirements.md"))
+        result = await handle_prompt_design(specs)
 
         text = result.content[0].text
         assert "エラー" in text
@@ -350,7 +361,8 @@ class TestPromptDesignHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_design_default_path(self):
         """Test prompt_design handler with default path."""
-        result = await handle_prompt_design(Path("specs/requirements.md"), Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=Path("specs/requirements.md"))
+        result = await handle_prompt_design(specs)
 
         text = result.content[0].text
         # Should either show error or attempt to generate prompt
@@ -411,7 +423,8 @@ class TestPromptDesignHandler:
 """
         req_file.write_text(complex_requirements)
 
-        result = await handle_prompt_design(req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
+        result = await handle_prompt_design(specs)
 
         text = result.content[0].text
         assert "design.md" in text
@@ -479,7 +492,10 @@ API仕様の詳細
 """
         design_file.write_text(design_content)
 
-        result = await handle_validate_design(design_file, req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, language=Language.JAPANESE
+        )
+        result = await handle_validate_design(specs)
 
         text = result.content[0].text
         assert "✅" in text
@@ -527,7 +543,10 @@ API仕様
 """
         design_file.write_text(design_content)
 
-        result = await handle_validate_design(design_file, req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, language=Language.JAPANESE
+        )
+        result = await handle_validate_design(specs)
 
         text = result.content[0].text
         # Should detect missing REQ-03
@@ -536,9 +555,11 @@ API仕様
     @pytest.mark.asyncio
     async def test_handle_validate_design_nonexistent_files(self):
         """Test validate_design handler with non-existent files."""
-        result = await handle_validate_design(
-            Path("nonexistent/design.md"), Path("nonexistent/requirements.md"), Language.JAPANESE
+        specs = await SpecDocuments.from_paths(
+            requirements_path=Path("nonexistent/requirements.md"),
+            design_path=Path("nonexistent/design.md"),
         )
+        result = await handle_validate_design(specs)
 
         text = result.content[0].text
         assert "エラー" in text
@@ -585,7 +606,10 @@ class TestPromptTasksHandler:
 """
         design_file.write_text(design_content)
 
-        result = await handle_prompt_tasks(design_file, req_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, language=Language.JAPANESE
+        )
+        result = await handle_prompt_tasks(specs)
 
         text = result.content[0].text
         assert "tasks.md" in text
@@ -636,7 +660,8 @@ TASK-01-01 → TASK-01-02 → TASK-02-01
 """
         tasks_file.write_text(tasks_content)
 
-        result = await handle_validate_tasks(tasks_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(tasks_path=tasks_file, language=Language.JAPANESE)
+        result = await handle_validate_tasks(specs)
 
         text = result.content[0].text
         assert "✅" in text
@@ -658,7 +683,8 @@ TASK-01-01 → TASK-01-02 → TASK-02-01
 """
         tasks_file.write_text(invalid_content)
 
-        result = await handle_validate_tasks(tasks_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(tasks_path=tasks_file, language=Language.JAPANESE)
+        result = await handle_validate_tasks(specs)
 
         text = result.content[0].text
         # Should detect validation issues
@@ -698,7 +724,10 @@ class TestPromptCodeHandler:
         tasks_content = "# Tasks\n- **TASK-01-01**: Test task"
         tasks_file.write_text(tasks_content)
 
-        result = await handle_prompt_code(tasks_file, req_file, design_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, tasks_path=tasks_file, language=Language.JAPANESE
+        )
+        result = await handle_prompt_code(specs)
 
         text = result.content[0].text
         assert "実装" in text
@@ -783,9 +812,12 @@ class TestGetTraceabilityHandler:
     @pytest.mark.asyncio
     async def test_handle_get_traceability_no_files(self):
         """Test get_traceability handler with no files."""
-        result = await handle_get_traceability(
-            Path("nonexistent_req.md"), Path("nonexistent_design.md"), Path("nonexistent_tasks.md"), Language.JAPANESE
+        specs = await SpecDocuments.from_paths(
+            requirements_path=Path("nonexistent_req.md"),
+            design_path=Path("nonexistent_design.md"),
+            tasks_path=Path("nonexistent_tasks.md"),
         )
+        result = await handle_get_traceability(specs)
 
         text = result.content[0].text
         assert "トレーサビリティレポート" in text
@@ -830,7 +862,10 @@ class TestGetTraceabilityHandler:
 """
         tasks_file.write_text(tasks_content)
 
-        result = await handle_get_traceability(req_file, design_file, tasks_file, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(
+            requirements_path=req_file, design_path=design_file, tasks_path=tasks_file, language=Language.JAPANESE
+        )
+        result = await handle_get_traceability(specs)
 
         text = result.content[0].text
         assert "トレーサビリティレポート" in text
@@ -854,9 +889,12 @@ class TestGetTraceabilityHandler:
 """
         req_file.write_text(req_content)
 
-        result = await handle_get_traceability(
-            req_file, Path("nonexistent_design.md"), Path("nonexistent_tasks.md"), Language.JAPANESE
+        specs = await SpecDocuments.from_paths(
+            requirements_path=req_file,
+            design_path=Path("nonexistent_design.md"),
+            tasks_path=Path("nonexistent_tasks.md"),
         )
+        result = await handle_get_traceability(specs)
 
         text = result.content[0].text
         assert "トレーサビリティレポート" in text

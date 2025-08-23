@@ -5,9 +5,9 @@ from pathlib import Path
 import typer
 from colorama import Fore, Style, init
 
+from wassden.language_types import Language
 from wassden.lib import fs_utils
 from wassden.lib.language_detection import determine_language
-from wassden.types import Language
 
 # Initialize colorama for cross-platform colored output
 init(autoreset=True)

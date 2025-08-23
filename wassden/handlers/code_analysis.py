@@ -1,31 +1,45 @@
 """Code analysis and implementation prompt generation."""
 
 import re
-from pathlib import Path
 from typing import Any
 
 from wassden.i18n import get_i18n
-from wassden.lib import fs_utils
-from wassden.types import HandlerResponse, Language, TextContent
+from wassden.types import HandlerResponse, SpecDocuments, TextContent
 
 
 async def handle_prompt_code(
-    tasks_path: Path = Path("specs/tasks.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
-    design_path: Path = Path("specs/design.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Generate implementation prompt from tasks, design, and requirements."""
-    i18n = get_i18n(language)
+    i18n = get_i18n(specs.language)
 
-    # Read all spec files
-    try:
-        tasks = await fs_utils.read_file(tasks_path)
-        design = await fs_utils.read_file(design_path)
-        requirements = await fs_utils.read_file(requirements_path)
-    except FileNotFoundError as e:
+    tasks = await specs.get_tasks()
+    design = await specs.get_design()
+    requirements = await specs.get_requirements()
+
+    if tasks is None:
         return HandlerResponse(
-            content=[TextContent(text=i18n.t("code_prompts.implementation.error.files_not_found", error=str(e)))]
+            content=[
+                TextContent(text=i18n.t("code_prompts.implementation.error.tasks_not_found", path=specs.tasks_path))
+            ]
+        )
+
+    if design is None:
+        return HandlerResponse(
+            content=[
+                TextContent(text=i18n.t("code_prompts.implementation.error.design_not_found", path=specs.design_path))
+            ]
+        )
+
+    if requirements is None:
+        return HandlerResponse(
+            content=[
+                TextContent(
+                    text=i18n.t(
+                        "code_prompts.implementation.error.requirements_not_found", path=specs.requirements_path
+                    )
+                )
+            ]
         )
 
     prompt = f"""{i18n.t("code_prompts.implementation.prompt.intro")}
@@ -66,25 +80,35 @@ async def handle_prompt_code(
 
 async def handle_generate_review_prompt(
     task_id: str,
-    tasks_path: Path = Path("specs/tasks.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
-    design_path: Path = Path("specs/design.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Generate implementation review prompt for specific TASK-ID."""
-    i18n = get_i18n(language)
+    i18n = get_i18n(specs.language)
 
     if not task_id:
         return HandlerResponse(content=[TextContent(text=i18n.t("code_prompts.review.error.task_id_required"))])
 
-    # Read all spec files
-    try:
-        tasks = await fs_utils.read_file(tasks_path)
-        design = await fs_utils.read_file(design_path)
-        requirements = await fs_utils.read_file(requirements_path)
-    except FileNotFoundError as e:
+    tasks = await specs.get_tasks()
+    design = await specs.get_design()
+    requirements = await specs.get_requirements()
+
+    if tasks is None:
         return HandlerResponse(
-            content=[TextContent(text=i18n.t("code_prompts.review.error.files_not_found", error=str(e)))]
+            content=[TextContent(text=i18n.t("code_prompts.review.error.tasks_not_found", path=specs.tasks_path))]
+        )
+
+    if design is None:
+        return HandlerResponse(
+            content=[TextContent(text=i18n.t("code_prompts.review.error.design_not_found", path=specs.design_path))]
+        )
+
+    if requirements is None:
+        return HandlerResponse(
+            content=[
+                TextContent(
+                    text=i18n.t("code_prompts.review.error.requirements_not_found", path=specs.requirements_path)
+                )
+            ]
         )
 
     # Extract task info

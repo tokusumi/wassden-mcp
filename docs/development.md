@@ -133,9 +133,10 @@ wassden-mcp/
 │   ├── server.py          # FastMCP server implementation
 │   └── cli.py             # Typer CLI interface
 ├── specs/                 # Generated specifications (examples)
-│   ├── requirements.md
-│   ├── design.md
-│   └── tasks.md
+│   └── my-feature/        # Feature-based directory structure
+│       ├── requirements.md
+│       ├── design.md
+│       └── tasks.md
 ├── tests/                 # Comprehensive test suite
 │   ├── unit/              # Unit tests
 │   ├── integration/       # Integration tests
@@ -237,6 +238,61 @@ Expected performance metrics:
 - **get_traceability**: <0.02ms average
 - **prompt_requirements**: <0.003ms average
 - **concurrent_20_tools**: <0.3ms average
+
+## API Reference
+
+### SpecDocuments Class
+
+The `SpecDocuments` class is the central API for working with specification documents:
+
+```python
+from pathlib import Path
+from wassden.types import SpecDocuments
+from wassden.language_types import Language
+
+# Auto-detect language from file content
+specs = await SpecDocuments.from_paths(
+    requirements_path=Path("specs/my-feature/requirements.md")
+)
+
+# Access content with automatic loading and caching
+requirements_content = await specs.get_requirements()
+design_content = await specs.get_design()  # Optional
+tasks_content = await specs.get_tasks()    # Optional
+
+# Language is automatically detected
+print(f"Detected language: {specs.language}")
+
+# Manual language specification
+specs = await SpecDocuments.from_paths(
+    requirements_path=Path("specs/my-feature/requirements.md"),
+    language=Language.ENGLISH
+)
+
+# Multiple files with cross-validation
+specs = await SpecDocuments.from_paths(
+    requirements_path=Path("specs/my-feature/requirements.md"),
+    design_path=Path("specs/my-feature/design.md"),
+    tasks_path=Path("specs/my-feature/tasks.md")
+)
+
+# Feature directory auto-resolution
+specs = await SpecDocuments.from_feature_dir(
+    Path("specs/my-feature")
+)
+```
+
+### Handler Usage
+
+```python
+from wassden.handlers.requirements import handle_validate_requirements
+
+# New API - single SpecDocuments parameter
+specs = await SpecDocuments.from_paths(
+    requirements_path=Path("specs/my-feature/requirements.md")
+)
+result = await handle_validate_requirements(specs)
+```
 
 ## Language Support
 

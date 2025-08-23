@@ -1,10 +1,9 @@
 """Requirements handling functions."""
 
-from pathlib import Path
-
 from wassden.i18n import get_i18n
-from wassden.lib import fs_utils, validate
-from wassden.types import HandlerResponse, Language, TextContent
+from wassden.language_types import Language
+from wassden.lib import validate
+from wassden.types import HandlerResponse, SpecDocuments, TextContent
 
 
 async def handle_prompt_requirements(
@@ -30,14 +29,16 @@ async def handle_prompt_requirements(
 
 
 async def handle_validate_requirements(
-    requirements_path: Path = Path("specs/requirements.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Validate requirements.md and generate fix instructions if needed."""
     try:
-        content = await fs_utils.read_file(requirements_path)
-        i18n = get_i18n(language)
-        validation_result = validate.validate_requirements(content, language)
+        content = await specs.get_requirements()
+        if content is None:
+            raise FileNotFoundError(f"Requirements file not found: {specs.requirements_path}")
+
+        i18n = get_i18n(specs.language)
+        validation_result = validate.validate_requirements(content, specs.language)
 
         if validation_result["isValid"]:
             stats = validation_result["stats"]
@@ -71,12 +72,14 @@ async def handle_validate_requirements(
 
         return HandlerResponse(content=[TextContent(text=error_text)])
     except FileNotFoundError:
-        i18n = get_i18n(language)
+        i18n = get_i18n(specs.language)
         return HandlerResponse(
-            content=[TextContent(text=i18n.t("validation.requirements.file_error.not_found", path=requirements_path))]
+            content=[
+                TextContent(text=i18n.t("validation.requirements.file_error.not_found", path=specs.requirements_path))
+            ]
         )
     except Exception as e:
-        i18n = get_i18n(language)
+        i18n = get_i18n(specs.language)
         return HandlerResponse(
             content=[TextContent(text=i18n.t("validation.requirements.file_error.general_error", error=str(e)))]
         )

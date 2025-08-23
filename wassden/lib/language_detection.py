@@ -2,7 +2,7 @@
 
 import pycld2 as cld2  # type: ignore
 
-from wassden.types import Language
+from wassden.language_types import Language
 
 # Spec document section patterns for language detection
 JAPANESE_SPEC_PATTERNS = [
@@ -57,6 +57,14 @@ ENGLISH_SPEC_PATTERNS = [
     "## Testing Requirements",
     # Numbered versions
     ". Summary",
+    "0. Summary",
+    "1. Glossary",
+    "2. Scope",
+    "3. Constraints",
+    "4. Non-Functional Requirements",
+    "5. KPI",
+    "6. Functional Requirements",
+    "7. Testing Requirements",
     ". Glossary",
     ". Scope",
     ". Constraints",

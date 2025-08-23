@@ -74,9 +74,9 @@ uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completenes
 
 ```bash
 # Validate specifications with auto language detection
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-requirements specs/requirements.md
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-design specs/design.md  
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-tasks specs/tasks.md
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-requirements specs/my-feature/requirements.md
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-design specs/my-feature/design.md  
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden validate-tasks specs/my-feature/tasks.md
 ```
 
 ### 3. Get Traceability Matrix

@@ -18,8 +18,8 @@ from typing import Any
 
 import psutil
 
+from wassden.language_types import Language
 from wassden.lib.experiment import PerformanceDetail, PerformanceReport
-from wassden.types import Language
 
 
 class PerformanceProfilerError(Exception):

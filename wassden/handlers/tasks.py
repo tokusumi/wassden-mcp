@@ -1,26 +1,30 @@
 """Tasks handling functions."""
 
-import contextlib
-from pathlib import Path
-
 from wassden.i18n import get_i18n
-from wassden.lib import fs_utils, validate
-from wassden.types import HandlerResponse, Language, TextContent
+from wassden.lib import validate
+from wassden.types import HandlerResponse, SpecDocuments, TextContent
 
 
 async def handle_prompt_tasks(
-    design_path: Path = Path("specs/design.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Generate prompt for creating tasks.md from design."""
-    i18n = get_i18n(language)
+    i18n = get_i18n(specs.language)
 
-    try:
-        design = await fs_utils.read_file(design_path)
-        requirements = await fs_utils.read_file(requirements_path)
-    except FileNotFoundError as e:
-        return HandlerResponse(content=[TextContent(text=i18n.t("tasks_prompts.error.files_not_found", error=str(e)))])
+    design = await specs.get_design()
+    requirements = await specs.get_requirements()
+
+    if design is None:
+        return HandlerResponse(
+            content=[TextContent(text=i18n.t("tasks_prompts.error.design_not_found", path=specs.design_path))]
+        )
+
+    if requirements is None:
+        return HandlerResponse(
+            content=[
+                TextContent(text=i18n.t("tasks_prompts.error.requirements_not_found", path=specs.requirements_path))
+            ]
+        )
 
     prompt = f"""{i18n.t("tasks_prompts.prompt.intro")}
 
@@ -54,24 +58,19 @@ async def handle_prompt_tasks(
 
 
 async def handle_validate_tasks(
-    tasks_path: Path = Path("specs/tasks.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Validate tasks.md structure and dependencies."""
-    i18n = get_i18n(language)
-
     try:
-        tasks_content = await fs_utils.read_file(tasks_path)
+        tasks_content = await specs.get_tasks()
+        if tasks_content is None:
+            raise FileNotFoundError(f"Tasks file not found: {specs.tasks_path}")
+
+        i18n = get_i18n(specs.language)
 
         # Try to read requirements and design for traceability check
-        requirements_content = None
-        design_content = None
-
-        with contextlib.suppress(FileNotFoundError):
-            requirements_content = await fs_utils.read_file(Path("specs/requirements.md"))
-
-        with contextlib.suppress(FileNotFoundError):
-            design_content = await fs_utils.read_file(Path("specs/design.md"))
+        requirements_content = await specs.get_requirements()
+        design_content = await specs.get_design()
 
         validation_result = validate.validate_tasks(tasks_content, requirements_content, design_content)
 
@@ -104,10 +103,12 @@ async def handle_validate_tasks(
 
         return HandlerResponse(content=[TextContent(text=error_text)])
     except FileNotFoundError:
+        i18n = get_i18n(specs.language)
         return HandlerResponse(
-            content=[TextContent(text=i18n.t("validation.tasks.file_error.not_found", path=tasks_path))]
+            content=[TextContent(text=i18n.t("validation.tasks.file_error.not_found", path=specs.tasks_path))]
         )
     except Exception as e:
+        i18n = get_i18n(specs.language)
         return HandlerResponse(
             content=[TextContent(text=i18n.t("validation.tasks.file_error.general_error", error=str(e)))]
         )

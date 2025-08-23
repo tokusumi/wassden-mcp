@@ -292,7 +292,7 @@ class TestValidateRequirementsCommand:
 
         assert result.exit_code == 0
         assert "validate-requirements" in result.output
-        assert "--requirementsPath" in result.output
+        assert "[REQUIREMENTSPATH]" in result.output
 
     def test_validate_requirements_default_path(self):
         """Test validate-requirements with default path."""
@@ -304,9 +304,7 @@ class TestValidateRequirementsCommand:
 
     def test_validate_requirements_nonexistent_file(self):
         """Test validate-requirements with non-existent file."""
-        result = self.runner.invoke(
-            app, ["validate-requirements", "--requirementsPath", "/nonexistent/requirements.md"]
-        )
+        result = self.runner.invoke(app, ["validate-requirements", "/nonexistent/requirements.md"])
 
         assert result.exit_code == 0  # Command succeeds but shows error message
         assert "エラー" in result.output
@@ -377,9 +375,7 @@ Missing required sections and invalid IDs
 - **REQ-01**: Test requirement
 """)
 
-            result = self.runner.invoke(
-                app, ["validate-requirements", "--requirementsPath", "custom/my_requirements.md"]
-            )
+            result = self.runner.invoke(app, ["validate-requirements", "custom/my_requirements.md"])
 
             assert result.exit_code == 0
 
@@ -409,7 +405,7 @@ class TestPromptDesignCommand:
 
         assert result.exit_code == 0
         assert "prompt-design" in result.output
-        assert "--requirementsPath" in result.output
+        assert "[REQUIREMENTSPATH]" in result.output
 
     def test_prompt_design_default_path(self):
         """Test prompt-design with default path."""
@@ -436,7 +432,7 @@ class TestPromptDesignCommand:
 
     def test_prompt_design_nonexistent_requirements(self):
         """Test prompt-design with non-existent requirements file."""
-        result = self.runner.invoke(app, ["prompt-design", "--requirementsPath", "/nonexistent/requirements.md"])
+        result = self.runner.invoke(app, ["prompt-design", "/nonexistent/requirements.md"])
 
         assert result.exit_code == 0
         assert "エラー" in result.output
@@ -451,7 +447,7 @@ class TestPromptDesignCommand:
 - **REQ-02**: Another requirement
 """)
 
-            result = self.runner.invoke(app, ["prompt-design", "--requirementsPath", "custom/my_requirements.md"])
+            result = self.runner.invoke(app, ["prompt-design", "custom/my_requirements.md"])
 
             assert result.exit_code == 0
             assert "design.md" in result.output
@@ -471,7 +467,7 @@ class TestValidateDesignCommand:
 
         assert result.exit_code == 0
         assert "validate-design" in result.output
-        assert "--designPath" in result.output
+        assert "[DESIGNPATH]" in result.output
         assert "--requirementsPath" in result.output
 
     def test_validate_design_default_paths(self):
@@ -526,7 +522,6 @@ Test strategy
                 app,
                 [
                     "validate-design",
-                    "--designPath",
                     "custom/my_design.md",
                     "--requirementsPath",
                     "custom/my_requirements.md",
@@ -550,7 +545,7 @@ class TestPromptTasksCommand:
 
         assert result.exit_code == 0
         assert "prompt-tasks" in result.output
-        assert "--designPath" in result.output
+        assert "[DESIGNPATH]" in result.output
         assert "--requirementsPath" in result.output
 
     def test_prompt_tasks_default_paths(self):
@@ -559,7 +554,7 @@ class TestPromptTasksCommand:
 
         assert result.exit_code == 0
         # Should show error about missing files or attempt to generate prompt
-        assert "エラー" in result.output or "tasks.md" in result.output
+        assert "エラー" in result.output or "tasks.md" in result.output or "design_not_found" in result.output
 
     def test_prompt_tasks_with_valid_files(self):
         """Test prompt-tasks with valid files."""
@@ -589,7 +584,7 @@ class TestValidateTasksCommand:
 
         assert result.exit_code == 0
         assert "validate-tasks" in result.output
-        assert "--tasksPath" in result.output
+        assert "[TASKSPATH]" in result.output
 
     def test_validate_tasks_default_path(self):
         """Test validate-tasks with default path."""
@@ -636,7 +631,7 @@ class TestPromptCodeCommand:
 
         assert result.exit_code == 0
         assert "prompt-code" in result.output
-        assert "--tasksPath" in result.output
+        assert "[TASKSPATH]" in result.output
         assert "--requirementsPath" in result.output
         assert "--designPath" in result.output
 
@@ -645,7 +640,7 @@ class TestPromptCodeCommand:
         result = self.runner.invoke(app, ["prompt-code"])
 
         assert result.exit_code == 0
-        assert "エラー" in result.output or "実装" in result.output
+        assert "エラー" in result.output or "実装" in result.output or "tasks_not_found" in result.output
 
     def test_prompt_code_with_valid_files(self):
         """Test prompt-code with valid files."""
@@ -743,7 +738,7 @@ class TestGetTraceabilityCommand:
 
         assert result.exit_code == 0
         assert "get-traceability" in result.output
-        assert "--requirementsPath" in result.output
+        assert "[REQUIREMENTSPATH]" in result.output
         assert "--designPath" in result.output
         assert "--tasksPath" in result.output
 
@@ -794,10 +789,10 @@ class TestCLIErrorHandling:
     def test_app_commands_handle_file_errors_gracefully(self):
         """Test that CLI commands handle file errors gracefully."""
         commands_with_file_args = [
-            ["validate-requirements", "--requirementsPath", "/invalid/path.md"],
-            ["prompt-design", "--requirementsPath", "/invalid/path.md"],
-            ["validate-design", "--designPath", "/invalid/path.md"],
-            ["validate-tasks", "--tasksPath", "/invalid/path.md"],
+            ["validate-requirements", "/invalid/path.md"],
+            ["prompt-design", "/invalid/path.md"],
+            ["validate-design", "/invalid/path.md"],
+            ["validate-tasks", "/invalid/path.md"],
         ]
 
         for command_args in commands_with_file_args:

@@ -1,7 +1,7 @@
 """Prompt generation utilities."""
 
 from wassden.i18n import get_i18n
-from wassden.types import Language
+from wassden.language_types import Language
 
 
 def generate_requirements_prompt(

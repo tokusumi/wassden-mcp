@@ -1,7 +1,7 @@
 """Detailed unit tests for analyze_changes functionality."""
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -73,12 +73,13 @@ class TestAnalyzeChangesDetailed:
         """Test impact analysis for new requirements changes."""
 
         # Mock file reading to return our test data
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(
                 Path("specs/requirements.md"), "Added REQ-04 for new notification feature", Language.JAPANESE
@@ -114,12 +115,13 @@ class TestAnalyzeChangesDetailed:
         """Test impact analysis for existing requirements changes."""
 
         # Mock file reading to return our test data
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(
                 Path("specs/requirements.md"), "Modified REQ-01 to include OAuth support", Language.JAPANESE
@@ -145,12 +147,13 @@ class TestAnalyzeChangesDetailed:
     async def test_design_change_impact_analysis(self, sample_requirements, sample_design, sample_tasks):
         """Test impact analysis for design changes with component-based analysis."""
 
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(
                 Path("specs/design.md"),
@@ -177,12 +180,13 @@ class TestAnalyzeChangesDetailed:
     async def test_tasks_change_impact_analysis(self, sample_requirements, sample_design, sample_tasks):
         """Test impact analysis for task changes."""
 
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object with async methods
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(
                 Path("specs/tasks.md"), "Modified TASK-02 implementation approach", Language.JAPANESE
@@ -204,12 +208,13 @@ class TestAnalyzeChangesDetailed:
     async def test_multiple_req_changes_impact(self, sample_requirements, sample_design, sample_tasks):
         """Test impact analysis when multiple requirements are changed."""
 
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(
                 Path("specs/requirements.md"),
@@ -250,12 +255,13 @@ class TestAnalyzeChangesDetailed:
     async def test_empty_change_description_handling(self, sample_requirements, sample_design, sample_tasks):
         """Test handling of empty change descriptions."""
 
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(Path("specs/requirements.md"), "", Language.JAPANESE)
 
@@ -272,12 +278,13 @@ class TestAnalyzeChangesDetailed:
     async def test_change_impact_output_structure(self, sample_requirements, sample_design, sample_tasks):
         """Test the structure and completeness of change impact output."""
 
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             result = await handle_analyze_changes(
                 Path("specs/requirements.md"), "Added REQ-04 for user preferences management", Language.JAPANESE
@@ -304,12 +311,13 @@ class TestAnalyzeChangesDetailed:
     async def test_traceability_matrix_usage_in_analysis(self, sample_requirements, sample_design, sample_tasks):
         """Test that the analysis properly uses traceability matrix for impact detection."""
 
-        with patch("wassden.handlers.traceability._read_all_specs") as mock_read:
-            mock_read.return_value = {
-                "requirements": sample_requirements,
-                "design": sample_design,
-                "tasks": sample_tasks,
-            }
+        with patch("wassden.types.SpecDocuments.from_feature_dir") as mock_from_feature_dir:
+            # Create a mock SpecDocuments object
+            mock_specs = MagicMock()
+            mock_specs.get_requirements = AsyncMock(return_value=sample_requirements)
+            mock_specs.get_design = AsyncMock(return_value=sample_design)
+            mock_specs.get_tasks = AsyncMock(return_value=sample_tasks)
+            mock_from_feature_dir.return_value = mock_specs
 
             # Mock the traceability matrix building with simplified structure
             with patch("wassden.lib.traceability.build_traceability_matrix") as mock_matrix:
