@@ -14,7 +14,7 @@ from wassden.handlers import (
     tasks,
     traceability,
 )
-from wassden.types import Language
+from wassden.types import Language, SpecDocuments
 
 
 def get_correct_tasks() -> str:
@@ -53,9 +53,15 @@ async def test_check_completeness_handler():
 @pytest.mark.asyncio
 async def test_prompt_requirements_handler():
     """Test requirements prompt handler."""
-    result = await requirements.handle_prompt_requirements(
-        "Test project", "Basic features", "Python 3.12+", Language.JAPANESE
+    # Create a SpecDocuments instance for testing
+    specs = SpecDocuments(
+        requirements_path=Path("specs/requirements.md"),
+        design_path=Path("specs/design.md"),
+        tasks_path=Path("specs/tasks.md"),
+        language=Language.JAPANESE,
     )
+
+    result = await requirements.handle_prompt_requirements(specs, "Test project", "Basic features", "Python 3.12+")
 
     assert result.content
     assert len(result.content) > 0
@@ -70,7 +76,8 @@ async def test_validate_requirements_handler(temp_dir, correct_requirements):
     req_path = temp_dir / "requirements.md"
     req_path.write_text(correct_requirements)
 
-    result = await requirements.handle_validate_requirements(req_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(requirements_path=req_path, language=Language.JAPANESE)
+    result = await requirements.handle_validate_requirements(specs)
 
     assert result.content
     text = result.content[0].text
@@ -83,7 +90,8 @@ async def test_prompt_design_handler(temp_dir, correct_requirements):
     req_path = temp_dir / "requirements.md"
     req_path.write_text(correct_requirements)
 
-    result = await design.handle_prompt_design(req_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(requirements_path=req_path, language=Language.JAPANESE)
+    result = await design.handle_prompt_design(specs)
 
     assert result.content
     text = result.content[0].text
@@ -99,7 +107,10 @@ async def test_validate_design_handler(temp_dir, correct_design, correct_require
     req_path = temp_dir / "requirements.md"
     req_path.write_text(correct_requirements)
 
-    result = await design.handle_validate_design(design_path, req_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=req_path, design_path=design_path, language=Language.JAPANESE
+    )
+    result = await design.handle_validate_design(specs)
 
     assert result.content
     text = result.content[0].text
@@ -114,7 +125,10 @@ async def test_prompt_tasks_handler(temp_dir, correct_design, correct_requiremen
     req_path = temp_dir / "requirements.md"
     req_path.write_text(correct_requirements)
 
-    result = await tasks.handle_prompt_tasks(design_path, req_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=req_path, design_path=design_path, language=Language.JAPANESE
+    )
+    result = await tasks.handle_prompt_tasks(specs)
 
     assert result.content
     text = result.content[0].text
@@ -128,7 +142,8 @@ async def test_validate_tasks_handler_with_traceability_issues(temp_dir, incorre
     tasks_path = temp_dir / "tasks.md"
     tasks_path.write_text(incorrect_tasks)
 
-    result = await tasks.handle_validate_tasks(tasks_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(tasks_path=tasks_path)
+    result = await tasks.handle_validate_tasks(specs)
 
     assert result.content
     text = result.content[0].text
@@ -164,7 +179,8 @@ async def test_validate_tasks_handler_success_case(temp_dir, correct_requirement
         raise FileNotFoundError(f"Mock: {path} not found")
 
     with patch("wassden.lib.fs_utils.read_file", side_effect=mock_read_file):
-        result = await tasks.handle_validate_tasks(tasks_path, Language.JAPANESE)
+        specs = await SpecDocuments.from_paths(tasks_path=tasks_path, language=Language.JAPANESE)
+        result = await tasks.handle_validate_tasks(specs)
 
     assert result.content
     text = result.content[0].text
@@ -185,7 +201,10 @@ async def test_prompt_code_handler(temp_dir, correct_requirements, correct_desig
     tasks_path = temp_dir / "tasks.md"
     tasks_path.write_text(correct_tasks)
 
-    result = await code_analysis.handle_prompt_code(tasks_path, req_path, design_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=req_path, design_path=design_path, tasks_path=tasks_path, language=Language.JAPANESE
+    )
+    result = await code_analysis.handle_prompt_code(specs)
 
     assert result.content
     text = result.content[0].text
@@ -204,9 +223,10 @@ async def test_generate_review_prompt_handler(temp_dir, correct_requirements, co
     tasks_path = temp_dir / "tasks.md"
     tasks_path.write_text(correct_tasks)
 
-    result = await code_analysis.handle_generate_review_prompt(
-        "TASK-01-01", tasks_path, req_path, design_path, Language.JAPANESE
+    specs = await SpecDocuments.from_paths(
+        requirements_path=req_path, design_path=design_path, tasks_path=tasks_path, language=Language.JAPANESE
     )
+    result = await code_analysis.handle_generate_review_prompt("TASK-01-01", specs)
 
     assert result.content
     text = result.content[0].text
@@ -227,9 +247,13 @@ async def test_generate_review_prompt_handler(temp_dir, correct_requirements, co
 @pytest.mark.asyncio
 async def test_generate_review_prompt_missing_task_id():
     """Test generate review prompt with missing task ID."""
-    result = await code_analysis.handle_generate_review_prompt(
-        "", Path("specs/tasks.md"), Path("specs/requirements.md"), Path("specs/design.md"), Language.JAPANESE
+    specs = await SpecDocuments.from_paths(
+        requirements_path=Path("specs/requirements.md"),
+        design_path=Path("specs/design.md"),
+        tasks_path=Path("specs/tasks.md"),
+        language=Language.JAPANESE,
     )
+    result = await code_analysis.handle_generate_review_prompt("", specs)
 
     assert result.content
     text = result.content[0].text
@@ -254,13 +278,13 @@ async def test_generate_review_prompt_nonexistent_task():
         design_path = f.name
 
     try:
-        result = await code_analysis.handle_generate_review_prompt(
-            "TASK-99-99",  # Non-existent task
-            Path(tasks_path),
-            Path(req_path),
-            Path(design_path),
-            Language.JAPANESE,
+        specs = await SpecDocuments.from_paths(
+            requirements_path=Path(req_path),
+            design_path=Path(design_path),
+            tasks_path=Path(tasks_path),
+            language=Language.JAPANESE,
         )
+        result = await code_analysis.handle_generate_review_prompt("TASK-99-99", specs)
 
         assert result.content
         text = result.content[0].text
@@ -281,7 +305,10 @@ async def test_get_traceability_handler(temp_dir, correct_requirements, correct_
     tasks_path = temp_dir / "tasks.md"
     tasks_path.write_text(correct_tasks)
 
-    result = await traceability.handle_get_traceability(req_path, design_path, tasks_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=req_path, design_path=design_path, tasks_path=tasks_path, language=Language.JAPANESE
+    )
+    result = await traceability.handle_get_traceability(specs)
 
     assert result.content
     text = result.content[0].text
@@ -309,7 +336,8 @@ async def test_validate_requirements_handler_failure_case(temp_dir, incorrect_re
     req_path = temp_dir / "requirements.md"
     req_path.write_text(incorrect_requirements)
 
-    result = await requirements.handle_validate_requirements(req_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(requirements_path=req_path, language=Language.JAPANESE)
+    result = await requirements.handle_validate_requirements(specs)
 
     assert result.content
     text = result.content[0].text
@@ -327,7 +355,10 @@ async def test_validate_design_handler_failure_case(temp_dir, incorrect_design, 
     req_path = temp_dir / "requirements.md"
     req_path.write_text(correct_requirements)
 
-    result = await design.handle_validate_design(design_path, req_path, Language.JAPANESE)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=req_path, design_path=design_path, language=Language.JAPANESE
+    )
+    result = await design.handle_validate_design(specs)
 
     assert result.content
     text = result.content[0].text

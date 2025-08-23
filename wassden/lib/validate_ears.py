@@ -11,7 +11,7 @@ import markdown
 from pydantic import BaseModel, Field
 
 from wassden.i18n.core import get_i18n
-from wassden.types import Language
+from wassden.language_types import Language
 
 
 class EARSViolation(BaseModel):

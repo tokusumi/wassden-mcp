@@ -76,9 +76,7 @@ class TestCLICommands:
 
     def test_validate_requirements_file_not_found(self):
         """Test validate_requirements with non-existent file."""
-        result = self.runner.invoke(
-            app, ["validate-requirements", "--requirementsPath", "/nonexistent/requirements.md"]
-        )
+        result = self.runner.invoke(app, ["validate-requirements", "/nonexistent/requirements.md"])
 
         assert result.exit_code == 0  # Command succeeds but shows error message
         assert "エラー" in result.output
@@ -239,7 +237,6 @@ Milestones
                     "custom/req.md",
                     "--designPath",
                     "custom/design.md",
-                    "--tasksPath",
                     "custom/tasks.md",
                 ],
             )
@@ -305,9 +302,7 @@ Milestones
     def test_command_error_handling(self):
         """Test command error handling."""
         # Test with invalid file path that will cause an error
-        result = self.runner.invoke(
-            app, ["validate-requirements", "--requirementsPath", "/invalid/path/that/definitely/does/not/exist.md"]
-        )
+        result = self.runner.invoke(app, ["validate-requirements", "/invalid/path/that/definitely/does/not/exist.md"])
 
         # Command should handle the error gracefully
         assert result.exit_code == 0

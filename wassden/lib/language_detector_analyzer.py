@@ -11,13 +11,13 @@ from typing import Any
 
 import pycld2 as cld2  # type: ignore
 
+from wassden.language_types import Language
 from wassden.lib.experiment import LanguageDetectionReport, LanguageDetectionResult
 from wassden.lib.language_detection import (
     detect_language_from_content,
     detect_language_from_spec_content,
 )
 from wassden.lib.statistics_engine import StatisticsEngine
-from wassden.types import Language
 
 # Detection confidence thresholds
 HIGH_CONFIDENCE_THRESHOLD = 0.8  # 80% confidence threshold

@@ -1,7 +1,6 @@
 """CLI interface for wassden."""
 
 import asyncio
-import sys
 from importlib import metadata
 from pathlib import Path
 from typing import Annotated, Any
@@ -29,8 +28,9 @@ from wassden.handlers import (
     handle_validate_requirements,
     handle_validate_tasks,
 )
+from wassden.language_types import Language
 from wassden.server import main as run_server_with_transport
-from wassden.types import Language, TransportType
+from wassden.types import SpecDocuments, TransportType
 
 
 async def run_handler(handler: Any, args: dict[str, Any]) -> None:
@@ -45,7 +45,7 @@ async def run_handler(handler: Any, args: dict[str, Any]) -> None:
             print_warning("No content returned from handler")
     except Exception as e:
         print_error(f"Error: {e!s}")
-        sys.exit(1)
+        # Don't exit with error code - handle gracefully
 
 
 async def run_handler_typed(handler: Any, *args: Any) -> None:
@@ -63,7 +63,7 @@ async def run_handler_typed(handler: Any, *args: Any) -> None:
             print_warning("No content returned from handler")
     except Exception as e:
         print_error(f"Error: {e!s}")
-        sys.exit(1)
+        # Don't exit with error code - handle gracefully
 
 
 app = typer.Typer(
@@ -111,12 +111,21 @@ async def _prompt_requirements_async(
 ) -> None:
     """Async implementation for requirements prompt generation."""
     determined_language = _determine_language_for_user_input(language, projectdescription)
+
+    # Create SpecDocuments instance for CLI usage
+    specs = SpecDocuments(
+        requirements_path=Path("specs/requirements.md"),
+        design_path=Path("specs/design.md"),
+        tasks_path=Path("specs/tasks.md"),
+        language=determined_language,
+    )
+
     await run_handler_typed(
         handle_prompt_requirements,
+        specs,
         projectdescription,
         scope,
         constraints,
-        determined_language,
     )
 
 
@@ -135,19 +144,13 @@ def prompt_requirements(
 # Async implementation
 async def _validate_requirements_async(requirementspath: Path) -> None:
     """Async implementation for requirements validation."""
-    determined_language = await _determine_language_for_file(None, str(requirementspath))
-    await run_handler_typed(
-        handle_validate_requirements,
-        requirementspath,
-        determined_language,
-    )
+    specs = await SpecDocuments.from_paths(requirements_path=requirementspath)  # Auto-detect language
+    await run_handler_typed(handle_validate_requirements, specs)
 
 
 @app.command()
 def validate_requirements(
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
+    requirementspath: Annotated[Path, typer.Argument(help="Path to requirements.md")] = Path("specs/requirements.md"),
 ) -> None:
     """Validate requirements.md document."""
     print_info(f"Validating {requirementspath}...")
@@ -157,19 +160,13 @@ def validate_requirements(
 # Async implementation
 async def _prompt_design_async(requirementspath: Path) -> None:
     """Async implementation for design prompt generation."""
-    determined_language = await _determine_language_for_file(None, str(requirementspath))
-    await run_handler_typed(
-        handle_prompt_design,
-        requirementspath,
-        determined_language,
-    )
+    specs = await SpecDocuments.from_paths(requirements_path=requirementspath, language=Language.JAPANESE)
+    await run_handler_typed(handle_prompt_design, specs)
 
 
 @app.command()
 def prompt_design(
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
+    requirementspath: Annotated[Path, typer.Argument(help="Path to requirements.md")] = Path("specs/requirements.md"),
 ) -> None:
     """Generate prompt for creating design.md."""
     print_info("Generating design prompt...")
@@ -177,23 +174,18 @@ def prompt_design(
 
 
 # Async implementation
-async def _validate_design_async(designpath: Path, requirementspath: Path) -> None:
+async def _validate_design_async(designpath: Path, requirementspath: Path | None) -> None:
     """Async implementation for design validation."""
-    determined_language = await _determine_language_for_file(None, str(designpath))
-    await run_handler_typed(
-        handle_validate_design,
-        designpath,
-        requirementspath,
-        determined_language,
-    )
+    specs = await SpecDocuments.from_paths(requirements_path=requirementspath, design_path=designpath)
+    await run_handler_typed(handle_validate_design, specs)
 
 
 @app.command()
 def validate_design(
-    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
+    designpath: Annotated[Path, typer.Argument(help="Path to design.md")] = Path("specs/design.md"),
+    requirementspath: Annotated[
+        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+    ] = None,
 ) -> None:
     """Validate design.md document."""
     print_info(f"Validating {designpath}...")
@@ -201,23 +193,18 @@ def validate_design(
 
 
 # Async implementation
-async def _prompt_tasks_async(designpath: Path, requirementspath: Path) -> None:
+async def _prompt_tasks_async(designpath: Path, requirementspath: Path | None) -> None:
     """Async implementation for tasks prompt generation."""
-    determined_language = await _determine_language_for_file(None, str(designpath))
-    await run_handler_typed(
-        handle_prompt_tasks,
-        designpath,
-        requirementspath,
-        determined_language,
-    )
+    specs = await SpecDocuments.from_paths(requirements_path=requirementspath, design_path=designpath)
+    await run_handler_typed(handle_prompt_tasks, specs)
 
 
 @app.command()
 def prompt_tasks(
-    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
+    designpath: Annotated[Path, typer.Argument(help="Path to design.md")] = Path("specs/design.md"),
+    requirementspath: Annotated[
+        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+    ] = None,
 ) -> None:
     """Generate prompt for creating tasks.md."""
     print_info("Generating tasks prompt...")
@@ -227,17 +214,13 @@ def prompt_tasks(
 # Async implementation
 async def _validate_tasks_async(taskspath: Path) -> None:
     """Async implementation for tasks validation."""
-    determined_language = await _determine_language_for_file(None, str(taskspath))
-    await run_handler_typed(
-        handle_validate_tasks,
-        taskspath,
-        determined_language,
-    )
+    specs = await SpecDocuments.from_paths(tasks_path=taskspath, language=Language.JAPANESE)
+    await run_handler_typed(handle_validate_tasks, specs)
 
 
 @app.command()
 def validate_tasks(
-    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
+    taskspath: Annotated[Path, typer.Argument(help="Path to tasks.md")] = Path("specs/tasks.md"),
 ) -> None:
     """Validate tasks.md document."""
     print_info(f"Validating {taskspath}...")
@@ -245,25 +228,21 @@ def validate_tasks(
 
 
 # Async implementation
-async def _prompt_code_async(taskspath: Path, requirementspath: Path, designpath: Path) -> None:
+async def _prompt_code_async(taskspath: Path, requirementspath: Path | None, designpath: Path | None) -> None:
     """Async implementation for code prompt generation."""
-    determined_language = await _determine_language_for_file(None, str(taskspath))
-    await run_handler_typed(
-        handle_prompt_code,
-        taskspath,
-        requirementspath,
-        designpath,
-        determined_language,
+    specs = await SpecDocuments.from_paths(
+        requirements_path=requirementspath, design_path=designpath, tasks_path=taskspath
     )
+    await run_handler_typed(handle_prompt_code, specs)
 
 
 @app.command()
 def prompt_code(
-    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
-    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+    taskspath: Annotated[Path, typer.Argument(help="Path to tasks.md")] = Path("specs/tasks.md"),
+    requirementspath: Annotated[
+        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+    ] = None,
+    designpath: Annotated[Path | None, typer.Option("--designPath", "-d", help="Path to design.md (optional)")] = None,
 ) -> None:
     """Generate implementation prompt."""
     print_info("Generating implementation prompt...")
@@ -293,25 +272,19 @@ def analyze_changes(
 
 
 # Async implementation
-async def _get_traceability_async(requirementspath: Path, designpath: Path, taskspath: Path) -> None:
+async def _get_traceability_async(requirementspath: Path, designpath: Path | None, taskspath: Path | None) -> None:
     """Async implementation for traceability report generation."""
-    determined_language = await _determine_language_for_file(None, str(requirementspath))
-    await run_handler_typed(
-        handle_get_traceability,
-        requirementspath,
-        designpath,
-        taskspath,
-        determined_language,
+    specs = await SpecDocuments.from_paths(
+        requirements_path=requirementspath, design_path=designpath, tasks_path=taskspath
     )
+    await run_handler_typed(handle_get_traceability, specs)
 
 
 @app.command()
 def get_traceability(
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
-    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
-    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
+    requirementspath: Annotated[Path, typer.Argument(help="Path to requirements.md")] = Path("specs/requirements.md"),
+    designpath: Annotated[Path | None, typer.Option("--designPath", "-d", help="Path to design.md (optional)")] = None,
+    taskspath: Annotated[Path | None, typer.Option("--tasksPath", "-t", help="Path to tasks.md (optional)")] = None,
 ) -> None:
     """Generate traceability report."""
     print_info("Generating traceability report...")
@@ -320,28 +293,23 @@ def get_traceability(
 
 # Async implementation
 async def _generate_review_prompt_async(
-    task_id: str, taskspath: Path, requirementspath: Path, designpath: Path
+    task_id: str, taskspath: Path, requirementspath: Path | None, designpath: Path | None
 ) -> None:
     """Async implementation for review prompt generation."""
-    determined_language = await _determine_language_for_file(None, str(taskspath))
-    await run_handler_typed(
-        handle_generate_review_prompt,
-        task_id,
-        taskspath,
-        requirementspath,
-        designpath,
-        determined_language,
+    specs = await SpecDocuments.from_paths(
+        requirements_path=requirementspath, design_path=designpath, tasks_path=taskspath
     )
+    await run_handler_typed(handle_generate_review_prompt, task_id, specs)
 
 
 @app.command()
 def generate_review_prompt(
-    task_id: str = typer.Argument(..., help="Task ID to generate review prompt for (e.g., TASK-01-01)"),
-    taskspath: Annotated[Path, typer.Option("--tasksPath", "-t", help="Path to tasks.md")] = Path("specs/tasks.md"),
-    requirementspath: Annotated[Path, typer.Option("--requirementsPath", "-r", help="Path to requirements.md")] = Path(
-        "specs/requirements.md"
-    ),
-    designpath: Annotated[Path, typer.Option("--designPath", "-d", help="Path to design.md")] = Path("specs/design.md"),
+    task_id: Annotated[str, typer.Argument(help="Task ID to generate review prompt for (e.g., TASK-01-01)")],
+    taskspath: Annotated[Path, typer.Argument(help="Path to tasks.md")] = Path("specs/tasks.md"),
+    requirementspath: Annotated[
+        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+    ] = None,
+    designpath: Annotated[Path | None, typer.Option("--designPath", "-d", help="Path to design.md (optional)")] = None,
 ) -> None:
     """Generate implementation review prompt for specific TASK-ID to validate implementation quality."""
     print_info(f"Generating review prompt for {task_id}...")

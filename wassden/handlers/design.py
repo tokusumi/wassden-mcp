@@ -1,25 +1,22 @@
 """Design handling functions."""
 
-import contextlib
-from pathlib import Path
-
 from wassden.i18n import get_i18n
-from wassden.lib import fs_utils, validate
-from wassden.types import HandlerResponse, Language, TextContent
+from wassden.lib import validate
+from wassden.types import HandlerResponse, SpecDocuments, TextContent
 
 
 async def handle_prompt_design(
-    requirements_path: Path = Path("specs/requirements.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Generate prompt for creating design.md from requirements."""
-    try:
-        requirements = await fs_utils.read_file(requirements_path)
-        i18n = get_i18n(language)
-    except FileNotFoundError:
-        i18n = get_i18n(language)
+    requirements = await specs.get_requirements()
+    i18n = get_i18n(specs.language)
+
+    if requirements is None:
         return HandlerResponse(
-            content=[TextContent(text=i18n.t("design_prompts.error.requirements_not_found", path=requirements_path))]
+            content=[
+                TextContent(text=i18n.t("design_prompts.error.requirements_not_found", path=specs.requirements_path))
+            ]
         )
 
     prompt = f"""{i18n.t("design_prompts.prompt.intro")}
@@ -29,7 +26,7 @@ async def handle_prompt_design(
 {requirements}
 ```
 
-{i18n.t("design_prompts.prompt.file_to_create")}
+{i18n.t("design_prompts.prompt.file_to_create", design_path=specs.design_path)}
 
 {i18n.t("design_prompts.prompt.required_structure")}
 
@@ -61,19 +58,18 @@ async def handle_prompt_design(
 
 
 async def handle_validate_design(
-    design_path: Path = Path("specs/design.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Validate design.md structure and traceability."""
     try:
-        design_content = await fs_utils.read_file(design_path)
-        i18n = get_i18n(language)
+        design_content = await specs.get_design()
+        if design_content is None:
+            raise FileNotFoundError(f"Design file not found: {specs.design_path}")
+
+        i18n = get_i18n(specs.language)
 
         # Try to read requirements for traceability check
-        requirements_content = None
-        with contextlib.suppress(FileNotFoundError):
-            requirements_content = await fs_utils.read_file(requirements_path)
+        requirements_content = await specs.get_requirements()
 
         validation_result = validate.validate_design(design_content, requirements_content)
 
@@ -106,12 +102,12 @@ async def handle_validate_design(
 
         return HandlerResponse(content=[TextContent(text=error_text)])
     except FileNotFoundError:
-        i18n = get_i18n(language)
+        i18n = get_i18n(specs.language)
         return HandlerResponse(
-            content=[TextContent(text=i18n.t("validation.design.file_error.not_found", path=design_path))]
+            content=[TextContent(text=i18n.t("validation.design.file_error.not_found", path=specs.design_path))]
         )
     except Exception as e:
-        i18n = get_i18n(language)
+        i18n = get_i18n(specs.language)
         return HandlerResponse(
             content=[TextContent(text=i18n.t("validation.design.file_error.general_error", error=str(e)))]
         )

@@ -6,7 +6,7 @@
     "intro": "以下のdesign.mdとrequirements.mdに基づいて、WBS形式のtasks.mdファイルを作成してください：",
     "design_content": "## Design内容",
     "requirements_content": "## Requirements内容",
-    "file_to_create": "## 作成するファイル\nファイル名: specs/tasks.md",
+    "file_to_create": "## 作成するファイル\nファイル名: {tasks_path}",
     "required_structure": "## 必須構造\n以下の章立てに従って作成してください：",
     "sections": {
       "overview": "### 1. 概要\nプロジェクトのタスク分解構造（WBS）の概要とアプローチ",

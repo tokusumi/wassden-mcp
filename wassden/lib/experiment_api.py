@@ -11,6 +11,7 @@ Implements: REQ-08, TASK-02-05
 from pathlib import Path
 from typing import Any
 
+from wassden.language_types import Language
 from wassden.lib.comparative_analyzer import ComparativeAnalyzer
 from wassden.lib.constants import DEFAULT_CONFIG_PATH
 from wassden.lib.ears_analyzer import EARSAnalyzer
@@ -28,7 +29,6 @@ from wassden.lib.language_detector_analyzer import LanguageDetectorAnalyzer
 from wassden.lib.output_formatter import OutputFormat as FormatterOutputFormat
 from wassden.lib.output_formatter import OutputFormatter
 from wassden.lib.performance_profiler import PerformanceProfiler
-from wassden.types import Language
 
 
 class ExperimentAPIError(Exception):

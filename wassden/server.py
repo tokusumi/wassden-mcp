@@ -27,7 +27,7 @@ from .handlers import (
 )
 from .lib import fs_utils
 from .lib.language_detection import determine_language
-from .types import Language
+from .types import Language, SpecDocuments
 
 # Create FastMCP server instance
 mcp = FastMCP("wassden")
@@ -67,7 +67,18 @@ async def prompt_requirements(
 ) -> str:
     """Generate requirements prompt."""
     language = determine_language(user_input=project_description)
-    result = await handle_prompt_requirements(project_description, scope, constraints, language)
+
+    # Create a SpecDocuments instance with default paths
+    # Assume specs/<feature-name>/ structure, but fallback to specs/ for backward compatibility
+    specs_path = Path("specs")
+    specs = SpecDocuments(
+        requirements_path=specs_path / "requirements.md",
+        design_path=specs_path / "design.md",
+        tasks_path=specs_path / "tasks.md",
+        language=language,
+    )
+
+    result = await handle_prompt_requirements(specs, project_description, scope, constraints)
     return str(result.content[0].text)
 
 
@@ -77,11 +88,11 @@ async def prompt_requirements(
     "(analyzes files only, does not modify files)",
 )
 async def validate_requirements(
-    requirements_path: Path = Path("specs/requirements.md"),
+    requirements_path: Path,
 ) -> str:
     """Validate requirements document."""
-    language = await _determine_language_for_file(requirements_path)
-    result = await handle_validate_requirements(Path(requirements_path), language)
+    specs = await SpecDocuments.from_paths(requirements_path=requirements_path)
+    result = await handle_validate_requirements(specs)
     return str(result.content[0].text)
 
 
@@ -91,11 +102,11 @@ async def validate_requirements(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_design(
-    requirements_path: Path = Path("specs/requirements.md"),
+    requirements_path: Path,
 ) -> str:
     """Generate design prompt."""
-    language = await _determine_language_for_file(requirements_path)
-    result = await handle_prompt_design(Path(requirements_path), language)
+    specs = await SpecDocuments.from_paths(requirements_path=requirements_path)
+    result = await handle_prompt_design(specs)
     return str(result.content[0].text)
 
 
@@ -105,12 +116,12 @@ async def prompt_design(
     "(analyzes files only, does not modify files)",
 )
 async def validate_design(
-    design_path: Path = Path("specs/design.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path,
+    requirements_path: Path | None = None,
 ) -> str:
     """Validate design document."""
-    language = await _determine_language_for_file(design_path)
-    result = await handle_validate_design(Path(design_path), Path(requirements_path), language)
+    specs = await SpecDocuments.from_paths(requirements_path=requirements_path, design_path=design_path)
+    result = await handle_validate_design(specs)
     return str(result.content[0].text)
 
 
@@ -120,12 +131,12 @@ async def validate_design(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_tasks(
-    design_path: Path = Path("specs/design.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
+    design_path: Path,
+    requirements_path: Path | None = None,
 ) -> str:
     """Generate tasks prompt."""
-    language = await _determine_language_for_file(design_path)
-    result = await handle_prompt_tasks(Path(design_path), Path(requirements_path), language)
+    specs = await SpecDocuments.from_paths(requirements_path=requirements_path, design_path=design_path)
+    result = await handle_prompt_tasks(specs)
     return str(result.content[0].text)
 
 
@@ -135,11 +146,11 @@ async def prompt_tasks(
     "(analyzes files only, does not modify files)",
 )
 async def validate_tasks(
-    tasks_path: Path = Path("specs/tasks.md"),
+    tasks_path: Path,
 ) -> str:
     """Validate tasks document."""
-    language = await _determine_language_for_file(tasks_path)
-    result = await handle_validate_tasks(Path(tasks_path), language)
+    specs = await SpecDocuments.from_paths(tasks_path=tasks_path)
+    result = await handle_validate_tasks(specs)
     return str(result.content[0].text)
 
 
@@ -149,13 +160,15 @@ async def validate_tasks(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_code(
-    tasks_path: Path = Path("specs/tasks.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
-    design_path: Path = Path("specs/design.md"),
+    tasks_path: Path,
+    requirements_path: Path | None = None,
+    design_path: Path | None = None,
 ) -> str:
     """Generate implementation prompt."""
-    language = await _determine_language_for_file(tasks_path)
-    result = await handle_prompt_code(Path(tasks_path), Path(requirements_path), Path(design_path), language)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=requirements_path, design_path=design_path, tasks_path=tasks_path
+    )
+    result = await handle_prompt_code(specs)
     return str(result.content[0].text)
 
 
@@ -180,13 +193,15 @@ async def analyze_changes(
     "(analyzes files only, does not modify files)",
 )
 async def get_traceability(
-    requirements_path: Path = Path("specs/requirements.md"),
-    design_path: Path = Path("specs/design.md"),
-    tasks_path: Path = Path("specs/tasks.md"),
+    requirements_path: Path,
+    design_path: Path | None = None,
+    tasks_path: Path | None = None,
 ) -> str:
     """Generate traceability report."""
-    language = await _determine_language_for_file(requirements_path)
-    result = await handle_get_traceability(Path(requirements_path), Path(design_path), Path(tasks_path), language)
+    specs = await SpecDocuments.from_paths(
+        requirements_path=requirements_path, design_path=design_path, tasks_path=tasks_path
+    )
+    result = await handle_get_traceability(specs)
     return str(result.content[0].text)
 
 
@@ -197,15 +212,15 @@ async def get_traceability(
 )
 async def generate_review_prompt(
     task_id: str,
-    tasks_path: Path = Path("specs/tasks.md"),
-    requirements_path: Path = Path("specs/requirements.md"),
-    design_path: Path = Path("specs/design.md"),
+    tasks_path: Path,
+    requirements_path: Path | None = None,
+    design_path: Path | None = None,
 ) -> str:
     """Generate review prompt for specific TASK-ID."""
-    language = await _determine_language_for_file(tasks_path)
-    result = await handle_generate_review_prompt(
-        task_id, Path(tasks_path), Path(requirements_path), Path(design_path), language
+    specs = await SpecDocuments.from_paths(
+        requirements_path=requirements_path, design_path=design_path, tasks_path=tasks_path
     )
+    result = await handle_generate_review_prompt(task_id, specs)
     return str(result.content[0].text)
 
 

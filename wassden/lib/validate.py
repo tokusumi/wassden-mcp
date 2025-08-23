@@ -3,7 +3,7 @@
 import re
 from typing import Any
 
-from wassden.types import Language
+from wassden.language_types import Language
 
 from .validate_ears import validate_ears_in_content
 from .validation_common import (

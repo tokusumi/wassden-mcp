@@ -15,6 +15,7 @@ from wassden.clis.utils import (
     print_success,
     print_warning,
 )
+from wassden.language_types import Language
 from wassden.lib.constants import DEFAULT_CONFIG_PATH
 from wassden.lib.experiment import ExperimentResult, ExperimentType, OutputFormat
 from wassden.lib.experiment_api import (
@@ -25,7 +26,6 @@ from wassden.lib.experiment_api import (
 from wassden.lib.experiment_manager import ExperimentManager
 from wassden.lib.output_formatter import OutputFormat as FormatterOutputFormat
 from wassden.lib.output_formatter import OutputFormatter
-from wassden.types import Language
 
 experiment_app = typer.Typer(
     help="Experiment runner commands for validation framework testing.",

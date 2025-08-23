@@ -6,7 +6,7 @@ set -e
 echo "Testing core CLI functionality..."
 uv run wassden --help > /dev/null 2>&1
 uv run wassden check-completeness --userInput "test project" > /dev/null 2>&1
-uv run wassden validate-requirements --requirementsPath specs/requirements.md > /dev/null 2>&1
+uv run wassden validate-requirements specs/experiment-framework/requirements.md > /dev/null 2>&1
 
 echo "Verifying experiment commands are not available in core mode..."
 if uv run wassden experiment --help 2>/dev/null; then

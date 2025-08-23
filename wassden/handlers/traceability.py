@@ -5,47 +5,28 @@ from pathlib import Path
 from typing import Any
 
 from wassden.i18n import get_i18n
-from wassden.lib import fs_utils, traceability
-from wassden.types import HandlerResponse, Language, TextContent
+from wassden.lib import traceability
+from wassden.types import HandlerResponse, Language, SpecDocuments, TextContent
 
 # Constants
 COMPLETE_COVERAGE_PERCENTAGE = 100
 
 
 async def handle_get_traceability(
-    requirements_path: Path = Path("specs/requirements.md"),
-    design_path: Path = Path("specs/design.md"),
-    tasks_path: Path = Path("specs/tasks.md"),
-    language: Language = Language.JAPANESE,
+    specs: SpecDocuments,
 ) -> HandlerResponse:
     """Generate traceability report."""
-    i18n = get_i18n(language)
+    i18n = get_i18n(specs.language)
 
-    specs = await _read_spec_files(requirements_path, design_path, tasks_path)
     matrix = traceability.build_traceability_matrix(
-        specs.get("requirements"),
-        specs.get("design"),
-        specs.get("tasks"),
+        await specs.get_requirements(),
+        await specs.get_design(),
+        await specs.get_tasks(),
     )
 
     report_lines = _build_traceability_report(matrix, i18n)
 
     return HandlerResponse(content=[TextContent(text="\n".join(report_lines))])
-
-
-async def _read_spec_files(requirements_path: Path, design_path: Path, tasks_path: Path) -> dict[str, str | None]:
-    """Read spec files if they exist."""
-    specs: dict[str, str | None] = {}
-    for name, path in [
-        ("requirements", requirements_path),
-        ("design", design_path),
-        ("tasks", tasks_path),
-    ]:
-        try:
-            specs[name] = await fs_utils.read_file(path)
-        except FileNotFoundError:
-            specs[name] = None
-    return specs
 
 
 def _build_traceability_report(matrix: dict[str, Any], i18n: Any) -> list[str]:
@@ -223,11 +204,12 @@ async def _handle_spec_file_change(
     changed_file: Path, change_description: str, spec_type: str, i18n: Any
 ) -> HandlerResponse:
     """Handle changes to spec files."""
-    specs = await _read_all_specs()
+    # Use the changed file to locate sibling specs
+    specs = await SpecDocuments.from_feature_dir(changed_file.parent)
     matrix = traceability.build_traceability_matrix(
-        specs.get("requirements"),
-        specs.get("design"),
-        specs.get("tasks"),
+        await specs.get_requirements(),
+        await specs.get_design(),
+        await specs.get_tasks(),
     )
 
     impact_lines = _build_change_header(changed_file, change_description, i18n)
@@ -250,21 +232,6 @@ async def _handle_spec_file_change(
     )
 
     return HandlerResponse(content=[TextContent(text="\n".join(impact_lines))])
-
-
-async def _read_all_specs() -> dict[str, str | None]:
-    """Read all spec files."""
-    specs: dict[str, str | None] = {}
-    for name, path in [
-        ("requirements", Path("specs/requirements.md")),
-        ("design", Path("specs/design.md")),
-        ("tasks", Path("specs/tasks.md")),
-    ]:
-        try:
-            specs[name] = await fs_utils.read_file(path)
-        except FileNotFoundError:
-            specs[name] = None
-    return specs
 
 
 def _build_change_header(changed_file: Path, change_description: str, i18n: Any) -> list[str]:

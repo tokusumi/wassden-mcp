@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from wassden.types import Language
+from wassden.language_types import Language
 
 
 class I18n:

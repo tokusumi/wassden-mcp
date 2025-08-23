@@ -9,12 +9,16 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from pathlib import Path
+
 from wassden.handlers import (
     handle_analyze_changes,
     handle_check_completeness,
     handle_get_traceability,
     handle_prompt_requirements,
 )
+from wassden.language_types import Language
+from wassden.types import SpecDocuments
 from wassden.utils.benchmark import PerformanceBenchmark
 
 
@@ -79,9 +83,21 @@ async def benchmark_all_handlers():
 
     # Benchmark prompt_requirements
     print("\nBenchmarking prompt_requirements...")
+
+    # Create SpecDocuments for benchmarking
+    specs = SpecDocuments(
+        requirements_path=Path("specs/requirements.md"),
+        design_path=Path("specs/design.md"),
+        tasks_path=Path("specs/tasks.md"),
+        language=Language.JAPANESE,
+    )
+
     result = await benchmark.benchmark_async(
         handle_prompt_requirements,
-        {"projectDescription": "Test project", "scope": "Limited scope", "constraints": "Python constraints"},
+        specs=specs,
+        project_description="Test project",
+        scope="Limited scope",
+        constraints="Python constraints",
         name="prompt_requirements",
     )
     results["prompt_requirements"] = {
