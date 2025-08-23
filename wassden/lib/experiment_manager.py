@@ -43,8 +43,11 @@ class ExperimentManager:
             config_dir: Directory for storing configuration files
         """
         self.config_dir = config_dir or Path.cwd() / ".wassden" / "experiments"
-        self.config_dir.mkdir(parents=True, exist_ok=True)
         self._active_experiments: dict[str, ExperimentResult] = {}
+
+    def _ensure_config_dir(self) -> None:
+        """Ensure configuration directory exists."""
+        self.config_dir.mkdir(parents=True, exist_ok=True)
 
     def save_config(self, config: ExperimentConfig, name: str) -> Path:
         """Save experiment configuration to YAML file.
@@ -59,6 +62,7 @@ class ExperimentManager:
         Raises:
             ConfigurationError: If save operation fails
         """
+        self._ensure_config_dir()
         config_path = self.config_dir / f"{name}.yaml"
 
         # Convert pydantic model to dictionary for YAML serialization

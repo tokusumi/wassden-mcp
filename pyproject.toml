@@ -97,7 +97,8 @@ markers = [
 
 [tool.coverage.run]
 source = ["wassden"]
-omit = ["*/tests/*", "*/__pycache__/*"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/site-packages/*"]
+parallel = true
 
 [tool.coverage.report]
 exclude_lines = [

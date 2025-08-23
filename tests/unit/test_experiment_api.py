@@ -105,6 +105,7 @@ class TestRunExperiment:
                 output_format=[OutputFormat.JSON],
                 timeout_seconds=120,
                 memory_limit_mb=256,
+                config_path=Path(temp_dir) / "test_config",
             )
 
             # Verify realistic workflow execution
@@ -121,7 +122,7 @@ class TestRunExperiment:
 
     @pytest.mark.asyncio
     @patch("wassden.lib.experiment_api.measure_performance")
-    async def test_performance_experiment_with_custom_parameters(self, mock_measure_performance):
+    async def test_performance_experiment_with_custom_parameters(self, mock_measure_performance, tmp_path):
         """Test performance experiment with complex parameter handling."""
 
         # Setup performance measurement mock with realistic data
@@ -147,6 +148,7 @@ class TestRunExperiment:
             output_format=[OutputFormat.JSON, OutputFormat.CSV],
             timeout_seconds=600,
             memory_limit_mb=512,
+            config_path=tmp_path / "test_config",
         )
 
         # Verify parameter propagation to performance measurement
@@ -167,7 +169,7 @@ class TestExperimentAPIBoundaryValues:
     """Test boundary values and edge cases for experiment API."""
 
     @pytest.mark.asyncio
-    async def test_timeout_boundary_values(self):
+    async def test_timeout_boundary_values(self, tmp_path):
         """Test timeout parameter boundary values."""
         # Test minimum timeout (1 second)
         with patch("wassden.lib.experiment_manager.ExperimentManager"):
@@ -177,6 +179,7 @@ class TestExperimentAPIBoundaryValues:
                 memory_limit_mb=100,
                 output_format=[OutputFormat.JSON],
                 parameters={"test_documents": ["test.py"]},
+                config_path=tmp_path / "test_config",
             )
             assert result.config.timeout_seconds == 1
 
@@ -188,11 +191,12 @@ class TestExperimentAPIBoundaryValues:
                 memory_limit_mb=100,
                 output_format=[OutputFormat.JSON],
                 parameters={"test_documents": ["test.py"]},
+                config_path=tmp_path / "test_config",
             )
             assert result.config.timeout_seconds == 86400
 
     @pytest.mark.asyncio
-    async def test_memory_limit_boundary_values(self):
+    async def test_memory_limit_boundary_values(self, tmp_path):
         """Test memory limit parameter boundary values."""
         # Test minimum memory (1 MB)
         with patch("wassden.lib.experiment_manager.ExperimentManager"):
@@ -202,6 +206,7 @@ class TestExperimentAPIBoundaryValues:
                 memory_limit_mb=1,
                 output_format=[OutputFormat.JSON],
                 parameters={"test_documents": ["test.py"]},
+                config_path=tmp_path / "test_config",
             )
             assert result.config.memory_limit_mb == 1
 
@@ -213,11 +218,12 @@ class TestExperimentAPIBoundaryValues:
                 memory_limit_mb=8192,
                 output_format=[OutputFormat.JSON],
                 parameters={"test_documents": ["test.py"]},
+                config_path=tmp_path / "test_config",
             )
             assert result.config.memory_limit_mb == 8192
 
     @pytest.mark.asyncio
-    async def test_large_file_list_handling(self):
+    async def test_large_file_list_handling(self, tmp_path):
         """Test handling of large file lists in parameters."""
         # Create config with many test files (for performance experiment)
         large_file_list = [f"test_file_{i}.py" for i in range(1000)]
@@ -237,11 +243,12 @@ class TestExperimentAPIBoundaryValues:
                 memory_limit_mb=500,  # More memory for large file list
                 output_format=[OutputFormat.JSON],
                 parameters={"test_documents": large_file_list},
+                config_path=tmp_path / "test_config",
             )
             assert len(result.config.parameters["test_documents"]) == 1000
 
     @pytest.mark.asyncio
-    async def test_concurrent_experiment_execution(self):
+    async def test_concurrent_experiment_execution(self, tmp_path):
         """Test behavior with multiple experiments running concurrently."""
         # Create multiple different experiment configs
         configs = [
@@ -271,6 +278,7 @@ class TestExperimentAPIBoundaryValues:
                     memory_limit_mb=100,
                     output_format=[OutputFormat.JSON],
                     parameters=params,
+                    config_path=tmp_path / "test_config",
                 )
                 results.append(result)
 
@@ -283,7 +291,7 @@ class TestExperimentAPIBoundaryValues:
         assert results[1].config.experiment_type == ExperimentType.EARS_COVERAGE
 
     @pytest.mark.asyncio
-    async def test_output_format_combinations(self):
+    async def test_output_format_combinations(self, tmp_path):
         """Test all possible output format combinations."""
         # Test all single formats
         single_formats = [[OutputFormat.JSON], [OutputFormat.CSV], [OutputFormat.YAML]]
@@ -303,6 +311,7 @@ class TestExperimentAPIBoundaryValues:
                     memory_limit_mb=100,
                     output_format=output_format,
                     parameters={"test_documents": ["test.py"]},
+                    config_path=tmp_path / "test_config",
                 )
                 assert result.config.output_format == output_format
 
@@ -322,6 +331,7 @@ class TestExperimentAPIBoundaryValues:
                 memory_limit_mb=150,
                 output_format=multi_format,
                 parameters={"test_documents": ["test.py"]},
+                config_path=tmp_path / "test_config",
             )
             assert len(result.config.output_format) == 3
             assert all(fmt in result.config.output_format for fmt in multi_format)
@@ -359,6 +369,7 @@ class TestExperimentAPIBoundaryValues:
                 ]
             },
             output_format=[OutputFormat.JSON],
+            config_path=tmp_path / "test_config",
         )
 
         # Verify analyzer was called for each document
@@ -375,13 +386,14 @@ class TestExperimentAPIBoundaryValues:
         assert result.status == ExperimentStatus.COMPLETED
 
     @pytest.mark.asyncio
-    async def test_experiment_error_handling_and_recovery(self):
+    async def test_experiment_error_handling_and_recovery(self, tmp_path):
         """Test error handling with realistic failure scenarios."""
         # Test with invalid input_paths parameter type
         with pytest.raises(ExecutionError) as exc_info:
             await run_experiment(
                 experiment_type=ExperimentType.EARS_COVERAGE,
                 parameters={"input_paths": "not_a_list"},  # Invalid type
+                config_path=tmp_path / "test_config",
             )
 
         # Verify error propagation and wrapping
@@ -390,13 +402,15 @@ class TestExperimentAPIBoundaryValues:
         # Test with non-existent file path
         with pytest.raises(ExecutionError) as exc_info:
             await run_experiment(
-                experiment_type=ExperimentType.EARS_COVERAGE, parameters={"input_paths": ["/nonexistent/file.md"]}
+                experiment_type=ExperimentType.EARS_COVERAGE,
+                parameters={"input_paths": ["/nonexistent/file.md"]},
+                config_path=tmp_path / "test_config",
             )
 
         assert "Input path does not exist" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_run_experiment_invalid_experiment_type(self):
+    async def test_run_experiment_invalid_experiment_type(self, tmp_path):
         """Test run_experiment with configuration validation."""
 
         # Test with actual error scenario - simulate a real failure
@@ -404,10 +418,10 @@ class TestExperimentAPIBoundaryValues:
             mock_run.side_effect = FileNotFoundError("Input file not found")
 
             with pytest.raises(ExecutionError, match="Experiment execution failed"):
-                await run_experiment(experiment_type=ExperimentType.PERFORMANCE)
+                await run_experiment(experiment_type=ExperimentType.PERFORMANCE, config_path=tmp_path / "test_config")
 
     @pytest.mark.asyncio
-    async def test_run_experiment_parameter_validation(self):
+    async def test_run_experiment_parameter_validation(self, tmp_path):
         """Test run_experiment validates parameters correctly."""
         with patch("wassden.lib.experiment_api._run_ears_coverage_experiment") as mock_run:
             # Test that the function properly handles and validates parameters
@@ -432,6 +446,7 @@ class TestExperimentAPIBoundaryValues:
                 parameters={"custom_param": "value"},
                 timeout_seconds=300,
                 memory_limit_mb=200,
+                config_path=tmp_path / "test_config",
             )
 
             # Verify that ExperimentManager and config creation work correctly
@@ -452,7 +467,7 @@ class TestExperimentAPIValidation:
     """Test validation functions with complex scenarios."""
 
     @pytest.mark.asyncio
-    async def test_comprehensive_parameter_validation_scenarios(self):
+    async def test_comprehensive_parameter_validation_scenarios(self, tmp_path):
         """Test various parameter validation scenarios with realistic data."""
 
         # Test empty input_paths validation
@@ -460,6 +475,7 @@ class TestExperimentAPIValidation:
             await run_experiment(
                 experiment_type=ExperimentType.EARS_COVERAGE,
                 parameters={"input_paths": []},  # Empty list
+                config_path=tmp_path / "test_config",
             )
 
         # Test language detection missing test_documents
@@ -469,6 +485,7 @@ class TestExperimentAPIValidation:
             await run_experiment(
                 experiment_type=ExperimentType.LANGUAGE_DETECTION,
                 parameters={},  # Missing required parameter
+                config_path=tmp_path / "test_config",
             )
 
         # Test comparative experiment missing baseline
@@ -478,6 +495,7 @@ class TestExperimentAPIValidation:
             await run_experiment(
                 experiment_type=ExperimentType.COMPARATIVE,
                 parameters={"comparison_experiment_ids": ["exp1", "exp2"]},  # Missing baseline
+                config_path=tmp_path / "test_config",
             )
 
         # Test comparative experiment missing comparisons
@@ -487,11 +505,12 @@ class TestExperimentAPIValidation:
             await run_experiment(
                 experiment_type=ExperimentType.COMPARATIVE,
                 parameters={"baseline_experiment_id": "baseline"},  # Missing comparisons
+                config_path=tmp_path / "test_config",
             )
 
     @pytest.mark.asyncio
     @patch("wassden.lib.experiment_api.measure_performance")
-    async def test_performance_validation_edge_cases(self, mock_measure):
+    async def test_performance_validation_edge_cases(self, mock_measure, tmp_path):
         """Test performance measurement validation with edge cases."""
 
         mock_report = Mock(spec=PerformanceReport)
@@ -500,15 +519,27 @@ class TestExperimentAPIValidation:
 
         # Test negative measurement rounds
         with pytest.raises(ExecutionError, match="Performance experiment failed.*measurement_rounds must be positive"):
-            await run_experiment(experiment_type=ExperimentType.PERFORMANCE, parameters={"measurement_rounds": -1})
+            await run_experiment(
+                experiment_type=ExperimentType.PERFORMANCE,
+                parameters={"measurement_rounds": -1},
+                config_path=tmp_path / "test_config",
+            )
 
         # Test zero measurement rounds
         with pytest.raises(ExecutionError, match="Performance experiment failed.*measurement_rounds must be positive"):
-            await run_experiment(experiment_type=ExperimentType.PERFORMANCE, parameters={"measurement_rounds": 0})
+            await run_experiment(
+                experiment_type=ExperimentType.PERFORMANCE,
+                parameters={"measurement_rounds": 0},
+                config_path=tmp_path / "test_config",
+            )
 
         # Test negative warmup rounds
         with pytest.raises(ExecutionError, match="Performance experiment failed.*warmup_rounds.*negative"):
-            await run_experiment(experiment_type=ExperimentType.PERFORMANCE, parameters={"warmup_rounds": -1})
+            await run_experiment(
+                experiment_type=ExperimentType.PERFORMANCE,
+                parameters={"warmup_rounds": -1},
+                config_path=tmp_path / "test_config",
+            )
 
     def test_validation_helper_functions_directly(self):
         """Test validation helper functions with comprehensive scenarios."""
@@ -551,7 +582,7 @@ class TestExperimentAPIValidation:
     """Integration tests with minimal mocking to test real code paths."""
 
     @pytest.mark.asyncio
-    async def test_parameter_validation_integration(self):
+    async def test_parameter_validation_integration(self, tmp_path):
         """Test parameter validation in actual execution flow."""
 
         # Test with invalid input_paths parameter
@@ -559,6 +590,7 @@ class TestExperimentAPIValidation:
             await run_experiment(
                 experiment_type=ExperimentType.EARS_COVERAGE,
                 parameters={"input_paths": "not_a_list"},  # Should be list
+                config_path=tmp_path / "test_config",
             )
 
         error_message = str(exc_info.value)
@@ -579,6 +611,7 @@ class TestExperimentAPIValidation:
                 parameters={"input_paths": [str(tmp_path / "test.md")]},
                 timeout_seconds=30,
                 memory_limit_mb=64,
+                config_path=tmp_path / "test_config",
             )
 
             # Verify limits were applied to config
@@ -609,6 +642,7 @@ class TestExperimentAPIValidation:
                 experiment_type=ExperimentType.EARS_COVERAGE,
                 parameters={"input_paths": [str(tmp_path / "test.md")]},
                 output_format=[OutputFormat.JSON, OutputFormat.CSV],
+                config_path=tmp_path / "test_config",
             )
 
             # Verify output formatting was called for each format
@@ -624,7 +658,7 @@ class TestExperimentAPIValidation:
 
     @pytest.mark.asyncio
     @patch("wassden.lib.experiment_api._run_comparative_experiment")
-    async def test_run_comparative_experiment(self, mock_run_comparative):
+    async def test_run_comparative_experiment(self, mock_run_comparative, tmp_path):
         """Test comparative experiment execution."""
         mock_config = ExperimentConfig(
             experiment_type=ExperimentType.COMPARATIVE,
@@ -647,6 +681,7 @@ class TestExperimentAPIValidation:
             output_format=[OutputFormat.YAML, OutputFormat.JSON],
             timeout_seconds=300,
             memory_limit_mb=200,
+            config_path=tmp_path / "test_config",
         )
 
         # Verify
@@ -655,7 +690,7 @@ class TestExperimentAPIValidation:
 
     @pytest.mark.asyncio
     @patch("wassden.lib.experiment_api._run_language_detection_experiment")
-    async def test_run_language_detection_experiment(self, mock_run_lang):
+    async def test_run_language_detection_experiment(self, mock_run_lang, tmp_path):
         """Test language detection experiment execution."""
         mock_config = ExperimentConfig(
             experiment_type=ExperimentType.LANGUAGE_DETECTION,
@@ -673,7 +708,10 @@ class TestExperimentAPIValidation:
         mock_run_lang.return_value = mock_result
 
         # Execute
-        result = await run_experiment(ExperimentType.LANGUAGE_DETECTION)
+        result = await run_experiment(
+            experiment_type=ExperimentType.LANGUAGE_DETECTION,
+            config_path=tmp_path / "test_config",
+        )
 
         # Verify
         assert result == mock_result
@@ -932,7 +970,7 @@ class TestExperimentRunners:
     """Test internal experiment runner functions."""
 
     @pytest.mark.asyncio
-    async def test_unsupported_experiment_type_in_run_experiment(self):
+    async def test_unsupported_experiment_type_in_run_experiment(self, tmp_path):
         """Test run_experiment with unsupported experiment type."""
 
         # Create a mock experiment type that's not handled - this will trigger pydantic validation error
@@ -944,7 +982,7 @@ class TestExperimentRunners:
 
         # Pydantic validation will catch this first, so we expect ExecutionError
         with pytest.raises(ExecutionError, match="Experiment execution failed"):
-            await run_experiment(experiment_type=unsupported_type)
+            await run_experiment(experiment_type=unsupported_type, config_path=tmp_path / "test_config")
 
     def test_raise_unsupported_experiment_type_directly(self):
         """Test _raise_unsupported_experiment_type function directly."""

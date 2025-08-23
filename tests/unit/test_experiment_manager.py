@@ -236,7 +236,8 @@ class TestExperimentManagerInit:
             manager = ExperimentManager()
             expected_dir = tmp_path / ".wassden" / "experiments"
             assert manager.config_dir == expected_dir
-            assert manager.config_dir.exists()
+            # Directory is not created until needed
+            assert not manager.config_dir.exists()
 
     def test_init_custom_config_dir(self):
         """Test initialization with custom config directory."""
@@ -244,13 +245,29 @@ class TestExperimentManagerInit:
             custom_dir = Path(temp_dir) / "custom_experiments"
             manager = ExperimentManager(config_dir=custom_dir)
             assert manager.config_dir == custom_dir
-            assert manager.config_dir.exists()
+            # Directory is not created until needed
+            assert not manager.config_dir.exists()
 
     def test_init_active_experiments_empty(self, tmp_path):
         """Test initialization with empty active experiments."""
         with patch("wassden.lib.experiment_manager.Path.cwd", return_value=tmp_path):
             manager = ExperimentManager()
             assert manager._active_experiments == {}
+
+    def test_ensure_config_dir_creates_directory(self, tmp_path):
+        """Test that _ensure_config_dir creates the directory when needed."""
+        config_dir = tmp_path / "test_config"
+        manager = ExperimentManager(config_dir=config_dir)
+
+        # Directory doesn't exist initially
+        assert not config_dir.exists()
+
+        # Call _ensure_config_dir
+        manager._ensure_config_dir()
+
+        # Directory should now exist
+        assert config_dir.exists()
+        assert config_dir.is_dir()
 
 
 @pytest.mark.dev
