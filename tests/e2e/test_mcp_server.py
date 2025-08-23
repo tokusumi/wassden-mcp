@@ -48,9 +48,15 @@ class TestMCPServer:
     @pytest.mark.asyncio
     async def test_prompt_requirements_tool(self):
         """Test prompt_requirements MCP tool."""
-        result = await handle_prompt_requirements(
-            "Test project", "Limited scope", "Python constraints", Language.JAPANESE
+        # Create a SpecDocuments instance for testing
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
         )
+
+        result = await handle_prompt_requirements(specs, "Test project", "Limited scope", "Python constraints")
 
         assert result.content
         result_text = result.content[0].text

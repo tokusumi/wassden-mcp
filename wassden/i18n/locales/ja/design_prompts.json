@@ -5,7 +5,7 @@
   "prompt": {
     "intro": "以下のrequirements.mdに基づいて、design.mdファイルを作成してください：",
     "requirements_content": "## Requirements内容",
-    "file_to_create": "## 作成するファイル\nファイル名: specs/design.md",
+    "file_to_create": "## 作成するファイル\nファイル名: {design_path}",
     "required_structure": "## 必須構造\n以下の章立てに従って作成してください：",
     "sections": {
       "architecture": "### 1. アーキテクチャ概要\n- **コンテキスト/依存関係/制約**: システムの位置づけと制限事項\n- **全体図**: コンポーネント/データフロー/シーケンスの概要\n[Requirements: REQ-XX, REQ-YY, ...]",

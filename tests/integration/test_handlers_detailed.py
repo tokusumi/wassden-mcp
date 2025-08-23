@@ -121,7 +121,13 @@ class TestPromptRequirementsHandler:
     async def test_handle_prompt_requirements_basic(self):
         """Test prompt_requirements handler with basic input."""
         description = "Simple web application for task management"
-        result = await handle_prompt_requirements(description, "", "", Language.JAPANESE)
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
+        )
+        result = await handle_prompt_requirements(specs, description, "", "")
 
         assert isinstance(result, HandlerResponse)
         assert len(result.content) > 0
@@ -133,8 +139,14 @@ class TestPromptRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_requirements_with_scope(self):
         """Test prompt_requirements handler with scope."""
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
+        )
         result = await handle_prompt_requirements(
-            "Web application project", "Enterprise-level web application with microservices", "", Language.JAPANESE
+            specs, "Web application project", "Enterprise-level web application with microservices", ""
         )
 
         text = result.content[0].text
@@ -144,8 +156,14 @@ class TestPromptRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_requirements_with_constraints(self):
         """Test prompt_requirements handler with constraints."""
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
+        )
         result = await handle_prompt_requirements(
-            "Mobile application", "", "React Native, iOS/Android, offline capability", Language.JAPANESE
+            specs, "Mobile application", "", "React Native, iOS/Android, offline capability"
         )
 
         text = result.content[0].text
@@ -155,11 +173,17 @@ class TestPromptRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_requirements_all_parameters(self):
         """Test prompt_requirements handler with all parameters."""
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
+        )
         result = await handle_prompt_requirements(
+            specs,
             "E-commerce platform",
             "B2B marketplace with vendor management",
             "AWS cloud, microservices, GDPR compliance",
-            Language.JAPANESE,
         )
 
         text = result.content[0].text
@@ -169,7 +193,13 @@ class TestPromptRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_requirements_empty_description(self):
         """Test prompt_requirements handler with empty description."""
-        result = await handle_prompt_requirements("", "", "", Language.JAPANESE)
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
+        )
+        result = await handle_prompt_requirements(specs, "", "", "")
 
         text = result.content[0].text
         assert "requirements.md" in text
@@ -177,11 +207,17 @@ class TestPromptRequirementsHandler:
     @pytest.mark.asyncio
     async def test_handle_prompt_requirements_special_characters(self):
         """Test prompt_requirements handler with special characters."""
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=Language.JAPANESE,
+        )
         result = await handle_prompt_requirements(
+            specs,
             "Project with symbols: !@#$%^&*()",
             "Scope with symbols: <>?{}[]",
             "Constraints with symbols: |\\\"';",
-            Language.JAPANESE,
         )
 
         text = result.content[0].text

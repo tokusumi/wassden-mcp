@@ -53,9 +53,15 @@ async def test_check_completeness_handler():
 @pytest.mark.asyncio
 async def test_prompt_requirements_handler():
     """Test requirements prompt handler."""
-    result = await requirements.handle_prompt_requirements(
-        "Test project", "Basic features", "Python 3.12+", Language.JAPANESE
+    # Create a SpecDocuments instance for testing
+    specs = SpecDocuments(
+        requirements_path=Path("specs/requirements.md"),
+        design_path=Path("specs/design.md"),
+        tasks_path=Path("specs/tasks.md"),
+        language=Language.JAPANESE,
     )
+
+    result = await requirements.handle_prompt_requirements(specs, "Test project", "Basic features", "Python 3.12+")
 
     assert result.content
     assert len(result.content) > 0

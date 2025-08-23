@@ -111,12 +111,21 @@ async def _prompt_requirements_async(
 ) -> None:
     """Async implementation for requirements prompt generation."""
     determined_language = _determine_language_for_user_input(language, projectdescription)
+
+    # Create SpecDocuments instance for CLI usage
+    specs = SpecDocuments(
+        requirements_path=Path("specs/requirements.md"),
+        design_path=Path("specs/design.md"),
+        tasks_path=Path("specs/tasks.md"),
+        language=determined_language,
+    )
+
     await run_handler_typed(
         handle_prompt_requirements,
+        specs,
         projectdescription,
         scope,
         constraints,
-        determined_language,
     )
 
 

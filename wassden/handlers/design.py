@@ -26,7 +26,7 @@ async def handle_prompt_design(
 {requirements}
 ```
 
-{i18n.t("design_prompts.prompt.file_to_create")}
+{i18n.t("design_prompts.prompt.file_to_create", design_path=specs.design_path)}
 
 {i18n.t("design_prompts.prompt.required_structure")}
 

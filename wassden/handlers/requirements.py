@@ -1,19 +1,18 @@
 """Requirements handling functions."""
 
 from wassden.i18n import get_i18n
-from wassden.language_types import Language
 from wassden.lib import validate
 from wassden.types import HandlerResponse, SpecDocuments, TextContent
 
 
 async def handle_prompt_requirements(
+    specs: SpecDocuments,
     project_description: str,
     scope: str = "",
     constraints: str = "",
-    language: Language = Language.JAPANESE,
 ) -> HandlerResponse:
     """Generate prompt for creating requirements.md."""
-    i18n = get_i18n(language)
+    i18n = get_i18n(specs.language)
 
     # Use defaults if not provided
     if not scope:

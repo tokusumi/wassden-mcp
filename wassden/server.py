@@ -67,7 +67,18 @@ async def prompt_requirements(
 ) -> str:
     """Generate requirements prompt."""
     language = determine_language(user_input=project_description)
-    result = await handle_prompt_requirements(project_description, scope, constraints, language)
+
+    # Create a SpecDocuments instance with default paths
+    # Assume specs/<feature-name>/ structure, but fallback to specs/ for backward compatibility
+    specs_path = Path("specs")
+    specs = SpecDocuments(
+        requirements_path=specs_path / "requirements.md",
+        design_path=specs_path / "design.md",
+        tasks_path=specs_path / "tasks.md",
+        language=language,
+    )
+
+    result = await handle_prompt_requirements(specs, project_description, scope, constraints)
     return str(result.content[0].text)
 
 

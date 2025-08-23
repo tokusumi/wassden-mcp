@@ -38,7 +38,7 @@ async def handle_prompt_tasks(
 {requirements}
 ```
 
-{i18n.t("tasks_prompts.prompt.file_to_create")}
+{i18n.t("tasks_prompts.prompt.file_to_create", tasks_path=specs.tasks_path)}
 
 {i18n.t("tasks_prompts.prompt.required_structure")}
 

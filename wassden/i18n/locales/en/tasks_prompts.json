@@ -6,7 +6,7 @@
     "intro": "Please create a WBS-format tasks.md file based on the following design.md and requirements.md:",
     "design_content": "## Design Content",
     "requirements_content": "## Requirements Content",
-    "file_to_create": "## File to Create\nFilename: specs/tasks.md",
+    "file_to_create": "## File to Create\nFilename: {tasks_path}",
     "required_structure": "## Required Structure\nPlease follow this chapter structure:",
     "sections": {
       "overview": "### 1. Overview\nOverview and approach of project task breakdown structure (WBS)",
