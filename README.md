@@ -13,7 +13,7 @@
 
 ```bash
 # Add to Claude Code
-claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio"
+claude mcp add wassden -- uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio
 
 # Test it
 uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "Create a TODO app"
@@ -35,7 +35,7 @@ uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completenes
 
 ### Claude Code
 ```bash
-claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio"
+claude mcp add wassden -- uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio
 ```
 
 ### Cursor, GitHub Copilot, Other MCP Clients
