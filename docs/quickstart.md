@@ -13,7 +13,7 @@ Get started with wassden in 5 minutes.
 ### Claude Code (CLI)
 
 ```bash
-claude mcp add wassden "uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio"
+claude mcp add wassden -- uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio
 # Restart Claude Code
 ```
 
