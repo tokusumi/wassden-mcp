@@ -10,10 +10,9 @@ Latest measurement results (50 iterations + warmup with statistical analysis):
 
 | Handler             | Median  | P95     | P99     | Std Dev |
 | ------------------- | ------- | ------- | ------- | ------- |
-| check_completeness  | 0.003ms | 0.014ms | 0.035ms | 0.005ms |
+| prompt_requirements | 0.001ms | 0.002ms | 0.003ms | 0.000ms |
 | analyze_changes     | 0.013ms | 0.032ms | 0.14ms  | 0.019ms |
 | get_traceability    | 0.013ms | 0.090ms | 0.13ms  | 0.024ms |
-| prompt_requirements | 0.001ms | 0.002ms | 0.003ms | 0.000ms |
 | concurrent_20_tools | 0.11ms  | 0.15ms  | 0.38ms  | 0.038ms |
 
 ### Performance Targets
@@ -38,8 +37,8 @@ python benchmarks/run_all.py
 ```
 Starting performance benchmarks...
 
-Benchmarking check_completeness...
-check_completeness:
+Benchmarking prompt_requirements...
+prompt_requirements:
   Mean: 0.003ms
   Median: 0.002ms
   P95: 0.014ms

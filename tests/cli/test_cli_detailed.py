@@ -46,7 +46,7 @@ class TestCLIBasicFunctionality:
         result = self.runner.invoke(app, ["--help"])
 
         expected_commands = [
-            "check-completeness",
+            "prompt-requirements",
             "prompt-requirements",
             "validate-requirements",
             "prompt-design",
@@ -89,37 +89,37 @@ class TestCLIBasicFunctionality:
 
 @pytest.mark.dev
 class TestCheckCompletenessCommand:
-    """Detailed check-completeness command tests."""
+    """Detailed prompt-requirements command tests."""
 
     def setup_method(self):
         """Set up test environment for each test."""
         self.runner = CliRunner()
 
-    def test_check_completeness_help(self):
-        """Test check-completeness help output."""
-        result = self.runner.invoke(app, ["check-completeness", "--help"])
+    def test_prompt_requirements_help(self):
+        """Test prompt-requirements help output."""
+        result = self.runner.invoke(app, ["prompt-requirements", "--help"])
 
         assert result.exit_code == 0
-        assert "check-completeness" in result.output
+        assert "prompt-requirements" in result.output
         assert "--userInput" in result.output
         assert "Usage:" in result.output
 
-    def test_check_completeness_missing_required_arg(self):
-        """Test check-completeness without required userInput."""
-        result = self.runner.invoke(app, ["check-completeness"])
+    def test_prompt_requirements_missing_required_arg(self):
+        """Test prompt-requirements without required userInput."""
+        result = self.runner.invoke(app, ["prompt-requirements"])
 
         assert result.exit_code != 0
         assert "Missing option" in result.output or "required" in result.output.lower()
 
-    def test_check_completeness_with_simple_input(self):
-        """Test check-completeness with simple input."""
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", "Simple test project"])
+    def test_prompt_requirements_with_simple_input(self):
+        """Test prompt-requirements with simple input."""
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", "Simple test project"])
 
         assert result.exit_code == 0
         assert "Please review the following project information" in result.output
 
-    def test_check_completeness_with_complex_input(self):
-        """Test check-completeness with complex input."""
+    def test_prompt_requirements_with_complex_input(self):
+        """Test prompt-requirements with complex input."""
         complex_input = """
         Python FastAPI web application for task management.
         Technology: Python 3.12, FastAPI, SQLAlchemy, PostgreSQL
@@ -128,40 +128,40 @@ class TestCheckCompletenessCommand:
         Scope: CRUD operations for tasks, user authentication, basic reporting
         """
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", complex_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", complex_input])
 
         assert result.exit_code == 0
         assert "Please review the following project information" in result.output
 
-    def test_check_completeness_with_empty_input(self):
-        """Test check-completeness with empty input."""
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", ""])
+    def test_prompt_requirements_with_empty_input(self):
+        """Test prompt-requirements with empty input."""
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", ""])
 
         assert result.exit_code == 0
         # Should still provide some guidance even with empty input
 
-    def test_check_completeness_with_special_characters(self):
-        """Test check-completeness with special characters."""
+    def test_prompt_requirements_with_special_characters(self):
+        """Test prompt-requirements with special characters."""
         special_input = "Project with symbols: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", special_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", special_input])
 
         assert result.exit_code == 0
 
-    def test_check_completeness_with_japanese_input(self):
-        """Test check-completeness with Japanese input."""
+    def test_prompt_requirements_with_japanese_input(self):
+        """Test prompt-requirements with Japanese input."""
         japanese_input = "日本語のプロジェクト説明です。Python、FastAPI、Reactを使用します。"
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", japanese_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", japanese_input])
 
         assert result.exit_code == 0
         assert "プロジェクト情報を確認" in result.output
 
-    def test_check_completeness_with_very_long_input(self):
-        """Test check-completeness with very long input."""
+    def test_prompt_requirements_with_very_long_input(self):
+        """Test prompt-requirements with very long input."""
         long_input = "A" * 10000  # 10KB of text
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", long_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", long_input])
 
         assert result.exit_code == 0
 
@@ -180,9 +180,8 @@ class TestPromptRequirementsCommand:
 
         assert result.exit_code == 0
         assert "prompt-requirements" in result.output
-        assert "--projectDescription" in result.output
-        assert "--scope" in result.output
-        assert "--constraints" in result.output
+        assert "--userInput" in result.output
+        assert "--force" in result.output
 
     def test_prompt_requirements_missing_required_arg(self):
         """Test prompt-requirements without required projectDescription."""
@@ -193,40 +192,38 @@ class TestPromptRequirementsCommand:
 
     def test_prompt_requirements_basic_usage(self):
         """Test prompt-requirements with basic usage."""
-        result = self.runner.invoke(
-            app, ["prompt-requirements", "--projectDescription", "Test project for CLI testing"]
-        )
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", "Test project for CLI testing"])
 
         assert result.exit_code == 0
         assert "requirements.md" in result.output
         assert "EARS format" in result.output
         assert "Test project for CLI testing" in result.output
 
-    def test_prompt_requirements_with_scope(self):
-        """Test prompt-requirements with scope parameter."""
+    def test_prompt_requirements_with_force(self):
+        """Test prompt-requirements with force parameter."""
         result = self.runner.invoke(
             app,
-            ["prompt-requirements", "--projectDescription", "Test project", "--scope", "Web application development"],
+            ["prompt-requirements", "--userInput", "Test project", "--force"],
         )
 
         assert result.exit_code == 0
-        assert "Web application development" in result.output
+        assert "Test project" in result.output
 
-    def test_prompt_requirements_with_constraints(self):
-        """Test prompt-requirements with constraints parameter."""
+    def test_prompt_requirements_with_language(self):
+        """Test prompt-requirements with language parameter."""
         result = self.runner.invoke(
             app,
             [
                 "prompt-requirements",
-                "--projectDescription",
+                "--userInput",
                 "Test project",
-                "--constraints",
-                "Python 3.12+, FastAPI, PostgreSQL",
+                "--language",
+                "en",
             ],
         )
 
         assert result.exit_code == 0
-        assert "Python 3.12+, FastAPI, PostgreSQL" in result.output
+        assert "Test project" in result.output
 
     def test_prompt_requirements_with_all_parameters(self):
         """Test prompt-requirements with all parameters."""
@@ -234,23 +231,21 @@ class TestPromptRequirementsCommand:
             app,
             [
                 "prompt-requirements",
-                "--projectDescription",
+                "--userInput",
                 "Comprehensive test project",
-                "--scope",
-                "Enterprise web application",
-                "--constraints",
-                "Python 3.12+, FastAPI, PostgreSQL, Docker",
+                "--force",
+                "--language",
+                "en",
             ],
         )
 
         assert result.exit_code == 0
         assert "Comprehensive test project" in result.output
-        assert "Enterprise web application" in result.output
-        assert "Python 3.12+, FastAPI, PostgreSQL, Docker" in result.output
+        assert "[INFO] Generating requirements prompt..." in result.output
 
     def test_prompt_requirements_empty_description(self):
         """Test prompt-requirements with empty description."""
-        result = self.runner.invoke(app, ["prompt-requirements", "--projectDescription", ""])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", ""])
 
         assert result.exit_code == 0
         assert "requirements.md" in result.output
@@ -261,16 +256,61 @@ class TestPromptRequirementsCommand:
             app,
             [
                 "prompt-requirements",
-                "--projectDescription",
+                "--userInput",
                 "Project with symbols: !@#$%^&*()",
-                "--scope",
-                "Scope with symbols: <>?{}[]",
-                "--constraints",
-                "Constraints with symbols: |\\:;\"'",
+                "--language",
+                "en",
             ],
         )
 
         assert result.exit_code == 0
+
+    def test_prompt_requirements_with_force_flag(self):
+        """Test prompt-requirements command with force flag."""
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", "Simple project", "--force"])
+        assert result.exit_code == 0
+        assert "[INFO] Generating requirements prompt..." in result.stdout
+        assert "requirements.md" in result.stdout
+
+    def test_prompt_requirements_completeness_check_incomplete(self):
+        """Test prompt-requirements command with incomplete input (default behavior)."""
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", "Simple project"])
+        assert result.exit_code == 0
+        assert "[INFO] Analyzing input completeness..." in result.stdout
+        # Should ask for missing information
+        output_has_questions = any(
+            keyword in result.stdout for keyword in ["技術", "ユーザー", "制約", "スコープ", "判断", "対応"]
+        )
+        assert output_has_questions
+
+    def test_prompt_requirements_completeness_check_complete(self):
+        """Test prompt-requirements command with complete input and force flag."""
+        complete_input = (
+            "Python Webアプリケーション。ユーザーは一般消費者。制約はパフォーマンス重視。スコープはMVP開発。"
+        )
+        result = self.runner.invoke(
+            app,
+            ["prompt-requirements", "--userInput", complete_input, "--force"],
+        )
+        assert result.exit_code == 0
+        assert "[INFO] Generating requirements prompt..." in result.stdout
+        assert "requirements.md" in result.stdout
+
+    def test_prompt_requirements_all_new_parameters(self):
+        """Test prompt-requirements command with all valid parameters."""
+        result = self.runner.invoke(
+            app,
+            [
+                "prompt-requirements",
+                "--userInput",
+                "Test project description",
+                "--force",
+                "--language",
+                "en",
+            ],
+        )
+        assert result.exit_code == 0
+        assert "[INFO] Generating requirements prompt..." in result.stdout
 
 
 @pytest.mark.dev
@@ -773,7 +813,7 @@ class TestCLIErrorHandling:
 
     def test_app_with_invalid_options(self):
         """Test CLI commands with invalid options."""
-        result = self.runner.invoke(app, ["check-completeness", "--invalid-option", "value"])
+        result = self.runner.invoke(app, ["prompt-requirements", "--invalid-option", "value"])
 
         assert result.exit_code != 0
         assert "no such option" in result.output.lower() or "unknown option" in result.output.lower()
@@ -806,7 +846,7 @@ class TestCLIErrorHandling:
         """Test CLI with very long arguments."""
         very_long_input = "A" * 100000  # 100KB of text
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", very_long_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", very_long_input])
 
         # Should handle long input without crashing
         assert result.exit_code == 0
@@ -815,6 +855,6 @@ class TestCLIErrorHandling:
         """Test CLI with Unicode arguments."""
         unicode_input = "Unicode test: 日本語, 한국어, العربية, русский, français"
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", unicode_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", unicode_input])
 
         assert result.exit_code == 0

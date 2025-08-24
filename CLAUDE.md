@@ -25,7 +25,7 @@
 
 ### CLI Testing Commands
 - **Local CLI**: `uv run wassden --help` - Show available CLI commands
-- **Test functionality**: `uv run wassden check-completeness --userInput "test"` - Test CLI functionality
+- **Test functionality**: `uv run wassden prompt-requirements --userInput "test"` - Test CLI functionality
 - **Start MCP server**: `uv run wassden start-mcp-server --transport stdio` - Start MCP server locally
 
 ### Multi-Language Support Commands
@@ -33,8 +33,8 @@
 - **English mode**: Add `--language en` to any command for English output
 - **Auto-detection**: Omit `--language` to let the system automatically detect language
 - **Examples**:
-  - `uv run wassden check-completeness --userInput "test" --language en` - Force English
-  - `uv run wassden check-completeness --userInput "テストプロジェクト"` - Auto-detects Japanese
+  - `uv run wassden prompt-requirements --userInput "test" --language en` - Force English
+  - `uv run wassden prompt-requirements --userInput "テストプロジェクト"` - Auto-detects Japanese
   - `uv run wassden validate-requirements --requirementsPath specs/requirements.md` - Detects from file content
 - **MCP Server**: All MCP tools automatically detect language from content without parameters
 - **Default Fallback**: Defaults to Japanese (`ja`) when detection is uncertain
@@ -72,10 +72,9 @@
 - **Benchmark library**: Use `from wassden.utils.benchmark import PerformanceBenchmark` for custom benchmarks
 
 ### Latest Performance Metrics (as of 2024)
-- **check_completeness**: 0.01ms mean (ultra-fast completeness analysis)
+- **prompt_requirements**: 0.003ms mean (lightning-fast requirements prompt generation including completeness analysis)
 - **analyze_changes**: 0.02ms mean (rapid change impact assessment)  
 - **get_traceability**: 0.02ms mean (instant traceability matrix generation)
-- **prompt_requirements**: 0.003ms mean (lightning-fast prompt generation)
 - **concurrent_20_tools**: 0.26ms mean (excellent concurrency performance)
 
 ### Development Setup

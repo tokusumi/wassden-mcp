@@ -20,7 +20,7 @@ class TestCLICommands:
 
         assert result.exit_code == 0
         assert "wassden - MCP-based Spec-Driven Development toolkit" in result.output
-        assert "check-completeness" in result.output
+        assert "prompt-requirements" in result.output
         assert "validate-requirements" in result.output
 
     def test_app_version(self):
@@ -30,49 +30,36 @@ class TestCLICommands:
         assert result.exit_code == 0
         assert "0.1.0" in result.output
 
-    def test_check_completeness_command(self):
-        """Test check_completeness command."""
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", "Simple test project"])
-
-        assert result.exit_code == 0
-        assert "Please review the following project information" in result.output
-
-    def test_check_completeness_missing_input(self):
-        """Test check_completeness command without required input."""
-        result = self.runner.invoke(app, ["check-completeness"])
+    def test_prompt_requirements_missing_input(self):
+        """Test prompt_requirements command without required input."""
+        result = self.runner.invoke(app, ["prompt-requirements"])
 
         assert result.exit_code != 0
         assert "Missing option" in result.output or "required" in result.output.lower()
 
     def test_prompt_requirements_command(self):
         """Test prompt_requirements command."""
-        result = self.runner.invoke(
-            app, ["prompt-requirements", "--projectDescription", "Test project for CLI testing"]
-        )
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", "Test project for CLI testing"])
 
         assert result.exit_code == 0
         assert "requirements.md" in result.output
         assert "EARS format" in result.output
         assert "Test project for CLI testing" in result.output
 
-    def test_prompt_requirements_with_scope_and_constraints(self):
-        """Test prompt_requirements with optional parameters."""
+    def test_prompt_requirements_with_force_flag(self):
+        """Test prompt_requirements with force flag."""
         result = self.runner.invoke(
             app,
             [
                 "prompt-requirements",
-                "--projectDescription",
+                "--userInput",
                 "Test project",
-                "--scope",
-                "Web application",
-                "--constraints",
-                "Python 3.12+",
+                "--force",
             ],
         )
 
         assert result.exit_code == 0
-        assert "Web application" in result.output
-        assert "Python 3.12+" in result.output
+        assert "Test project" in result.output
 
     def test_validate_requirements_file_not_found(self):
         """Test validate_requirements with non-existent file."""
@@ -278,7 +265,7 @@ Milestones
     def test_all_commands_have_help(self):
         """Test that all commands have help text."""
         commands = [
-            "check-completeness",
+            "prompt-requirements",
             "prompt-requirements",
             "validate-requirements",
             "prompt-design",
@@ -317,17 +304,17 @@ class TestCLIEdgeCases:
         self.runner = CliRunner()
 
     def test_empty_user_input(self):
-        """Test check_completeness with empty input."""
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", ""])
+        """Test prompt_requirements with empty input."""
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", ""])
 
         assert result.exit_code == 0
         # Should still provide guidance even with empty input
 
     def test_very_long_user_input(self):
-        """Test check_completeness with very long input."""
+        """Test prompt_requirements with very long input."""
         long_input = "A" * 10000  # Very long input
 
-        result = self.runner.invoke(app, ["check-completeness", "--userInput", long_input])
+        result = self.runner.invoke(app, ["prompt-requirements", "--userInput", long_input])
 
         assert result.exit_code == 0
 
@@ -335,7 +322,11 @@ class TestCLIEdgeCases:
         """Test CLI with Japanese input."""
         result = self.runner.invoke(
             app,
-            ["check-completeness", "--userInput", "日本語のプロジェクト説明です。Python、FastAPI、Reactを使用します。"],
+            [
+                "prompt-requirements",
+                "--userInput",
+                "日本語のプロジェクト説明です。Python、FastAPI、Reactを使用します。",
+            ],
         )
 
         assert result.exit_code == 0
@@ -344,7 +335,7 @@ class TestCLIEdgeCases:
     def test_special_characters_input(self):
         """Test CLI with special characters."""
         result = self.runner.invoke(
-            app, ["check-completeness", "--userInput", "Project with symbols: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"]
+            app, ["prompt-requirements", "--userInput", "Project with symbols: !@#$%^&*()_+-={}[]|\\:;\"'<>?,./"]
         )
 
         assert result.exit_code == 0
@@ -355,19 +346,16 @@ class TestCLIEdgeCases:
             app,
             [
                 "prompt-requirements",
-                "--projectDescription",
+                "--userInput",
                 "Test project",
-                "--scope",
-                "Limited scope",
-                "--constraints",
-                "Python only",
+                "--force",
+                "--language",
+                "en",
             ],
         )
 
         assert result.exit_code == 0
         assert "Test project" in result.output
-        assert "Limited scope" in result.output
-        assert "Python only" in result.output
 
 
 class TestCLIIntegration:
@@ -382,7 +370,7 @@ class TestCLIIntegration:
         with self.runner.isolated_filesystem():
             # Step 1: Check completeness
             result1 = self.runner.invoke(
-                app, ["check-completeness", "--userInput", "Python FastAPI web application for task management"]
+                app, ["prompt-requirements", "--userInput", "Python FastAPI web application for task management"]
             )
             assert result1.exit_code == 0
 

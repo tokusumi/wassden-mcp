@@ -91,11 +91,11 @@ make validate-examples
 # Show available commands
 uv run wassden --help
 
-# Test completeness check (auto-detects Japanese)
-uv run wassden check-completeness --userInput "テストプロジェクト"
+# Test requirements prompt generation (auto-detects Japanese)
+uv run wassden prompt-requirements --userInput "テストプロジェクト"
 
 # Test with English
-uv run wassden check-completeness --userInput "test project" --language en
+uv run wassden prompt-requirements --userInput "test project" --language en
 
 # Test validation
 uv run wassden validate-requirements specs/requirements.md
@@ -112,8 +112,7 @@ uv run wassden get-traceability
 wassden-mcp/
 ├── wassden/
 │   ├── handlers/           # Tool implementation handlers
-│   │   ├── completeness.py # Project completeness analysis
-│   │   ├── requirements.py # Requirements prompt generation
+│   │   ├── requirements.py # Requirements prompt generation (includes completeness analysis)
 │   │   ├── design.py       # Design prompt generation
 │   │   ├── tasks.py        # Tasks prompt generation
 │   │   ├── code_analysis.py # Code review and analysis
@@ -233,10 +232,9 @@ cat benchmarks/results.json
 ```
 
 Expected performance metrics:
-- **check_completeness**: <0.01ms average
+- **prompt_requirements**: <0.003ms average
 - **analyze_changes**: <0.02ms average
 - **get_traceability**: <0.02ms average
-- **prompt_requirements**: <0.003ms average
 - **concurrent_20_tools**: <0.3ms average
 
 ## API Reference
@@ -400,7 +398,7 @@ Enable debug logging:
 export WASSDEN_DEBUG=1
 
 # Run with debug output
-uv run wassden check-completeness --userInput "test"
+uv run wassden prompt-requirements --userInput "test"
 ```
 
 ## Resources

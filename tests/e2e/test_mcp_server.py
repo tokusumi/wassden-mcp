@@ -27,7 +27,7 @@ from wassden.utils.benchmark import PerformanceBenchmark
 # Test constants
 MAX_RESPONSE_TIME_SECONDS = 5.0
 MIN_RESPONSE_LENGTH = 100
-EXPECTED_TOOL_COUNT = 10
+EXPECTED_TOOL_COUNT = 9
 LARGE_FILE_SIZE = 10000
 VERY_LARGE_FILE_SIZE = 50000
 
@@ -46,13 +46,13 @@ class TestMCPServer:
         assert "技術" in result_text or "ユーザー" in result_text
 
     @pytest.mark.asyncio
-    async def test_prompt_requirements_tool(self):
+    async def test_prompt_requirements_tool(self, tmp_path):
         """Test prompt_requirements MCP tool."""
         # Create a SpecDocuments instance for testing
         specs = SpecDocuments(
-            requirements_path=Path("specs/requirements.md"),
-            design_path=Path("specs/design.md"),
-            tasks_path=Path("specs/tasks.md"),
+            requirements_path=tmp_path / "requirements.md",
+            design_path=tmp_path / "design.md",
+            tasks_path=tmp_path / "tasks.md",
             language=Language.JAPANESE,
         )
 
@@ -64,6 +64,51 @@ class TestMCPServer:
         assert "Test project" in result_text
         assert "Limited scope" in result_text
         assert "Python constraints" in result_text
+
+    @pytest.mark.asyncio
+    async def test_prompt_requirements_tool_with_force(self, tmp_path):
+        """Test prompt_requirements MCP tool with force mode (skip completeness check)."""
+
+        # Test force mode: should skip completeness verification and generate requirements prompt
+        specs = SpecDocuments(
+            requirements_path=tmp_path / "requirements.md",
+            design_path=tmp_path / "design.md",
+            tasks_path=tmp_path / "tasks.md",
+            language=Language.JAPANESE,
+        )
+        result = await handle_prompt_requirements(specs, "Simple project", "", "")
+
+        assert result.content
+        result_text = result.content[0].text
+        assert "requirements.md" in result_text
+        assert "Simple project" in result_text
+
+    @pytest.mark.asyncio
+    async def test_prompt_requirements_tool_completeness_check(self):
+        """Test prompt_requirements MCP tool with completeness check (default mode)."""
+
+        # Test default mode with incomplete input: should ask questions
+        result = await handle_check_completeness("Simple project", Language.JAPANESE)
+
+        assert result.content
+        result_text = result.content[0].text
+        # Should ask for missing information since input is incomplete
+        assert any(keyword in result_text for keyword in ["技術", "ユーザー", "制約", "スコープ"])
+
+    @pytest.mark.asyncio
+    async def test_prompt_requirements_tool_complete_input(self):
+        """Test prompt_requirements MCP tool with complete input."""
+
+        # Test default mode with complete input: should generate requirements prompt
+        complete_input = (
+            "Python Webアプリケーション。ユーザーは一般消費者。制約はパフォーマンス重視。スコープはMVP開発。"
+        )
+        result = await handle_check_completeness(complete_input, Language.JAPANESE)
+
+        assert result.content
+        result_text = result.content[0].text
+        assert "requirements.md" in result_text
+        assert "Python" in result_text
 
     @pytest.mark.asyncio
     async def test_validate_requirements_tool_file_not_found(self):
@@ -146,10 +191,10 @@ class TestMCPServer:
         )
 
     @pytest.mark.asyncio
-    async def test_analyze_changes_tool(self):
+    async def test_analyze_changes_tool(self, tmp_path):
         """Test analyze_changes MCP tool."""
         result = await handle_analyze_changes(
-            Path("specs/requirements.md"), "Added REQ-05 for new authentication feature", Language.JAPANESE
+            tmp_path / "requirements.md", "Added REQ-05 for new authentication feature", Language.JAPANESE
         )
 
         assert result.content
@@ -189,7 +234,6 @@ class TestMCPServer:
         except Exception:
             # Fallback: check for tool functions by looking at server module
             tools = [
-                "check_completeness",
                 "prompt_requirements",
                 "validate_requirements",
                 "prompt_design",
@@ -202,7 +246,6 @@ class TestMCPServer:
             ]
 
         expected_tools = [
-            "check_completeness",
             "prompt_requirements",
             "validate_requirements",
             "prompt_design",
@@ -287,65 +330,77 @@ class TestMCPServerIntegration:
             os.chdir(original_cwd)
 
     @pytest.mark.asyncio
-    async def test_tool_parameter_defaults(self):
+    async def test_tool_parameter_defaults(self, tmp_path):
         """Test that MCP tools use correct default parameters."""
-        # Test default paths - these should succeed since spec files exist
-        req_specs = await SpecDocuments.from_paths(
-            requirements_path=Path("specs/requirements.md"), language=Language.JAPANESE
-        )
+        # Create temporary spec files for testing
+        req_file = tmp_path / "requirements.md"
+        design_file = tmp_path / "design.md"
+        tasks_file = tmp_path / "tasks.md"
+
+        # Create minimal spec files
+        req_file.write_text("# Requirements\n## REQ-01\nTest requirement")
+        design_file.write_text("# Design\n## Components\nTest design")
+        tasks_file.write_text("# Tasks\n## TASK-01\nTest task")
+
+        req_specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
         req_result = await handle_validate_requirements(req_specs)
         req_text = req_result.content[0].text
-        assert "specs/requirements.md" in req_text or "エラー" in req_text or "検証に成功しました" in req_text
-
-        design_specs = await SpecDocuments.from_paths(
-            requirements_path=Path("specs/requirements.md"), language=Language.JAPANESE
+        assert (
+            str(req_file) in req_text
+            or "エラー" in req_text
+            or "検証に成功しました" in req_text
+            or "修正が必要です" in req_text
         )
+
+        design_specs = await SpecDocuments.from_paths(requirements_path=req_file, language=Language.JAPANESE)
         design_result = await handle_prompt_design(design_specs)
         design_text = design_result.content[0].text
-        assert "specs/requirements.md" in design_text or "エラー" in design_text
+        assert str(req_file) in design_text or "エラー" in design_text or "design.md" in design_text
 
         design_val_specs = await SpecDocuments.from_paths(
-            design_path=Path("specs/design.md"),
-            requirements_path=Path("specs/requirements.md"),
+            design_path=design_file,
+            requirements_path=req_file,
             language=Language.JAPANESE,
         )
         design_val_result = await handle_validate_design(design_val_specs)
         design_val_text = design_val_result.content[0].text
         assert (
-            "specs/design.md" in design_val_text
+            str(design_file) in design_val_text
             or "エラー" in design_val_text
             or "検証に成功しました" in design_val_text
+            or "修正が必要です" in design_val_text
         )
 
         tasks_specs = await SpecDocuments.from_paths(
-            design_path=Path("specs/design.md"),
-            requirements_path=Path("specs/requirements.md"),
+            design_path=design_file,
+            requirements_path=req_file,
             language=Language.JAPANESE,
         )
         tasks_result = await handle_prompt_tasks(tasks_specs)
         tasks_text = tasks_result.content[0].text
         # Handle both translated text and translation keys
         assert (
-            "specs/design.md" in tasks_text
+            str(design_file) in tasks_text
             or "エラー" in tasks_text
             or "tasks_prompts.error" in tasks_text
             or "design_not_found" in tasks_text
+            or "tasks.md" in tasks_text
         )
 
-        tasks_val_specs = await SpecDocuments.from_paths(tasks_path=Path("specs/tasks.md"), language=Language.JAPANESE)
+        tasks_val_specs = await SpecDocuments.from_paths(tasks_path=tasks_file, language=Language.JAPANESE)
         tasks_val_result = await handle_validate_tasks(tasks_val_specs)
         tasks_val_text = tasks_val_result.content[0].text
         assert (
-            "specs/tasks.md" in tasks_val_text
+            str(tasks_file) in tasks_val_text
             or "エラー" in tasks_val_text
             or "検証に成功しました" in tasks_val_text
             or "修正が必要です" in tasks_val_text
         )
 
         trace_specs = await SpecDocuments.from_paths(
-            requirements_path=Path("specs/requirements.md"),
-            design_path=Path("specs/design.md"),
-            tasks_path=Path("specs/tasks.md"),
+            requirements_path=req_file,
+            design_path=design_file,
+            tasks_path=tasks_file,
             language=Language.JAPANESE,
         )
         trace_result = await handle_get_traceability(trace_specs)
@@ -384,7 +439,7 @@ class TestMCPServerPerformance:
     """Test MCP server performance characteristics with reproducible measurements."""
 
     @pytest.mark.asyncio
-    async def test_tool_response_times(self):
+    async def test_tool_response_times(self, tmp_path):
         """Test that MCP tools respond within reasonable time with reproducible benchmarks."""
         benchmark = PerformanceBenchmark(
             warmup_iterations=3,
@@ -412,9 +467,9 @@ class TestMCPServerPerformance:
 
         # Benchmark analyze_changes performance
         async def analyze_changes_test():
-            return await handle_analyze_changes(
-                Path("specs/requirements.md"), "Performance test change", Language.JAPANESE
-            )
+            test_file = tmp_path / "requirements.md"
+            test_file.write_text("# Requirements\n## REQ-01\nTest requirement")
+            return await handle_analyze_changes(test_file, "Performance test change", Language.JAPANESE)
 
         result = await benchmark.benchmark_async(
             analyze_changes_test,

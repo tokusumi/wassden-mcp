@@ -85,7 +85,7 @@ class TestSpecExamples:
     )
     def test_language_detection(self, base_dir, input_text, expected_lang):
         """Test automatic language detection."""
-        success, output = self.run_wassden_command(base_dir, ["check-completeness", "--userInput", input_text])
+        success, output = self.run_wassden_command(base_dir, ["prompt-requirements", "--userInput", input_text])
         assert success, f"Language detection failed for {expected_lang}: {output}"
 
         # Check for language-specific indicators

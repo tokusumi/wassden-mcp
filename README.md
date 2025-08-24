@@ -16,7 +16,7 @@
 claude mcp add wassden -- uvx --from git+https://github.com/tokusumi/wassden-mcp wassden start-mcp-server --transport stdio
 
 # Test it
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "Create a TODO app"
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements --userInput "Create a TODO app"
 ```
 
 ## 🎯 What It Does
@@ -66,7 +66,7 @@ Edit your MCP settings file:
 
 ```bash
 # Analyze project description and generate requirements prompt
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "Create a task management API with authentication"
 ```
 
@@ -89,8 +89,9 @@ uvx --from git+https://github.com/tokusumi/wassden-mcp wassden get-traceability
 ## 🛠️ Core Tools
 
 ### Requirements Generation
-- **`check-completeness`** - Analyzes input and generates EARS requirements prompt
-- **`prompt-requirements`** - Creates specialized requirements generation prompt
+- **`prompt-requirements`** - Analyzes input for completeness and generates EARS requirements prompt
+  - Default: Checks completeness, asks questions if incomplete, generates prompt if complete
+  - `--force`: Skip completeness verification and generate requirements prompt
 
 ### Design & Planning  
 - **`prompt-design`** - Generates architectural design prompt from requirements
