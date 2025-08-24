@@ -191,27 +191,44 @@ def _find_duplicate_task_ids(task_ids: list[str]) -> set[str]:
 
 
 def _extract_all_task_patterns(tasks_content: str) -> list[str]:
-    """Extract all TASK patterns for validation - includes valid and invalid patterns."""
+    """Extract all TASK patterns for validation - includes valid and invalid patterns.
+
+    Only extracts patterns from the Task List section (タスク一覧 or Task List),
+    not from other sections like dependencies or milestones.
+    """
     all_task_ids = []
 
-    # 1. Standard TASK patterns (numeric)
-    all_task_ids.extend(re.findall(r"\bTASK-\d{1,3}(?:-\d{1,3}){1,2}\b", tasks_content))
+    # Find the task list section (support both Japanese and English)
+    task_list_match_ja = re.search(r"## \d*\.?\s*タスク一覧.*?(?=## |$)", tasks_content, re.DOTALL)
+    task_list_match_en = re.search(r"## \d*\.?\s*Task List.*?(?=## |$)", tasks_content, re.DOTALL)
 
-    # 2. Case-insensitive TASK patterns
-    additional_task_patterns = re.findall(r"\b[Tt][Aa][Ss][Kk]-\d+(?:-\d+)+\b", tasks_content)
-    all_task_ids.extend(additional_task_patterns)
+    task_list_section = ""
+    if task_list_match_ja:
+        task_list_section = task_list_match_ja.group(0)
+    elif task_list_match_en:
+        task_list_section = task_list_match_en.group(0)
+    else:
+        # If no task list section found, return empty list
+        return []
 
-    # 3. Obviously malformed TASK patterns (wrong format but clearly intended as TASK-IDs)
-    malformed_patterns = re.findall(r"\bTASK-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\b", tasks_content)
-    for pattern in malformed_patterns:
-        if pattern not in all_task_ids:
-            all_task_ids.append(pattern)
+    # Extract task definitions (patterns surrounded by **) from task list section only
+    # Case-insensitive to catch both TASK and task patterns
+    task_def_patterns = re.findall(r"\*\*([Tt][Aa][Ss][Kk]-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)\*\*", task_list_section)
+    all_task_ids.extend(task_def_patterns)
 
-    # 4. Wrong prefixes that should be TASK
-    wrong_prefix_patterns = re.findall(r"\b(?:TSK|INVALID)-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\b", tasks_content)
-    all_task_ids.extend(wrong_prefix_patterns)
+    # Also check for malformed patterns with wrong prefixes that should be TASK
+    wrong_prefix_patterns = re.findall(r"\*\*(?:TSK|INVALID)-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\*\*", task_list_section)
+    all_task_ids.extend(p.strip("*") for p in wrong_prefix_patterns)
 
-    return all_task_ids
+    # Remove duplicates while preserving order for error reporting
+    seen = set()
+    unique_task_ids = []
+    for task_id in all_task_ids:
+        if task_id not in seen:
+            seen.add(task_id)
+            unique_task_ids.append(task_id)
+
+    return unique_task_ids
 
 
 def _find_invalid_task_ids(all_task_ids: list[str]) -> list[str]:

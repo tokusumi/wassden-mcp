@@ -70,6 +70,70 @@ def test_validate_tasks_structure(sample_tasks):
     assert any("Duplicate" in error for error in errors)
 
 
+def test_validate_tasks_with_incomplete_references():
+    """Test that incomplete TASK-ID references in descriptions are not flagged as errors."""
+    # Test case from dogfooding-findings.md
+    tasks_content = """# タスク管理
+
+## 1. 概要
+プロジェクトのタスク管理
+
+## 2. タスク一覧
+- **TASK-01-01**: 初期設定タスク
+- **TASK-01-02**: 基本実装タスク
+- **TASK-01-03**: テスト作成タスク
+
+## 3. 依存関係
+- TASK-01-02 → TASK-01-01
+- TASK-01-03 → TASK-01-02
+
+## 4. マイルストーン
+- **M1**: Foundation Phase完了 (TASK-01 (TASK-01-01〜TASK-01-03) 完了時点)
+"""
+    errors = validate.validate_tasks_structure(tasks_content)
+
+    # TASK-01 and TASK-01-03 in the milestone description should NOT be flagged as errors
+    # because they are references in descriptive text, not task definitions
+    assert not any("TASK-01" in error and "Invalid" in error for error in errors), (
+        f"TASK-01 in description should not be invalid. Errors: {errors}"
+    )
+    assert not any("TASK-03" in error and "Invalid" in error for error in errors), (
+        f"TASK-03 reference should not be invalid. Errors: {errors}"
+    )
+
+    # The actual task definitions (TASK-01-01, TASK-01-02, TASK-01-03) should be valid
+    assert len(errors) == 0, f"Should have no errors for valid task structure, but got: {errors}"
+
+
+def test_task_id_validation_context_aware():
+    """Test that TASK-ID validation considers context (definitions vs references)."""
+    # Incomplete TASK-IDs in various contexts
+    tasks_content = """# タスク管理
+
+## 1. 概要
+このセクションではTASK-01について説明します。
+
+## 2. タスク一覧
+- **TASK-02-01**: 実装タスク
+  - 詳細: TASK-02の最初のサブタスク
+- **TASK-02-02**: テストタスク
+  - 関連: TASK-01やTASK-03も参照
+
+## 3. 依存関係
+- TASK-02-02 → TASK-02-01
+
+## 4. マイルストーン
+- M1: TASK-01完了時点
+- M2: TASK-02 (TASK-02-01, TASK-02-02)完了時点
+- M3: TASK-03開始予定
+"""
+    errors = validate.validate_tasks_structure(tasks_content)
+
+    # References to TASK-01, TASK-02, TASK-03 should not be errors
+    invalid_errors = [e for e in errors if "Invalid TASK-ID format" in e]
+    assert len(invalid_errors) == 0, f"Should not have invalid format errors for references: {invalid_errors}"
+
+
 def test_validate_requirements(sample_requirements):
     """Test complete requirements validation."""
     result = validate.validate_requirements(sample_requirements)
