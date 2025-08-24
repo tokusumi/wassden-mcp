@@ -118,9 +118,19 @@ async def _prompt_requirements_async(userinput: str, force: bool, language: Lang
 
 @app.command()
 def prompt_requirements(
-    userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
+    userinput: Annotated[
+        str,
+        typer.Option(
+            "--userInput", "-i", help="Detailed description of your project including goals, features, and context"
+        ),
+    ],
     force: Annotated[
-        bool, typer.Option("--force", "-f", help="Generate requirements prompt without completeness verification")
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Skip completeness verification (NOT RECOMMENDED: may result in incomplete requirements)",
+        ),
     ] = False,
     language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
 ) -> None:

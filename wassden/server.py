@@ -51,8 +51,10 @@ async def _determine_language_for_file(file_path: Path, is_spec_document: bool =
     "(generates prompts only, does not modify files)",
 )
 async def prompt_requirements(
-    user_input: str,
-    force: bool = False,
+    user_input: Annotated[str, "Detailed description of your project including goals, features, and context"],
+    force: Annotated[
+        bool, "Skip completeness verification (NOT RECOMMENDED: may result in incomplete requirements)"
+    ] = False,
 ) -> str:
     """Analyze user input for completeness and generate requirements prompt."""
     language = determine_language(user_input=user_input)
