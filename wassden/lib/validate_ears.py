@@ -200,10 +200,19 @@ class EARSValidator:
         text = text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
 
         # Strip REQ-ID prefixes for EARS validation
+        # First try strict pattern for valid REQ-IDs
         req_id_pattern = r"^(REQ-\d+|TR-\d+|NFR-\d+|KPI-\d+):\s*(.+)$"
         req_id_match = re.match(req_id_pattern, text)
         if req_id_match:
             text = req_id_match.group(2).strip()
+        else:
+            # Also handle malformed REQ-ID patterns that should be stripped
+            # This catches cases like REQ-ABC, REQ-, REQ:, REQ-01-02, etc.
+            loose_pattern = r"^(REQ[-A-Za-z0-9]*|TR[-A-Za-z0-9]*|NFR[-A-Za-z0-9]*|KPI[-A-Za-z0-9]*):\s*(.+)$"
+            loose_match = re.match(loose_pattern, text)
+            if loose_match:
+                # Extract content after the malformed REQ-ID
+                text = loose_match.group(2).strip()
 
         return text
 
@@ -262,10 +271,19 @@ class EARSValidator:
                 req_text = re.sub(r"\[(.+?)\]\(.+?\)", r"\1", req_text)  # Links
 
                 # Strip REQ-ID prefixes for EARS validation
+                # First try strict pattern for valid REQ-IDs
                 req_id_pattern = r"^(REQ-\d+|TR-\d+|NFR-\d+|KPI-\d+):\s*(.+)$"
                 req_id_match = re.match(req_id_pattern, req_text)
                 if req_id_match:
                     req_text = req_id_match.group(2).strip()
+                else:
+                    # Also handle malformed REQ-ID patterns that should be stripped
+                    # This catches cases like REQ-ABC, REQ-, REQ:, REQ-01-02, etc.
+                    loose_pattern = r"^(REQ[-A-Za-z0-9]*|TR[-A-Za-z0-9]*|NFR[-A-Za-z0-9]*|KPI[-A-Za-z0-9]*):\s*(.+)$"
+                    loose_match = re.match(loose_pattern, req_text)
+                    if loose_match:
+                        # Extract content after the malformed REQ-ID
+                        req_text = loose_match.group(2).strip()
 
                 return req_text
 

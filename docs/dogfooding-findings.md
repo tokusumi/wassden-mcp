@@ -8,7 +8,7 @@
 
 - **対象**: 実験ランナーコンポーネントの仕様作成
 - **期間**: 2025年8月21日
-- **使用機能**: check-completeness, prompt-requirements, validate-requirements, prompt-design, validate-design, prompt-tasks, validate-tasks, get-traceability
+- **使用機能**: prompt-requirements, validate-requirements, prompt-design, validate-design, prompt-tasks, validate-tasks, get-traceability
 - **成果物**: specs/requirements.md, specs/design.md, specs/tasks.md
 
 ## 発見された問題と再現方法
@@ -16,11 +16,11 @@
 ### 1. プロンプト生成の問題
 
 #### 1.1 情報充足性判定の過度な厳格さ
-**問題**: `check-completeness`が十分な情報が提供されていても「情報不足」と判定することがある
+**問題**: `prompt-requirements`が十分な情報が提供されていても「情報不足」と判定することがある
 
 **再現方法**:
 ```bash
-uv run wassden check-completeness --userInput "実験ランナーコンポーネントを実装したい。検証フレームワークの実験機能として、EARS適用率測定、検証パフォーマンス測定、言語検出精度測定、比較実験などを行うモジュールです。"
+uv run wassden prompt-requirements --userInput "実験ランナーコンポーネントを実装したい。検証フレームワークの実験機能として、EARS適用率測定、検証パフォーマンス測定、言語検出精度測定、比較実験などを行うモジュールです。"
 ```
 
 **結果**: 十分な説明があるにも関わらず、ユーザー、制約、スコープについて追加質問される
@@ -41,24 +41,6 @@ uv run wassden check-completeness --userInput "実験ランナーコンポーネ
 - ユーザーレベル（初心者/上級者）による出力調整
 
 ### 2. 検証機能の問題
-
-#### 2.1 EARS検証の誤検出
-**問題**: 受け入れ観点やコメント内の「REQ-ID」文字列を要件IDとして誤検出
-
-**再現方法**:
-1. requirements.mdに以下を記載:
-```markdown
-- **REQ-01**: システムは機能を提供すること
-  - 受け入れ観点1: REQ-IDを含む要件を正確に抽出する
-```
-2. `validate-requirements`を実行
-
-**結果**: 「REQ-IDを含む要件を正確に抽出する」が不正なREQ-IDフォーマットとしてエラー
-
-**改善案**:
-- 要件抽出ロジックの改善（リスト項目の階層構造を考慮）
-- コンテキスト解析による誤検出防止
-- 検証対象範囲の明確化
 
 #### 2.2 TASK-ID検証の過度な厳格さ
 **問題**: tasks.mdの説明文やコメント内の「TASK-XX」パターンも不正として検出
