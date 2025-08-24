@@ -8,7 +8,7 @@ modify your filesystem. It only reads files and generates analysis/prompts.
 """
 
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastmcp import FastMCP
 
@@ -48,7 +48,9 @@ async def _determine_language_for_file(file_path: Path, is_spec_document: bool =
     description="[READ-ONLY] Analyze user input for completeness and either generate clarifying questions "
     "or create requirements.md directly (generates prompts only, does not modify files)",
 )
-async def check_completeness(user_input: str) -> str:
+async def check_completeness(
+    user_input: Annotated[str, "Project description or requirements input to analyze for completeness"],
+) -> str:
     """Analyze user input for completeness."""
     language = determine_language(user_input=user_input)
     result = await handle_check_completeness(user_input, language)
@@ -61,9 +63,9 @@ async def check_completeness(user_input: str) -> str:
     "(deprecated - use check_completeness instead) (generates prompts only, does not modify files)",
 )
 async def prompt_requirements(
-    project_description: str,
-    scope: str = "",
-    constraints: str = "",
+    project_description: Annotated[str, "Detailed project description for requirements generation"],
+    scope: Annotated[str, "Project scope definition (what is included/excluded)"] = "",
+    constraints: Annotated[str, "Technical, business, or environmental constraints"] = "",
 ) -> str:
     """Generate requirements prompt."""
     language = determine_language(user_input=project_description)
@@ -88,7 +90,7 @@ async def prompt_requirements(
     "(analyzes files only, does not modify files)",
 )
 async def validate_requirements(
-    requirements_path: Path,
+    requirements_path: Annotated[Path, "Path to the requirements.md file to validate"],
 ) -> str:
     """Validate requirements document."""
     specs = await SpecDocuments.from_paths(requirements_path=requirements_path)
@@ -102,7 +104,7 @@ async def validate_requirements(
     "(generates prompts only, does not modify files)",
 )
 async def prompt_design(
-    requirements_path: Path,
+    requirements_path: Annotated[Path, "Path to the requirements.md file to generate design from"],
 ) -> str:
     """Generate design prompt."""
     specs = await SpecDocuments.from_paths(requirements_path=requirements_path)
@@ -116,8 +118,8 @@ async def prompt_design(
     "(analyzes files only, does not modify files)",
 )
 async def validate_design(
-    design_path: Path,
-    requirements_path: Path | None = None,
+    design_path: Annotated[Path, "Path to the design.md file to validate"],
+    requirements_path: Annotated[Path | None, "Path to requirements.md file for traceability validation"] = None,
 ) -> str:
     """Validate design document."""
     specs = await SpecDocuments.from_paths(requirements_path=requirements_path, design_path=design_path)
@@ -127,12 +129,17 @@ async def validate_design(
 
 @mcp.tool(
     name="prompt_tasks",
-    description="[READ-ONLY] Generate prompt for agent to create tasks.md (WBS) from design.md "
+    description="[READ-ONLY] Generate prompt to create tasks.md (WBS) that defines mandatory implementation steps "
+    "from design.md. These tasks enforce spec compliance during development "
     "(generates prompts only, does not modify files)",
 )
 async def prompt_tasks(
-    design_path: Path,
-    requirements_path: Path | None = None,
+    design_path: Annotated[
+        Path, "Path to design.md file - tasks will enforce implementation of all components defined here"
+    ],
+    requirements_path: Annotated[
+        Path | None, "Path to requirements.md file - tasks will ensure all REQ-XX are implemented"
+    ] = None,
 ) -> str:
     """Generate tasks prompt."""
     specs = await SpecDocuments.from_paths(requirements_path=requirements_path, design_path=design_path)
@@ -142,11 +149,12 @@ async def prompt_tasks(
 
 @mcp.tool(
     name="validate_tasks",
-    description="[READ-ONLY] Validate tasks.md structure and dependencies, generate fix instructions if needed "
+    description="[READ-ONLY] Validate tasks.md structure, dependencies, and spec compliance requirements. "
+    "Ensures tasks properly enforce implementation according to requirements and design "
     "(analyzes files only, does not modify files)",
 )
 async def validate_tasks(
-    tasks_path: Path,
+    tasks_path: Annotated[Path, "Path to tasks.md file to validate - ensures proper spec compliance enforcement"],
 ) -> str:
     """Validate tasks document."""
     specs = await SpecDocuments.from_paths(tasks_path=tasks_path)
@@ -156,13 +164,18 @@ async def validate_tasks(
 
 @mcp.tool(
     name="prompt_code",
-    description="[READ-ONLY] Generate prompt for agent to implement code step by step with important guidelines "
+    description="[READ-ONLY] Generate essential implementation guidelines that enforce strict adherence "
+    "to generated specs (requirements→design→tasks). All code must follow these mandatory guidelines "
     "(generates prompts only, does not modify files)",
 )
 async def prompt_code(
-    tasks_path: Path,
-    requirements_path: Path | None = None,
-    design_path: Path | None = None,
+    tasks_path: Annotated[Path, "Path to tasks.md file - implementation must strictly follow these defined tasks"],
+    requirements_path: Annotated[
+        Path | None, "Path to requirements.md file - all REQ-XX must be satisfied in implementation"
+    ] = None,
+    design_path: Annotated[
+        Path | None, "Path to design.md file - architecture and components must be implemented as specified"
+    ] = None,
 ) -> str:
     """Generate implementation prompt."""
     specs = await SpecDocuments.from_paths(
@@ -178,8 +191,8 @@ async def prompt_code(
     "(analyzes files only, does not modify files)",
 )
 async def analyze_changes(
-    changed_file: Path,
-    change_description: str,
+    changed_file: Annotated[Path, "Path to the specification file that was modified"],
+    change_description: Annotated[str, "Detailed description of the changes made to the file"],
 ) -> str:
     """Analyze impact of changes."""
     language = await _determine_language_for_file(changed_file)
@@ -193,9 +206,9 @@ async def analyze_changes(
     "(analyzes files only, does not modify files)",
 )
 async def get_traceability(
-    requirements_path: Path,
-    design_path: Path | None = None,
-    tasks_path: Path | None = None,
+    requirements_path: Annotated[Path, "Path to the requirements.md file for traceability analysis"],
+    design_path: Annotated[Path | None, "Path to design.md file for component mapping"] = None,
+    tasks_path: Annotated[Path | None, "Path to tasks.md file for task mapping"] = None,
 ) -> str:
     """Generate traceability report."""
     specs = await SpecDocuments.from_paths(
@@ -207,14 +220,19 @@ async def get_traceability(
 
 @mcp.tool(
     name="generate_review_prompt",
-    description="[READ-ONLY] Generate implementation review prompt for specific TASK-ID to validate quality "
+    description="[READ-ONLY] Generate implementation review prompt for specific TASK-ID to validate strict "
+    "spec compliance and quality. Ensures implementation follows requirements→design→tasks specifications "
     "(generates prompts only, does not modify files)",
 )
 async def generate_review_prompt(
-    task_id: str,
-    tasks_path: Path,
-    requirements_path: Path | None = None,
-    design_path: Path | None = None,
+    task_id: Annotated[str, "Task ID to review for spec compliance (format: TASK-XX-XX)"],
+    tasks_path: Annotated[Path, "Path to tasks.md file - implementation must match this task definition exactly"],
+    requirements_path: Annotated[
+        Path | None, "Path to requirements.md file - implementation must satisfy all related REQ-XX"
+    ] = None,
+    design_path: Annotated[
+        Path | None, "Path to design.md file - implementation must follow specified architecture"
+    ] = None,
 ) -> str:
     """Generate review prompt for specific TASK-ID."""
     specs = await SpecDocuments.from_paths(

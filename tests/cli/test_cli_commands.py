@@ -210,8 +210,8 @@ Milestones
         result = self.runner.invoke(app, ["generate-review-prompt", "--help"])
 
         assert result.exit_code == 0
-        assert "Task ID to generate review prompt for" in result.output
-        assert "TASK-01-01" in result.output
+        assert "Task ID to review for spec compliance" in result.output
+        assert "TASK-XX-XX" in result.output
 
     def test_generate_review_prompt_missing_task_id(self):
         """Test generate_review_prompt command without task ID."""
