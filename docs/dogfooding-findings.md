@@ -8,7 +8,7 @@
 
 - **対象**: 実験ランナーコンポーネントの仕様作成
 - **期間**: 2025年8月21日
-- **使用機能**: check-completeness, prompt-requirements, validate-requirements, prompt-design, validate-design, prompt-tasks, validate-tasks, get-traceability
+- **使用機能**: prompt-requirements, validate-requirements, prompt-design, validate-design, prompt-tasks, validate-tasks, get-traceability
 - **成果物**: specs/requirements.md, specs/design.md, specs/tasks.md
 
 ## 発見された問題と再現方法
@@ -16,11 +16,11 @@
 ### 1. プロンプト生成の問題
 
 #### 1.1 情報充足性判定の過度な厳格さ
-**問題**: `check-completeness`が十分な情報が提供されていても「情報不足」と判定することがある
+**問題**: `prompt-requirements`が十分な情報が提供されていても「情報不足」と判定することがある
 
 **再現方法**:
 ```bash
-uv run wassden check-completeness --userInput "実験ランナーコンポーネントを実装したい。検証フレームワークの実験機能として、EARS適用率測定、検証パフォーマンス測定、言語検出精度測定、比較実験などを行うモジュールです。"
+uv run wassden prompt-requirements --userInput "実験ランナーコンポーネントを実装したい。検証フレームワークの実験機能として、EARS適用率測定、検証パフォーマンス測定、言語検出精度測定、比較実験などを行うモジュールです。"
 ```
 
 **結果**: 十分な説明があるにも関わらず、ユーザー、制約、スコープについて追加質問される
