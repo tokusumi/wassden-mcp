@@ -97,10 +97,13 @@ async def _check_completeness_async(userinput: str, language: Language | None) -
 
 @app.command()
 def check_completeness(
-    userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
+    userinput: Annotated[
+        str,
+        typer.Option("--userInput", "-i", help="Project description or requirements input to analyze for completeness"),
+    ],
     language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
 ) -> None:
-    """Analyze user input for completeness."""
+    """Analyze user input for completeness and generate clarifying questions or requirements.md prompt."""
     print_info("Analyzing input completeness...")
     asyncio.run(_check_completeness_async(userinput, language))
 
@@ -131,12 +134,18 @@ async def _prompt_requirements_async(
 
 @app.command()
 def prompt_requirements(
-    projectdescription: Annotated[str, typer.Option("--projectDescription", "-p", help="Project description")],
-    scope: Annotated[str, typer.Option("--scope", "-s", help="Project scope")] = "",
-    constraints: Annotated[str, typer.Option("--constraints", "-c", help="Technical constraints")] = "",
+    projectdescription: Annotated[
+        str, typer.Option("--projectDescription", "-p", help="Detailed project description for requirements generation")
+    ],
+    scope: Annotated[
+        str, typer.Option("--scope", "-s", help="Project scope definition (what is included/excluded)")
+    ] = "",
+    constraints: Annotated[
+        str, typer.Option("--constraints", "-c", help="Technical, business, or environmental constraints")
+    ] = "",
     language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
 ) -> None:
-    """Generate prompt for creating requirements.md."""
+    """Generate prompt for creating requirements.md in EARS format (deprecated - use check_completeness instead)."""
     print_info("Generating requirements prompt...")
     asyncio.run(_prompt_requirements_async(projectdescription, scope, constraints, language))
 
@@ -150,9 +159,11 @@ async def _validate_requirements_async(requirementspath: Path) -> None:
 
 @app.command()
 def validate_requirements(
-    requirementspath: Annotated[Path, typer.Argument(help="Path to requirements.md")] = Path("specs/requirements.md"),
+    requirementspath: Annotated[Path, typer.Argument(help="Path to the requirements.md file to validate")] = Path(
+        "specs/requirements.md"
+    ),
 ) -> None:
-    """Validate requirements.md document."""
+    """Validate requirements.md and generate fix instructions if needed."""
     print_info(f"Validating {requirementspath}...")
     asyncio.run(_validate_requirements_async(requirementspath))
 
@@ -166,9 +177,11 @@ async def _prompt_design_async(requirementspath: Path) -> None:
 
 @app.command()
 def prompt_design(
-    requirementspath: Annotated[Path, typer.Argument(help="Path to requirements.md")] = Path("specs/requirements.md"),
+    requirementspath: Annotated[
+        Path, typer.Argument(help="Path to the requirements.md file to generate design from")
+    ] = Path("specs/requirements.md"),
 ) -> None:
-    """Generate prompt for creating design.md."""
+    """Generate prompt for creating design.md from requirements.md."""
     print_info("Generating design prompt...")
     asyncio.run(_prompt_design_async(requirementspath))
 
@@ -182,12 +195,15 @@ async def _validate_design_async(designpath: Path, requirementspath: Path | None
 
 @app.command()
 def validate_design(
-    designpath: Annotated[Path, typer.Argument(help="Path to design.md")] = Path("specs/design.md"),
+    designpath: Annotated[Path, typer.Argument(help="Path to the design.md file to validate")] = Path(
+        "specs/design.md"
+    ),
     requirementspath: Annotated[
-        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+        Path | None,
+        typer.Option("--requirementsPath", "-r", help="Path to requirements.md file for traceability validation"),
     ] = None,
 ) -> None:
-    """Validate design.md document."""
+    """Validate design.md structure and traceability, generate fix instructions if needed."""
     print_info(f"Validating {designpath}...")
     asyncio.run(_validate_design_async(designpath, requirementspath))
 
@@ -201,12 +217,22 @@ async def _prompt_tasks_async(designpath: Path, requirementspath: Path | None) -
 
 @app.command()
 def prompt_tasks(
-    designpath: Annotated[Path, typer.Argument(help="Path to design.md")] = Path("specs/design.md"),
+    designpath: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to design.md file - tasks will enforce implementation of all components defined here"
+        ),
+    ] = Path("specs/design.md"),
     requirementspath: Annotated[
-        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+        Path | None,
+        typer.Option(
+            "--requirementsPath",
+            "-r",
+            help="Path to requirements.md file - tasks will ensure all REQ-XX are implemented",
+        ),
     ] = None,
 ) -> None:
-    """Generate prompt for creating tasks.md."""
+    """Generate prompt to create tasks.md (WBS) that defines mandatory implementation steps from design.md."""
     print_info("Generating tasks prompt...")
     asyncio.run(_prompt_tasks_async(designpath, requirementspath))
 
@@ -220,9 +246,11 @@ async def _validate_tasks_async(taskspath: Path) -> None:
 
 @app.command()
 def validate_tasks(
-    taskspath: Annotated[Path, typer.Argument(help="Path to tasks.md")] = Path("specs/tasks.md"),
+    taskspath: Annotated[
+        Path, typer.Argument(help="Path to tasks.md file to validate - ensures proper spec compliance enforcement")
+    ] = Path("specs/tasks.md"),
 ) -> None:
-    """Validate tasks.md document."""
+    """Validate tasks.md structure, dependencies, and spec compliance requirements."""
     print_info(f"Validating {taskspath}...")
     asyncio.run(_validate_tasks_async(taskspath))
 
@@ -238,13 +266,28 @@ async def _prompt_code_async(taskspath: Path, requirementspath: Path | None, des
 
 @app.command()
 def prompt_code(
-    taskspath: Annotated[Path, typer.Argument(help="Path to tasks.md")] = Path("specs/tasks.md"),
+    taskspath: Annotated[
+        Path, typer.Argument(help="Path to tasks.md file - implementation must strictly follow these defined tasks")
+    ] = Path("specs/tasks.md"),
     requirementspath: Annotated[
-        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+        Path | None,
+        typer.Option(
+            "--requirementsPath",
+            "-r",
+            help="Path to requirements.md file - all REQ-XX must be satisfied in implementation",
+        ),
     ] = None,
-    designpath: Annotated[Path | None, typer.Option("--designPath", "-d", help="Path to design.md (optional)")] = None,
+    designpath: Annotated[
+        Path | None,
+        typer.Option(
+            "--designPath",
+            "-d",
+            help="Path to design.md file - architecture and components must be implemented as specified",
+        ),
+    ] = None,
 ) -> None:
-    """Generate implementation prompt."""
+    """Generate essential implementation guidelines that enforce strict adherence to generated specs
+    (requirements→design→tasks)."""
     print_info("Generating implementation prompt...")
     asyncio.run(_prompt_code_async(taskspath, requirementspath, designpath))
 
@@ -263,10 +306,14 @@ async def _analyze_changes_async(changedfile: Path, changedescription: str) -> N
 
 @app.command()
 def analyze_changes(
-    changedfile: Annotated[Path, typer.Option("--changedFile", "-f", help="Path to changed file")],
-    changedescription: Annotated[str, typer.Option("--changeDescription", "-c", help="Description of changes")],
+    changedfile: Annotated[
+        Path, typer.Option("--changedFile", "-f", help="Path to the specification file that was modified")
+    ],
+    changedescription: Annotated[
+        str, typer.Option("--changeDescription", "-c", help="Detailed description of the changes made to the file")
+    ],
 ) -> None:
-    """Analyze impact of changes to spec files."""
+    """Analyze changes to specs and generate prompts for dependent modifications."""
     print_info(f"Analyzing changes to {changedfile}...")
     asyncio.run(_analyze_changes_async(changedfile, changedescription))
 
@@ -282,11 +329,17 @@ async def _get_traceability_async(requirementspath: Path, designpath: Path | Non
 
 @app.command()
 def get_traceability(
-    requirementspath: Annotated[Path, typer.Argument(help="Path to requirements.md")] = Path("specs/requirements.md"),
-    designpath: Annotated[Path | None, typer.Option("--designPath", "-d", help="Path to design.md (optional)")] = None,
-    taskspath: Annotated[Path | None, typer.Option("--tasksPath", "-t", help="Path to tasks.md (optional)")] = None,
+    requirementspath: Annotated[
+        Path, typer.Argument(help="Path to the requirements.md file for traceability analysis")
+    ] = Path("specs/requirements.md"),
+    designpath: Annotated[
+        Path | None, typer.Option("--designPath", "-d", help="Path to design.md file for component mapping")
+    ] = None,
+    taskspath: Annotated[
+        Path | None, typer.Option("--tasksPath", "-t", help="Path to tasks.md file for task mapping")
+    ] = None,
 ) -> None:
-    """Generate traceability report."""
+    """Generate current traceability report showing REQ↔DESIGN↔TASK mappings."""
     print_info("Generating traceability report...")
     asyncio.run(_get_traceability_async(requirementspath, designpath, taskspath))
 
@@ -304,14 +357,26 @@ async def _generate_review_prompt_async(
 
 @app.command()
 def generate_review_prompt(
-    task_id: Annotated[str, typer.Argument(help="Task ID to generate review prompt for (e.g., TASK-01-01)")],
-    taskspath: Annotated[Path, typer.Argument(help="Path to tasks.md")] = Path("specs/tasks.md"),
+    task_id: Annotated[str, typer.Argument(help="Task ID to review for spec compliance (format: TASK-XX-XX)")],
+    taskspath: Annotated[
+        Path, typer.Argument(help="Path to tasks.md file - implementation must match this task definition exactly")
+    ] = Path("specs/tasks.md"),
     requirementspath: Annotated[
-        Path | None, typer.Option("--requirementsPath", "-r", help="Path to requirements.md (optional)")
+        Path | None,
+        typer.Option(
+            "--requirementsPath",
+            "-r",
+            help="Path to requirements.md file - implementation must satisfy all related REQ-XX",
+        ),
     ] = None,
-    designpath: Annotated[Path | None, typer.Option("--designPath", "-d", help="Path to design.md (optional)")] = None,
+    designpath: Annotated[
+        Path | None,
+        typer.Option(
+            "--designPath", "-d", help="Path to design.md file - implementation must follow specified architecture"
+        ),
+    ] = None,
 ) -> None:
-    """Generate implementation review prompt for specific TASK-ID to validate implementation quality."""
+    """Generate implementation review prompt for specific TASK-ID to validate strict spec compliance and quality."""
     print_info(f"Generating review prompt for {task_id}...")
     asyncio.run(_generate_review_prompt_async(task_id, taskspath, requirementspath, designpath))
 
