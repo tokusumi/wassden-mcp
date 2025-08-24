@@ -146,6 +146,54 @@ System overview.
         assert requirements[1] == "The system shall encrypt data."
         assert requirements[2] == "The system shall log activities."
 
+    def test_extract_requirements_with_req_id_in_content(self) -> None:
+        """Test that REQ-ID mentions in content don't cause errors."""
+        markdown = """# 要件定義書
+
+## 機能要件
+- **REQ-01**: システムはユーザー認証を行うこと。
+  - 受け入れ観点1: REQ-IDを含む要件を正確に抽出する
+  - 受け入れ観点2: 不正なREQ-IDフォーマットを検出する
+- **REQ-02**: システムはデータを暗号化すること。
+  - テスト観点: REQ-01とREQ-02の連携を確認
+- システムはREQ-IDに従って動作すること。
+"""
+        requirements = self.validator.extract_requirements_from_markdown(markdown)
+
+        # Should extract only actual requirements, ignoring acceptance criteria
+        assert len(requirements) == 3
+        assert requirements[0] == "システムはユーザー認証を行うこと。"
+        assert requirements[1] == "システムはデータを暗号化すること。"
+        assert requirements[2] == "システムはREQ-IDに従って動作すること。"
+
+    def test_extract_requirements_with_invalid_req_id_format(self) -> None:
+        """Test that invalid REQ-ID formats are simply ignored, not causing errors."""
+        markdown = """# Requirements Document
+
+## Functional Requirements
+- **REQ-01**: The system shall authenticate users.
+- **REQ-ABC**: The system shall encrypt data.
+- **REQ**: The system shall log events.
+- **REQ-**: The system shall backup data.
+- **REQ-01-02**: The system shall restore data.
+- The system mentions REQ-ID in its operation.
+"""
+        requirements = self.validator.extract_requirements_from_markdown(markdown)
+
+        # With original strict pattern, malformed REQ-IDs wouldn't be stripped properly
+        # This should demonstrate the issue
+        print(f"Extracted requirements: {requirements}")
+
+        # Should extract all items, handling various formats gracefully
+        assert len(requirements) >= 5
+        assert "The system shall authenticate users." in requirements
+
+        # These should NOT include the malformed REQ-ID prefix
+        # With the original code, these might include "REQ-ABC: The system shall encrypt data."
+        assert not any("REQ-ABC:" in req for req in requirements), "REQ-ABC prefix should be stripped"
+        assert not any("REQ:" in req for req in requirements), "REQ: prefix should be stripped"
+        assert not any("REQ-:" in req for req in requirements), "REQ-: prefix should be stripped"
+
     def test_result_to_dict(self) -> None:
         """Test converting result to dictionary format."""
         requirements = ["Invalid requirement"]
