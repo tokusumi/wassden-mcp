@@ -82,7 +82,7 @@ def test_performance_function():
 
         # Test subcommand help in parallel
         subcommands = [
-            "check-completeness",
+            "prompt-requirements",
             "validate-requirements",
             "prompt-requirements",
             "validate-design",
@@ -122,7 +122,7 @@ def test_performance_function():
     def test_cli_basic_functionality(self):
         """Test TR-06: Basic CLI functionality end-to-end."""
         # Test completeness check
-        result = self.run_cli_command(["check-completeness", "--userInput", "Test project"])
+        result = self.run_cli_command(["prompt-requirements", "--userInput", "Test project"])
         assert result.returncode == 0
         # Output should contain some guidance or response
         assert len(result.stdout) > 0
@@ -131,12 +131,9 @@ def test_performance_function():
         result = self.run_cli_command(
             [
                 "prompt-requirements",
-                "--projectDescription",
+                "--userInput",
                 "Test project",
-                "--scope",
-                "Basic functionality",
-                "--constraints",
-                "Python 3.12+",
+                "--force",
             ]
         )
         assert result.returncode == 0
@@ -254,7 +251,7 @@ def test_performance_function():
         # Test with invalid parameters
         result = self.run_cli_command(
             [
-                "check-completeness"
+                "prompt-requirements"
                 # Missing required --userInput parameter
             ],
             check=False,
@@ -351,7 +348,7 @@ def test_performance_function():
                 assert result2.returncode == 0 or len(result2.stderr) > 0
 
             # Step 3: Test completeness check
-            result3 = self.run_cli_command(["check-completeness", "--userInput", "Integration test project"])
+            result3 = self.run_cli_command(["prompt-requirements", "--userInput", "Integration test project"])
 
             assert result3.returncode == 0
             assert len(result3.stdout) > 0

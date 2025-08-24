@@ -44,13 +44,13 @@ Edit your MCP settings file (location varies by client):
 ### Step 1: Describe Your Project
 
 ```bash
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "I want to build a TODO app with user authentication"
 ```
 
 wassden will analyze your description and either:
-- Ask clarifying questions if more information is needed
-- Provide a structured prompt for generating requirements
+- Ask clarifying questions if more information is needed (default behavior)
+- Provide a structured prompt for generating requirements (when using --force to skip completeness verification)
 
 ### Step 2: Generate Specifications
 
@@ -81,7 +81,7 @@ uvx --from git+https://github.com/tokusumi/wassden-mcp wassden get-traceability
 ### 1. Initial Analysis
 
 ```bash
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "TODO app with React frontend, FastAPI backend, PostgreSQL database, JWT authentication"
 ```
 
@@ -149,7 +149,7 @@ You: I need to create a chat application
 
 Claude: I'll help you create a chat application. Let me first analyze your requirements for completeness.
 
-[Uses check_completeness tool]
+[Uses prompt_requirements tool]
 
 I need more information about your chat application:
 1. What type of chat (1-on-1, group, or both)?
@@ -164,23 +164,23 @@ wassden automatically detects Japanese or English:
 
 ```bash
 # Japanese input - responds in Japanese
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "タスク管理アプリを作りたい"
 
 # English input - responds in English  
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "I want to create a task management app"
 
 # Force specific language
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "Create an app" --language ja
 ```
 
 ## Common Commands
 
-### Check Project Completeness
+### Generate Requirements Prompt
 ```bash
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness --userInput "YOUR_PROJECT_DESCRIPTION"
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements --userInput "YOUR_PROJECT_DESCRIPTION"
 ```
 
 ### Validate All Specs
@@ -250,4 +250,4 @@ Read the validation output carefully - it provides specific guidance on what nee
 
 ---
 
-**Ready to build with structured specifications? Start with `check-completeness` and let wassden guide you!**
+**Ready to build with structured specifications? Start with `prompt-requirements` and let wassden guide you!**

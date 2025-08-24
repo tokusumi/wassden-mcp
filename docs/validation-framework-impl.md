@@ -149,7 +149,7 @@ QuARSやRequirements Smellsの研究では曖昧語や弱い表現の自動検�
 ```
 wassden-mcp/
 ├── wassden/
-│   ├── handlers/                     # 既存: completeness / requirements / design / tasks
+│   ├── handlers/                     # 既存: requirements (includes completeness) / design / tasks
 │   ├── lib/
 │   │   ├── validate.py               # 入口: EARS/Smell/Structure/Trace を統合
 │   │   ├── validate_ears.py          # ★EARSは初版Ubiquitousのみ
@@ -335,7 +335,7 @@ wassden run-experiment \
 
 ### ベース（常時）
 
-- `check-completeness` / `prompt-*` / `validate-requirements|design|tasks` / `get-traceability` / `analyze-changes` …（現行通り）
+- `prompt-requirements` (includes completeness check) / `prompt-*` / `validate-requirements|design|tasks` / `get-traceability` / `analyze-changes` …（現行通り）
 
 ### dev（`wassden[dev]`導入時のみ）
 

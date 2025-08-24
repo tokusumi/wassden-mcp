@@ -89,56 +89,47 @@ def start_mcp_server(
 
 
 # Async implementation
-async def _check_completeness_async(userinput: str, language: Language | None) -> None:
-    """Async implementation for completeness check."""
-    determined_language = _determine_language_for_user_input(language, userinput)
-    await run_handler_typed(handle_check_completeness, userinput, determined_language)
-
-
-@app.command()
-def check_completeness(
-    userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
-    language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
-) -> None:
-    """Analyze user input for completeness."""
-    print_info("Analyzing input completeness...")
-    asyncio.run(_check_completeness_async(userinput, language))
 
 
 # Async implementation
-async def _prompt_requirements_async(
-    projectdescription: str, scope: str, constraints: str, language: Language | None
-) -> None:
+async def _prompt_requirements_async(userinput: str, force: bool, language: Language | None) -> None:
     """Async implementation for requirements prompt generation."""
-    determined_language = _determine_language_for_user_input(language, projectdescription)
+    determined_language = _determine_language_for_user_input(language, userinput)
 
-    # Create SpecDocuments instance for CLI usage
-    specs = SpecDocuments(
-        requirements_path=Path("specs/requirements.md"),
-        design_path=Path("specs/design.md"),
-        tasks_path=Path("specs/tasks.md"),
-        language=determined_language,
-    )
-
-    await run_handler_typed(
-        handle_prompt_requirements,
-        specs,
-        projectdescription,
-        scope,
-        constraints,
-    )
+    if force:
+        # Force mode: generate requirements prompt without completeness verification
+        specs = SpecDocuments(
+            requirements_path=Path("specs/requirements.md"),
+            design_path=Path("specs/design.md"),
+            tasks_path=Path("specs/tasks.md"),
+            language=determined_language,
+        )
+        await run_handler_typed(
+            handle_prompt_requirements,
+            specs,
+            userinput,
+            "",
+            "",
+        )
+    else:
+        # Default mode: check completeness
+        await run_handler_typed(handle_check_completeness, userinput, determined_language)
 
 
 @app.command()
 def prompt_requirements(
-    projectdescription: Annotated[str, typer.Option("--projectDescription", "-p", help="Project description")],
-    scope: Annotated[str, typer.Option("--scope", "-s", help="Project scope")] = "",
-    constraints: Annotated[str, typer.Option("--constraints", "-c", help="Technical constraints")] = "",
+    userinput: Annotated[str, typer.Option("--userInput", "-i", help="User's project description")],
+    force: Annotated[
+        bool, typer.Option("--force", "-f", help="Generate requirements prompt without completeness verification")
+    ] = False,
     language: Annotated[Language | None, typer.Option("--language", "-l", help="Language for output")] = None,
 ) -> None:
-    """Generate prompt for creating requirements.md."""
-    print_info("Generating requirements prompt...")
-    asyncio.run(_prompt_requirements_async(projectdescription, scope, constraints, language))
+    """Analyze user input for completeness and generate requirements prompt."""
+    if force:
+        print_info("Generating requirements prompt...")
+    else:
+        print_info("Analyzing input completeness...")
+    asyncio.run(_prompt_requirements_async(userinput, force, language))
 
 
 # Async implementation

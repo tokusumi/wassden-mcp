@@ -43,42 +43,34 @@ async def _determine_language_for_file(file_path: Path, is_spec_document: bool =
 
 
 # Register all tools
-@mcp.tool(
-    name="check_completeness",
-    description="[READ-ONLY] Analyze user input for completeness and either generate clarifying questions "
-    "or create requirements.md directly (generates prompts only, does not modify files)",
-)
-async def check_completeness(user_input: str) -> str:
-    """Analyze user input for completeness."""
-    language = determine_language(user_input=user_input)
-    result = await handle_check_completeness(user_input, language)
-    return str(result.content[0].text)
 
 
 @mcp.tool(
     name="prompt_requirements",
-    description="[READ-ONLY] Generate prompt for agent to create requirements.md in EARS format "
-    "(deprecated - use check_completeness instead) (generates prompts only, does not modify files)",
+    description="[READ-ONLY] Analyze user input for completeness and generate requirements.md creation prompt "
+    "(generates prompts only, does not modify files)",
 )
 async def prompt_requirements(
-    project_description: str,
-    scope: str = "",
-    constraints: str = "",
+    user_input: str,
+    force: bool = False,
 ) -> str:
-    """Generate requirements prompt."""
-    language = determine_language(user_input=project_description)
+    """Analyze user input for completeness and generate requirements prompt."""
+    language = determine_language(user_input=user_input)
 
-    # Create a SpecDocuments instance with default paths
-    # Assume specs/<feature-name>/ structure, but fallback to specs/ for backward compatibility
-    specs_path = Path("specs")
-    specs = SpecDocuments(
-        requirements_path=specs_path / "requirements.md",
-        design_path=specs_path / "design.md",
-        tasks_path=specs_path / "tasks.md",
-        language=language,
-    )
+    if force:
+        # Force mode: generate requirements prompt without completeness verification
+        specs_path = Path("specs")
+        specs = SpecDocuments(
+            requirements_path=specs_path / "requirements.md",
+            design_path=specs_path / "design.md",
+            tasks_path=specs_path / "tasks.md",
+            language=language,
+        )
+        result = await handle_prompt_requirements(specs, user_input, "", "")
+    else:
+        # Default mode: check completeness
+        result = await handle_check_completeness(user_input, language)
 
-    result = await handle_prompt_requirements(specs, project_description, scope, constraints)
     return str(result.content[0].text)
 
 

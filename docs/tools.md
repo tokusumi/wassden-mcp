@@ -10,42 +10,30 @@ wassden provides a comprehensive set of tools for Spec-Driven Development (SDD) 
 
 These tools provide structured prompts for AI agents to create high-quality specifications.
 
-### check-completeness
+### prompt-requirements
 
 Analyzes user input for completeness and generates requirements prompts.
 
 **Usage:**
 ```bash
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+# Default behavior - checks completeness first
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "Create a task management API with authentication"
+
+# Skip completeness verification
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
+  --userInput "Create a task management API with authentication" \
+  --force
 ```
 
 **Parameters:**
 - `userInput` (required): Project description or requirements
+- `--force` (optional): Skip completeness verification before generating prompt
 - `--language` (optional): Force language (ja/en), auto-detects by default
 
 **Output:**
-- If incomplete: Clarifying questions in detected language
-- If complete: Structured prompt for EARS-format requirements generation
-
-### prompt-requirements
-
-Generates specialized requirements generation prompt.
-
-**Usage:**
-```bash
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
-  --projectName "TaskAPI" \
-  --description "Task management system" \
-  --goals "Enable task CRUD operations"
-```
-
-**Parameters:**
-- `projectName`: Project name
-- `description`: Project description
-- `goals`: Project goals
-- `constraints` (optional): Technical constraints
-- `--language` (optional): Output language
+- Default: If incomplete, shows clarifying questions; if complete, shows structured prompt
+- With --force: Skips completeness verification and generates structured prompt for EARS-format requirements
 
 ### prompt-design
 
@@ -241,7 +229,6 @@ All tools are available through MCP when wassden is configured in Claude Code or
 
 | CLI Command | MCP Tool Name |
 |------------|--------------|
-| `check-completeness` | `check_completeness` |
 | `prompt-requirements` | `prompt_requirements` |
 | `prompt-design` | `prompt_design` |
 | `prompt-tasks` | `prompt_tasks` |
@@ -261,7 +248,7 @@ Once configured, tools appear in Claude Code's tool palette. Example usage:
 User: Check if my project description is complete
 Assistant: I'll analyze your project description for completeness.
 
-[Uses check_completeness tool]
+[Uses prompt_requirements tool]
 
 Based on the analysis, your project description is missing:
 1. Specific authentication methods
@@ -303,8 +290,8 @@ All tools are optimized for speed:
 
 | Tool | Average Response Time |
 |------|---------------------|
-| check_completeness | <0.01ms |
-| prompt_* | <0.003ms |
+| prompt_requirements | <0.003ms |
+| prompt_* (others) | <0.003ms |
 | validate_* | <0.02ms |
 | get_traceability | <0.02ms |
 | analyze_changes | <0.02ms |
@@ -341,7 +328,7 @@ uv run wassden validate-requirements specs/requirements.md
 
 ## Best Practices
 
-1. **Start with check-completeness**: Ensure project description is complete
+1. **Start with prompt-requirements**: Ensure project description is complete
 2. **Validate after generation**: Always validate agent-generated documents
 3. **Maintain traceability**: Use get-traceability regularly
 4. **Track changes**: Use analyze-changes when modifying specs
@@ -353,7 +340,7 @@ uv run wassden validate-requirements specs/requirements.md
 
 ```bash
 # 1. Check project completeness
-uvx --from git+https://github.com/tokusumi/wassden-mcp wassden check-completeness \
+uvx --from git+https://github.com/tokusumi/wassden-mcp wassden prompt-requirements \
   --userInput "Create a REST API for task management with JWT auth"
 
 # 2. Generate requirements (agent uses prompt)

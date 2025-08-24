@@ -6,18 +6,15 @@ wassden provides comprehensive MCP tools for spec-driven development. This docum
 
 ## Basic Commands
 
-### check-completeness
-Analyze information sufficiency and generate user questions for missing information.
-
-```bash
-uv run wassden check-completeness --userInput "Create user authentication system"
-```
-
 ### prompt-requirements
-Generate EARS format requirements.md creation prompts for Agents.
+Analyze information sufficiency and generate requirements prompts.
 
 ```bash
-uv run wassden prompt-requirements --userInput "User authentication system requirements"
+# Default behavior - checks completeness first
+uv run wassden prompt-requirements --userInput "Create user authentication system"
+
+# Skip completeness verification
+uv run wassden prompt-requirements --userInput "User authentication system" --force
 ```
 
 ### validate-requirements
@@ -75,17 +72,17 @@ All commands support multi-language output through the `--language` parameter:
 
 ### Japanese Mode
 ```bash
-uv run wassden check-completeness --userInput "test" --language ja
+uv run wassden prompt-requirements --userInput "test" --language ja
 ```
 
 ### English Mode
 ```bash
-uv run wassden check-completeness --userInput "test" --language en
+uv run wassden prompt-requirements --userInput "test" --language en
 ```
 
 ### Auto-Detection Mode
 ```bash
-uv run wassden check-completeness --userInput "テストプロジェクト"
+uv run wassden prompt-requirements --userInput "テストプロジェクト"
 # Automatically detects Japanese and responds in Japanese
 ```
 
@@ -120,11 +117,11 @@ wassden uses intelligent language detection:
 
 ### Complete Workflow
 ```bash
-# 1. Check information completeness
-uv run wassden check-completeness --userInput "E-commerce system development"
+# 1. Check information completeness and generate requirements
+uv run wassden prompt-requirements --userInput "E-commerce system development"
 
-# 2. Generate requirements
-uv run wassden prompt-requirements --userInput "E-commerce system with user authentication, product catalog, shopping cart"
+# (If needed) Skip completeness verification with --force
+uv run wassden prompt-requirements --userInput "E-commerce system with user authentication, product catalog, shopping cart" --force
 
 # 3. Validate requirements
 uv run wassden validate-requirements --requirementsPath specs/requirements.md
@@ -148,16 +145,14 @@ uv run wassden get-traceability --specsDir specs/
 ### Multi-Language Workflow
 ```bash
 # English workflow
-uv run wassden check-completeness --userInput "Create REST API" --language en
-uv run wassden prompt-requirements --userInput "REST API for user management" --language en
+uv run wassden prompt-requirements --userInput "Create REST API" --language en
 
 # Japanese workflow
-uv run wassden check-completeness --userInput "RESTAPIを作成" --language ja
-uv run wassden prompt-requirements --userInput "ユーザー管理用RESTAPI" --language ja
+uv run wassden prompt-requirements --userInput "RESTAPIを作成" --language ja
 
 # Auto-detection workflow
-uv run wassden check-completeness --userInput "Create REST API"  # English detected
-uv run wassden check-completeness --userInput "RESTAPIを作成"    # Japanese detected
+uv run wassden prompt-requirements --userInput "Create REST API"  # English detected
+uv run wassden prompt-requirements --userInput "RESTAPIを作成"    # Japanese detected
 ```
 
 ## Error Handling
