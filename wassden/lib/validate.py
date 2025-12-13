@@ -29,11 +29,8 @@ USE_AST_VALIDATION = os.environ.get("USE_AST_VALIDATION", "0") == "1"
 if USE_AST_VALIDATION:
     from .spec_ast.validation_compat import (
         validate_design_ast,
-        validate_design_structure_ast,
         validate_requirements_ast,
-        validate_requirements_structure_ast,
         validate_tasks_ast,
-        validate_tasks_structure_ast,
     )
 
 # Constants

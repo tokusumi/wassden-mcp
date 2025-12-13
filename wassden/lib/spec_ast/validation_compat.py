@@ -9,11 +9,14 @@ from typing import Any
 
 from wassden.language_types import Language
 
-from .blocks import BlockType, DocumentBlock, RequirementBlock, SectionBlock, TaskBlock
+from .blocks import BlockType, DocumentBlock, ListItemBlock, RequirementBlock, SectionBlock, TaskBlock
 from .id_extractor import IDExtractor
 from .parser import SpecMarkdownParser
 from .validation_engine import ValidationEngine
 from .validation_rules import ValidationResult
+
+# Constants
+HEADING_LEVEL_2 = 2  # Level 2 headings (##) for backward compatibility with legacy validation
 
 
 def extract_stats_from_document(document: DocumentBlock, doc_type: str) -> dict[str, Any]:
@@ -78,7 +81,7 @@ def _extract_requirements_stats(document: DocumentBlock) -> dict[str, Any]:  # n
     }
 
 
-def _extract_design_stats(document: DocumentBlock) -> dict[str, Any]:
+def _extract_design_stats(document: DocumentBlock) -> dict[str, Any]:  # noqa: C901, PLR0912
     """Extract statistics from design document."""
     referenced_reqs = set()
     referenced_trs = set()
@@ -98,6 +101,18 @@ def _extract_design_stats(document: DocumentBlock) -> dict[str, Any]:
         if isinstance(block, SectionBlock) and block.title:
             req_id, _, _ = IDExtractor.extract_req_id_from_text(block.title)
             if req_id:
+                if req_id.startswith("REQ-"):
+                    referenced_reqs.add(req_id)
+                elif req_id.startswith("TR-"):
+                    referenced_trs.add(req_id)
+
+    # Also extract from ListItemBlocks (for traceability section)
+    list_item_blocks = document.get_blocks_by_type(BlockType.LIST_ITEM)
+    for block in list_item_blocks:
+        if isinstance(block, ListItemBlock) and block.content:
+            # Extract all REQ-IDs from list item content
+            req_ids = list(IDExtractor.extract_all_req_ids(block.content))
+            for req_id in req_ids:
                 if req_id.startswith("REQ-"):
                     referenced_reqs.add(req_id)
                 elif req_id.startswith("TR-"):
@@ -156,7 +171,11 @@ def extract_found_sections(document: DocumentBlock) -> list[str]:
     """
     section_blocks = document.get_blocks_by_type(BlockType.SECTION)
     # Only include level 2 sections for backward compatibility with legacy validation
-    return [block.title for block in section_blocks if isinstance(block, SectionBlock) and block.title and block.level == 2]
+    return [
+        block.title
+        for block in section_blocks
+        if isinstance(block, SectionBlock) and block.title and block.level == HEADING_LEVEL_2
+    ]
 
 
 def convert_validation_results_to_errors(results: list[ValidationResult]) -> list[str]:

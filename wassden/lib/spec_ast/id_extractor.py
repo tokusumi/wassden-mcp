@@ -18,9 +18,11 @@ class IDExtractor:
     TASK_ID_PATTERN = r"\bTASK-\d{2}(?:-\d{2}){0,2}\b"
     DC_PATTERN = r"\bDC-\d{2}\b"
 
-    # Prefixed patterns for list items (e.g., "REQ-01: requirement text")
-    PREFIXED_REQ_PATTERN = r"^(REQ-\d+|NFR-\d+|KPI-\d+|TR-\d+):\s*(.+)$"
-    PREFIXED_TASK_PATTERN = r"^(TASK-\d+(?:-\d+){0,2}):\s*(.+)$"
+    # Prefixed patterns for list items
+    # Supports formats: "REQ-01: text", "**REQ-01**: text", "[ ] **TASK-01-01**: text"
+    # Allow optional checkbox "[ ]" or "[x]" and optional bold markers "**"
+    PREFIXED_REQ_PATTERN = r"^(?:\[[ x]\]\s*)?\*?\*?(REQ-\d+|NFR-\d+|KPI-\d+|TR-\d+)\*?\*?:\s*(.+)$"
+    PREFIXED_TASK_PATTERN = r"^(?:\[[ x]\]\s*)?\*?\*?(TASK-\d+(?:-\d+){0,2})\*?\*?:\s*(.+)$"
 
     # Loose patterns for malformed IDs
     LOOSE_REQ_PATTERN = r"^(REQ[-A-Za-z0-9]*|TR[-A-Za-z0-9]*|NFR[-A-Za-z0-9]*|KPI[-A-Za-z0-9]*):\s*(.+)$"

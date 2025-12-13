@@ -6,7 +6,7 @@ and coverage requirements.
 
 from wassden.language_types import Language
 
-from .blocks import BlockType, DocumentBlock, RequirementBlock, SectionBlock, TaskBlock
+from .blocks import BlockType, DocumentBlock, ListItemBlock, RequirementBlock, SectionBlock, TaskBlock
 from .id_extractor import IDExtractor
 from .section_patterns import SectionType
 from .validation_rules import (
@@ -123,6 +123,16 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-"):
                 referenced_ids.add(block.req_id)
 
+        # Also check list item blocks (for traceability section list items)
+        list_item_blocks = document.get_blocks_by_type(BlockType.LIST_ITEM)
+        for block in list_item_blocks:
+            if isinstance(block, ListItemBlock) and block.content:
+                # Extract all REQ-IDs from the list item content
+                req_ids = list(IDExtractor.extract_all_req_ids(block.content))
+                for req_id in req_ids:
+                    if req_id.startswith("REQ-"):
+                        referenced_ids.add(req_id)
+
         return referenced_ids
 
 
@@ -176,6 +186,17 @@ class DesignReferencesRequirementsRule(TraceabilityValidationRule):
                 if isinstance(block, SectionBlock) and block.title:
                     req_id, _, _ = IDExtractor.extract_req_id_from_text(block.title)
                     if req_id and req_id.startswith("REQ-"):
+                        has_req_refs = True
+                        break
+
+        # Also check ListItemBlocks (for traceability section list items)
+        if not has_req_refs:
+            list_item_blocks = document.get_blocks_by_type(BlockType.LIST_ITEM)
+            for block in list_item_blocks:
+                if isinstance(block, ListItemBlock) and block.content:
+                    # Use extract_all_req_ids for traceability items like "REQ-01 ⇔ component-a"
+                    req_ids = list(IDExtractor.extract_all_req_ids(block.content))
+                    if any(req_id.startswith("REQ-") for req_id in req_ids):
                         has_req_refs = True
                         break
 
