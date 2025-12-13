@@ -416,6 +416,12 @@ def validate_design_ast(
     result_dict["stats"] = extract_stats_from_document(document, "design")
     result_dict["foundSections"] = extract_found_sections(document)
 
+    # Extract missing references from validation results
+    missing_refs = extract_missing_references_from_results(results)
+    # Flatten to simple list format for backward compatibility
+    all_missing = missing_refs["requirements"] + missing_refs["test_requirements"] + missing_refs["design"]
+    result_dict["stats"]["missingReferences"] = all_missing
+
     return result_dict
 
 
