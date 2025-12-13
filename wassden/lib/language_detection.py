@@ -1,5 +1,7 @@
 """Language detection utilities for automatic language determination."""
 
+import re
+
 import pycld2 as cld2  # type: ignore
 
 from wassden.language_types import Language
@@ -91,12 +93,32 @@ def detect_language_from_spec_content(content: str) -> Language:
     if not content:
         return Language.JAPANESE  # Default to Japanese
 
-    # Count pattern matches for each language
-    japanese_matches = sum(1 for pattern in JAPANESE_SPEC_PATTERNS if pattern in content)
-    english_matches = sum(1 for pattern in ENGLISH_SPEC_PATTERNS if pattern in content)
+    # Remove section numbers from content for pattern matching (e.g., "## 1. Overview" -> "## Overview")
+    # This allows patterns to match both numbered and unnumbered sections
+    normalized_content = re.sub(r"(^|\n)(#{1,6})\s*\d+\.?\s+", r"\1\2 ", content, flags=re.MULTILINE)
 
-    # If English patterns are significantly more common, use English
-    if english_matches > japanese_matches:
+    # Count pattern matches for each language, checking both original and normalized content
+    # This handles patterns that expect numbers (like ". サマリー") and those that don't (like "## Overview")
+    japanese_matches = sum(
+        1 for pattern in JAPANESE_SPEC_PATTERNS if pattern in content or pattern in normalized_content
+    )
+    english_matches = sum(1 for pattern in ENGLISH_SPEC_PATTERNS if pattern in content or pattern in normalized_content)
+
+    # Determine language based on pattern matches
+    # If significantly more patterns match one language, use that language
+    # "Significantly more" means at least 2x more matches or 3+ more matches
+    if japanese_matches >= 2 * english_matches or japanese_matches >= english_matches + 3:
+        return Language.JAPANESE
+    if english_matches >= 2 * japanese_matches or english_matches >= japanese_matches + 3:
+        return Language.ENGLISH
+
+    # If close match counts, prefer Japanese (many Japanese docs include English notes)
+    # but only if Japanese has any matches at all
+    if japanese_matches > 0:
+        return Language.JAPANESE
+
+    # If only English patterns found
+    if english_matches > 0:
         return Language.ENGLISH
 
     # Default to Japanese (backward compatibility)

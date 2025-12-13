@@ -75,14 +75,6 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             display_refs = missing_refs[:MAX_DISPLAY_REQUIREMENTS]
             suffix = "..." if len(missing_refs) > MAX_DISPLAY_REQUIREMENTS else ""
 
-            # Determine context based on document type
-            # Check if document has task blocks (tasks document) or not (design document)
-            task_blocks = document.get_blocks_by_type(BlockType.TASK)
-            if task_blocks:
-                context_str = "tasks"
-            else:
-                context_str = "design"
-
             message = f"Missing references to requirements: {', '.join(display_refs)}{suffix}"
             errors.append(
                 ValidationError(
@@ -106,11 +98,10 @@ class RequirementCoverageRule(TraceabilityValidationRule):
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
 
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id:
-                # Only REQ- and TR- require explicit traceability
-                # NFR and KPI are system-wide and don't need component mapping
-                if block.req_id.startswith(("REQ-", "TR-")):
-                    req_ids.add(block.req_id)
+            # Only REQ- and TR- require explicit traceability
+            # NFR and KPI are system-wide and don't need component mapping
+            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith(("REQ-", "TR-")):
+                req_ids.add(block.req_id)
 
         return req_ids
 
@@ -134,10 +125,13 @@ class RequirementCoverageRule(TraceabilityValidationRule):
         # Also check requirement blocks (for design traceability section)
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id:
-                # Include all requirement types
-                if block.req_id.startswith(("REQ-", "NFR-", "KPI-", "TR-")):
-                    referenced_ids.add(block.req_id)
+            # Include all requirement types
+            if (
+                isinstance(block, RequirementBlock)
+                and block.req_id
+                and block.req_id.startswith(("REQ-", "NFR-", "KPI-", "TR-"))
+            ):
+                referenced_ids.add(block.req_id)
 
         # Also check list item blocks (for traceability section list items)
         list_item_blocks = document.get_blocks_by_type(BlockType.LIST_ITEM)

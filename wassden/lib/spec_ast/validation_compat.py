@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 from wassden.language_types import Language
+from wassden.lib.language_detection import detect_language_from_spec_content
 
 from .blocks import BlockType, DocumentBlock, ListItemBlock, RequirementBlock, SectionBlock, TaskBlock
 from .id_extractor import IDExtractor
@@ -219,7 +220,7 @@ def convert_validation_results_to_dict(results: list[ValidationResult]) -> dict[
     }
 
 
-def extract_missing_references_from_results(results: list[ValidationResult]) -> dict[str, list[str]]:
+def extract_missing_references_from_results(results: list[ValidationResult]) -> dict[str, list[str]]:  # noqa: C901
     """Extract missing references from validation results.
 
     Args:
@@ -239,9 +240,11 @@ def extract_missing_references_from_results(results: list[ValidationResult]) -> 
             message = error.message
 
             # Extract missing requirements (REQ-XX, NFR-XX, KPI-XX, TR-XX)
-            if ("Requirements not referenced" in message or
-                "Requirement not referenced" in message or
-                "Missing references to requirements" in message):
+            if (
+                "Requirements not referenced" in message
+                or "Requirement not referenced" in message
+                or "Missing references to requirements" in message
+            ):
                 # Parse: "Requirements not referenced: REQ-01, REQ-02, TR-01, TR-02..."
                 # or "Missing references to requirements: REQ-01, REQ-02..."
                 match = re.search(r"(?:requirements|Requirements?|REQ-\d+)[^:]*:\s*(.+)", message)
@@ -371,9 +374,7 @@ def validate_requirements_ast(content: str, language: Language | None = None) ->
     """
     # Auto-detect language if not specified
     if language is None:
-        from wassden.lib.language_detection import detect_language_from_content
-
-        language = detect_language_from_content(content)
+        language = detect_language_from_spec_content(content)
 
     # Parse document
     parser = SpecMarkdownParser(language)
@@ -412,9 +413,7 @@ def validate_design_ast(
     """
     # Auto-detect language if not specified
     if language is None:
-        from wassden.lib.language_detection import detect_language_from_content
-
-        language = detect_language_from_content(content)
+        language = detect_language_from_spec_content(content)
 
     # Parse documents
     parser = SpecMarkdownParser(language)
@@ -467,9 +466,7 @@ def validate_tasks_ast(
     """
     # Auto-detect language if not specified
     if language is None:
-        from wassden.lib.language_detection import detect_language_from_content
-
-        language = detect_language_from_content(content)
+        language = detect_language_from_spec_content(content)
 
     # Parse documents
     parser = SpecMarkdownParser(language)

@@ -7,6 +7,7 @@ import mistune
 
 from wassden.language_types import Language
 from wassden.lib.spec_ast.blocks import (
+    BlockType,
     DocumentBlock,
     ListItemBlock,
     RequirementBlock,
@@ -35,7 +36,7 @@ class SpecMarkdownParser:
         self.language = language
         self._markdown = mistune.create_markdown(renderer="ast")
 
-    def parse(self, markdown_text: str) -> DocumentBlock:
+    def parse(self, markdown_text: str) -> DocumentBlock:  # noqa: C901
         """Parse markdown text into structured block tree.
 
         Args:
@@ -393,7 +394,7 @@ class SpecMarkdownParser:
 
         return None, heading_text.strip()
 
-    def _process_dependencies_section(self, document: DocumentBlock) -> None:
+    def _process_dependencies_section(self, document: DocumentBlock) -> None:  # noqa: C901
         """Process dependencies section and update TaskBlock dependencies.
 
         Looks for Dependencies section and extracts task dependencies
@@ -402,17 +403,13 @@ class SpecMarkdownParser:
         Args:
             document: Document block to process
         """
-        from .blocks import BlockType
-        from .section_patterns import SectionType
-
         # Find dependencies section
         dependencies_section = None
         for child in document.children:
-            if isinstance(child, SectionBlock):
-                # Check if this is the dependencies section
-                if child.section_type == SectionType.DEPENDENCIES:
-                    dependencies_section = child
-                    break
+            # Check if this is the dependencies section
+            if isinstance(child, SectionBlock) and child.section_type == SectionType.DEPENDENCIES:
+                dependencies_section = child
+                break
 
         if not dependencies_section:
             return
@@ -425,7 +422,7 @@ class SpecMarkdownParser:
         content = dependencies_section.raw_content or ""
         # Check for paragraph content stored during parsing
         if hasattr(dependencies_section, "_paragraph_content"):
-            content += "\n" + "\n".join(dependencies_section._paragraph_content)  # type: ignore
+            content += "\n" + "\n".join(dependencies_section._paragraph_content)
         for child in dependencies_section.children:
             if hasattr(child, "raw_content"):
                 content += "\n" + (child.raw_content or "")
@@ -448,9 +445,8 @@ class SpecMarkdownParser:
         # Update TaskBlocks with extracted dependencies
         task_blocks = document.get_blocks_by_type(BlockType.TASK)
         for block in task_blocks:
-            if isinstance(block, TaskBlock) and block.task_id:
-                if block.task_id in task_deps:
-                    # Merge with existing dependencies
-                    existing = set(block.dependencies) if block.dependencies else set()
-                    new_deps = set(task_deps[block.task_id])
-                    block.dependencies = sorted(existing | new_deps)
+            if isinstance(block, TaskBlock) and block.task_id and block.task_id in task_deps:
+                # Merge with existing dependencies
+                existing = set(block.dependencies) if block.dependencies else set()
+                new_deps = set(task_deps[block.task_id])
+                block.dependencies = sorted(existing | new_deps)
