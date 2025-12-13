@@ -218,6 +218,66 @@ def convert_validation_results_to_dict(results: list[ValidationResult]) -> dict[
     }
 
 
+def extract_missing_references_from_results(results: list[ValidationResult]) -> dict[str, list[str]]:
+    """Extract missing references from validation results.
+
+    Args:
+        results: List of validation results
+
+    Returns:
+        Dictionary with missing references by type
+    """
+    missing_refs: dict[str, list[str]] = {
+        "requirements": [],
+        "test_requirements": [],
+        "design": [],
+    }
+
+    import re
+
+    for result in results:
+        for error in result.errors:
+            message = error.message
+
+            # Extract missing requirements (REQ-XX, NFR-XX, KPI-XX)
+            if "Requirements not referenced" in message or "Requirement not referenced" in message:
+                # Parse: "Requirements not referenced: REQ-01, REQ-02..."
+                match = re.search(r"(?:Requirements?|REQ-\d+)[^:]*:\s*(.+)", message)
+                if match:
+                    refs_str = match.group(1).replace("...", "")
+                    refs = [r.strip() for r in refs_str.split(",") if r.strip().startswith(("REQ-", "NFR-", "KPI-"))]
+                    missing_refs["requirements"].extend(refs)
+
+            # Extract missing test requirements (TR-XX)
+            if "Test requirement not referenced" in message or "TR-" in message:
+                match = re.search(r"(TR-\d+)", message)
+                if match:
+                    missing_refs["test_requirements"].append(match.group(1))
+
+            # Extract missing design components
+            if "not referenced in tasks:" in message:
+                # Pattern: "Design components not referenced in tasks: comp1, comp2, comp3..."
+                # or "Test scenario not referenced in tasks: test-xxx"
+                list_match = re.search(r"not referenced in tasks:\s*(.+)", message)
+                if list_match:
+                    components_str = list_match.group(1).replace("...", "")
+                    # Split by comma and extract component names
+                    components = [c.strip() for c in components_str.split(",") if c.strip()]
+                    # Filter to only valid component/scenario names
+                    valid_comps = [
+                        c
+                        for c in components
+                        if re.match(r"^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+$", c)
+                    ]
+                    missing_refs["design"].extend(valid_comps)
+
+    # Remove duplicates and sort
+    for key in missing_refs:
+        missing_refs[key] = sorted(set(missing_refs[key]))
+
+    return missing_refs
+
+
 def validate_requirements_structure_ast(req_content: str, language: Language = Language.JAPANESE) -> list[str]:
     """Validate requirements document structure using AST validation.
 
@@ -406,5 +466,11 @@ def validate_tasks_ast(
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "tasks")
     result_dict["foundSections"] = extract_found_sections(document)
+
+    # Extract missing references from validation results
+    missing_refs = extract_missing_references_from_results(results)
+    result_dict["stats"]["missingRequirementReferences"] = missing_refs.get("requirements", [])
+    result_dict["stats"]["missingTRReferences"] = missing_refs.get("test_requirements", [])
+    result_dict["stats"]["missingDesignReferences"] = missing_refs.get("design", [])
 
     return result_dict

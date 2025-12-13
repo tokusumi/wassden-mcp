@@ -312,10 +312,42 @@ class TasksReferenceDesignRule(TraceabilityValidationRule):
 
         # Check if tasks have any design references
         task_blocks = document.get_blocks_by_type(BlockType.TASK)
-        has_design_refs = any(isinstance(block, TaskBlock) and block.design_refs for block in task_blocks)
 
-        # If design exists but tasks don't reference it, error
-        if not has_design_refs:
+        # Check design_refs field
+        has_design_refs_field = any(isinstance(block, TaskBlock) and block.design_refs for block in task_blocks)
+
+        # Also check if design components appear in task content (legacy compatibility)
+        has_design_refs_content = False
+        if not has_design_refs_field:
+            # Extract design components from design document
+            from .blocks import BlockType as BT
+            from .blocks import ListItemBlock
+            import re
+
+            design_components = set()
+            list_item_blocks = context.design_doc.get_blocks_by_type(BT.LIST_ITEM)
+            for block in list_item_blocks:
+                if isinstance(block, ListItemBlock) and block.content:
+                    # Pattern 1: **component-name** (with bold markers)
+                    bold_pattern = r"\*\*([a-z][a-z0-9]*(?:[-_][a-z0-9]+)+)\*\*"
+                    bold_matches = re.findall(bold_pattern, block.content)
+                    design_components.update(bold_matches)
+
+                    # Pattern 2: component-name: (without bold, at start of line)
+                    plain_pattern = r"^([a-z][a-z0-9]*(?:[-_][a-z0-9]+)+):"
+                    plain_matches = re.findall(plain_pattern, block.content)
+                    design_components.update(plain_matches)
+
+            # Check if any component appears in task content
+            for task_block in task_blocks:
+                if isinstance(task_block, TaskBlock):
+                    content = task_block.raw_content or task_block.task_text or ""
+                    if any(comp in content for comp in design_components):
+                        has_design_refs_content = True
+                        break
+
+        # If design exists but tasks don't reference it at all, error
+        if not has_design_refs_field and not has_design_refs_content:
             errors.append(
                 ValidationError(
                     message=(

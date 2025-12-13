@@ -17,7 +17,7 @@ from .format_rules import (
 )
 from .section_patterns import SectionType
 from .structure_rules import DesignStructureRule, RequirementsStructureRule, TasksStructureRule
-from .test_scenario_rules import TestScenarioCoverageRule
+from .test_scenario_rules import DesignComponentCoverageRule, TestScenarioCoverageRule
 from .traceability_rules import (
     DesignReferencesRequirementsRule,
     RequirementCoverageRule,
@@ -125,6 +125,7 @@ TASKS_STYLE = DocumentStyle(
         TasksReferenceDesignRule,
         RequirementCoverageRule,
         TestScenarioCoverageRule,
+        DesignComponentCoverageRule,
     ],
     optional_sections=[
         SectionType.REFERENCES,
