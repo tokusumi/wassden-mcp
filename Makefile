@@ -20,7 +20,7 @@ test-dev:
 	uv run --active pytest --cov=wassden -m "dev"
 
 test-ast:
-	USE_AST_VALIDATION=1 uv run --active pytest tests/unit/test_spec_ast/ tests/unit/test_validate.py -v
+	USE_AST_VALIDATION=1 uv run --active pytest --cov=wassden
 
 validate-examples:
 	uv run --active pytest tests/integration/test_spec_examples.py -v
@@ -34,7 +34,7 @@ ci:
 	uv run ruff format --check
 	uv run ruff check
 	uv run mypy wassden
-	USE_AST_VALIDATION=1 uv run pytest tests/unit/test_spec_ast/ tests/unit/test_validate.py -v
+	USE_AST_VALIDATION=1 uv run pytest --cov=wassden
 	uv run pytest --cov=wassden
 	@scripts/verify-dev-cli.sh
 	@echo "✅ CI checks passed!"
