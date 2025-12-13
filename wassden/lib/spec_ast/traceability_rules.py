@@ -74,9 +74,16 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             # Display first few missing references
             display_refs = missing_refs[:MAX_DISPLAY_REQUIREMENTS]
             suffix = "..." if len(missing_refs) > MAX_DISPLAY_REQUIREMENTS else ""
-            # Determine context based on document type (legacy compatibility)
-            context_str = "tasks"  # Default to tasks for RequirementCoverageRule in tasks validation
-            message = f"Requirements not referenced in {context_str}: {', '.join(display_refs)}{suffix}"
+
+            # Determine context based on document type
+            # Check if document has task blocks (tasks document) or not (design document)
+            task_blocks = document.get_blocks_by_type(BlockType.TASK)
+            if task_blocks:
+                context_str = "tasks"
+            else:
+                context_str = "design"
+
+            message = f"Missing references to requirements: {', '.join(display_refs)}{suffix}"
             errors.append(
                 ValidationError(
                     message=message,
@@ -93,14 +100,17 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             document: Requirements document
 
         Returns:
-            Set of requirement IDs
+            Set of requirement IDs (REQ-, TR- only - NFR/KPI not required for traceability)
         """
         req_ids = set()
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
 
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-"):
-                req_ids.add(block.req_id)
+            if isinstance(block, RequirementBlock) and block.req_id:
+                # Only REQ- and TR- require explicit traceability
+                # NFR and KPI are system-wide and don't need component mapping
+                if block.req_id.startswith(("REQ-", "TR-")):
+                    req_ids.add(block.req_id)
 
         return req_ids
 
@@ -124,17 +134,20 @@ class RequirementCoverageRule(TraceabilityValidationRule):
         # Also check requirement blocks (for design traceability section)
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-"):
-                referenced_ids.add(block.req_id)
+            if isinstance(block, RequirementBlock) and block.req_id:
+                # Include all requirement types
+                if block.req_id.startswith(("REQ-", "NFR-", "KPI-", "TR-")):
+                    referenced_ids.add(block.req_id)
 
         # Also check list item blocks (for traceability section list items)
         list_item_blocks = document.get_blocks_by_type(BlockType.LIST_ITEM)
         for block in list_item_blocks:
             if isinstance(block, ListItemBlock) and block.content:
-                # Extract all REQ-IDs from the list item content
+                # Extract all requirement IDs (REQ-, NFR-, KPI-, TR-)
                 req_ids = list(IDExtractor.extract_all_req_ids(block.content))
                 for req_id in req_ids:
-                    if req_id.startswith("REQ-"):
+                    # Include all requirement types
+                    if req_id.startswith(("REQ-", "NFR-", "KPI-", "TR-")):
                         referenced_ids.add(req_id)
 
         return referenced_ids

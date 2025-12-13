@@ -89,15 +89,15 @@ class BaseSectionPattern(ABC):
 
 
 class SummaryPattern(BaseSectionPattern):
-    """Summary section pattern (deprecated - use OVERVIEW instead)."""
+    """Summary section pattern (maps to OVERVIEW for compatibility)."""
 
     @property
     def section_type(self) -> SectionType:
-        return SectionType.SUMMARY
+        return SectionType.OVERVIEW  # Map to OVERVIEW for compatibility
 
     @property
     def ja_patterns(self) -> list[str]:
-        return []  # Deprecated - "サマリー" now maps to OVERVIEW
+        return []  # "サマリー" now handled by OverviewPattern
 
     @property
     def en_patterns(self) -> list[str]:
@@ -367,7 +367,7 @@ class OverviewPattern(BaseSectionPattern):
 
     @property
     def en_patterns(self) -> list[str]:
-        return ["Overview"]
+        return ["Overview", "Summary"]
 
 
 class TaskListPattern(BaseSectionPattern):
@@ -533,12 +533,18 @@ def classify_section(title: str, language: str = "ja") -> SectionType:
     # Clean title: remove section numbers, extra whitespace
     clean_title = title.strip()
 
-    # Try to match against patterns
+    # Try to match against patterns (case-insensitive for English)
+    clean_title_lower = clean_title.lower()
     for pattern in SECTION_PATTERNS:
         patterns = pattern.ja_patterns if language == "ja" else pattern.en_patterns
         for pattern_text in patterns:
-            if pattern_text in clean_title:
-                return pattern.section_type
+            # Case-insensitive match for English, case-sensitive for Japanese
+            if language == "en":
+                if pattern_text.lower() in clean_title_lower:
+                    return pattern.section_type
+            else:
+                if pattern_text in clean_title:
+                    return pattern.section_type
 
     return SectionType.UNKNOWN
 
