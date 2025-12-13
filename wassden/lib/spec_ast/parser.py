@@ -66,10 +66,12 @@ class SpecMarkdownParser:
                 token_type = token.get("type", "")
 
                 if token_type == "heading":
-                    section = self._parse_heading(token, lines)
-                    if section:
-                        doc.add_child(section)
-                        current_section = section
+                    block = self._parse_heading(token, lines)
+                    if block:
+                        doc.add_child(block)
+                        # Only update current_section if it's actually a SectionBlock
+                        if isinstance(block, SectionBlock):
+                            current_section = block
 
                 elif token_type == "list" and current_section:
                     # Parse list items within current section
@@ -79,15 +81,17 @@ class SpecMarkdownParser:
 
         return doc
 
-    def _parse_heading(self, token: dict[str, Any], lines: list[str]) -> SectionBlock | None:
-        """Parse heading token into SectionBlock.
+    def _parse_heading(
+        self, token: dict[str, Any], lines: list[str]
+    ) -> SectionBlock | RequirementBlock | TaskBlock | None:
+        """Parse heading token into SectionBlock, RequirementBlock, or TaskBlock.
 
         Args:
             token: Heading token from mistune
             lines: Document lines for line number tracking
 
         Returns:
-            SectionBlock or None if level 1 (document title)
+            SectionBlock, RequirementBlock, TaskBlock, or None if level 1 (document title)
         """
         # In mistune v3, level is in attrs dict
         attrs = token.get("attrs", {})
@@ -106,7 +110,43 @@ class SpecMarkdownParser:
         # Extract section number if present (e.g., "1. Overview" -> "1")
         section_number, clean_title = self._extract_section_number(heading_text)
 
-        # Classify section
+        # Check if this heading contains a requirement or task ID (e.g., "### REQ-01: Description")
+        # This handles requirements/tasks written as headings instead of list items
+
+        # Try to extract requirement ID
+        req_id, req_text, req_type = IDExtractor.extract_req_id_from_text(clean_title)
+        if req_id:
+            # This is a requirement heading
+            return RequirementBlock(
+                line_start=line_num,
+                line_end=line_num,
+                raw_content=heading_text,
+                req_id=req_id,
+                req_text=req_text,
+                req_type=req_type,
+            )
+
+        # Try to extract task ID
+        task_id, task_text = IDExtractor.extract_task_id_from_text(clean_title)
+        if task_id:
+            # This is a task heading
+            # Extract references and dependencies from the task text
+            req_refs = list(IDExtractor.extract_all_req_ids(task_text))
+            design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
+            dependencies = IDExtractor.extract_task_dependencies(task_text)
+
+            return TaskBlock(
+                line_start=line_num,
+                line_end=line_num,
+                raw_content=heading_text,
+                task_id=task_id,
+                task_text=task_text,
+                dependencies=dependencies,
+                req_refs=req_refs,
+                design_refs=design_refs,
+            )
+
+        # Not a requirement or task - classify as regular section
         section_type = classify_section(clean_title, self.language.value)
         normalized_title = section_type.value
 
