@@ -226,7 +226,6 @@ class SpecMarkdownParser:
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
 
                     # Also extract component-style and test scenario references from DC field
-                    import re
                     # Pattern: look for components after "DC:"
                     # Matches: DC: **input-handler**, DC: input-handler, test-input-processing, etc.
                     # Extract everything after "DC:" until end of line or list item
@@ -264,7 +263,6 @@ class SpecMarkdownParser:
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
 
                     # Also extract component-style and test scenario references from DC field
-                    import re
                     # Pattern: look for components after "DC:"
                     dc_match = re.search(r"DC:\s*(.+?)(?:\n|$)", task_text, re.IGNORECASE)
                     if dc_match:
@@ -301,7 +299,7 @@ class SpecMarkdownParser:
 
         return items
 
-    def _extract_text_from_children(self, children: list[Any], skip_acceptance_criteria: bool = True) -> str:
+    def _extract_text_from_children(self, children: list[Any], skip_acceptance_criteria: bool = True) -> str:  # noqa: C901
         """Recursively extract text from token children.
 
         Args:
@@ -319,7 +317,9 @@ class SpecMarkdownParser:
                     text_parts.append(child.get("raw", ""))
                 elif child_type == "block_text":
                     # mistune v3 wraps list item content in block_text
-                    text_parts.append(self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria))
+                    text_parts.append(
+                        self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria)
+                    )
                 elif child_type == "list":
                     # Process each list item individually to selectively skip acceptance criteria
                     list_children = child.get("children", [])

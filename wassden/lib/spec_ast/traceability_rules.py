@@ -4,6 +4,8 @@ This module contains rules that validate cross-document references
 and coverage requirements.
 """
 
+import re
+
 from wassden.language_types import Language
 
 from .blocks import BlockType, DocumentBlock, ListItemBlock, RequirementBlock, SectionBlock, TaskBlock
@@ -73,8 +75,8 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             display_refs = missing_refs[:MAX_DISPLAY_REQUIREMENTS]
             suffix = "..." if len(missing_refs) > MAX_DISPLAY_REQUIREMENTS else ""
             # Determine context based on document type (legacy compatibility)
-            context = "tasks"  # Default to tasks for RequirementCoverageRule in tasks validation
-            message = f"Requirements not referenced in {context}: {', '.join(display_refs)}{suffix}"
+            context_str = "tasks"  # Default to tasks for RequirementCoverageRule in tasks validation
+            message = f"Requirements not referenced in {context_str}: {', '.join(display_refs)}{suffix}"
             errors.append(
                 ValidationError(
                     message=message,
@@ -322,12 +324,8 @@ class TasksReferenceDesignRule(TraceabilityValidationRule):
         has_design_refs_content = False
         if not has_design_refs_field:
             # Extract design components from design document
-            from .blocks import BlockType as BT
-            from .blocks import ListItemBlock
-            import re
-
             design_components = set()
-            list_item_blocks = context.design_doc.get_blocks_by_type(BT.LIST_ITEM)
+            list_item_blocks = context.design_doc.get_blocks_by_type(BlockType.LIST_ITEM)
             for block in list_item_blocks:
                 if isinstance(block, ListItemBlock) and block.content:
                     # Pattern 1: **component-name** (with bold markers)

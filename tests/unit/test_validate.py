@@ -264,7 +264,4 @@ TASK-01-01 → TASK-01-02
 """
 
     result = validate.validate_tasks(tasks_content, requirements_content, design_content)
-    import os
-    print(f"\nDEBUG: USE_AST_VALIDATION env = {os.environ.get('USE_AST_VALIDATION')}")
-    print(f"DEBUG: validate.USE_AST_VALIDATION = {validate.USE_AST_VALIDATION}")
     assert result["isValid"] is True, f"Validation failed with issues: {result.get('issues', [])}"

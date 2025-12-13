@@ -5,6 +5,7 @@ validation system, maintaining the existing function interfaces while using
 the new validation engine internally.
 """
 
+import re
 from typing import Any
 
 from wassden.language_types import Language
@@ -233,8 +234,6 @@ def extract_missing_references_from_results(results: list[ValidationResult]) -> 
         "design": [],
     }
 
-    import re
-
     for result in results:
         for error in result.errors:
             message = error.message
@@ -264,16 +263,12 @@ def extract_missing_references_from_results(results: list[ValidationResult]) -> 
                     # Split by comma and extract component names
                     components = [c.strip() for c in components_str.split(",") if c.strip()]
                     # Filter to only valid component/scenario names
-                    valid_comps = [
-                        c
-                        for c in components
-                        if re.match(r"^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+$", c)
-                    ]
+                    valid_comps = [c for c in components if re.match(r"^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+$", c)]
                     missing_refs["design"].extend(valid_comps)
 
     # Remove duplicates and sort
-    for key in missing_refs:
-        missing_refs[key] = sorted(set(missing_refs[key]))
+    for key, values in missing_refs.items():
+        missing_refs[key] = sorted(set(values))
 
     return missing_refs
 

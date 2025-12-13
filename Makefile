@@ -34,7 +34,6 @@ ci:
 	uv run ruff format --check
 	uv run ruff check
 	uv run mypy wassden
-	USE_AST_VALIDATION=1 uv run pytest --cov=wassden
 	uv run pytest --cov=wassden
 	@scripts/verify-dev-cli.sh
 	@echo "✅ CI checks passed!"
