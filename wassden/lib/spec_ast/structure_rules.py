@@ -43,7 +43,7 @@ class RequiredSectionsRule(StructureValidationRule):
         errors: list[ValidationError] = []
 
         # Get all sections from document
-        section_blocks = document.get_blocks_by_type(BlockType.SECTION)  # type: ignore
+        section_blocks = document.get_blocks_by_type(BlockType.SECTION)
         found_section_types = {section.section_type for section in section_blocks if isinstance(section, SectionBlock)}
 
         # Check for missing required sections

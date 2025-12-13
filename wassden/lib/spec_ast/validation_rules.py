@@ -7,6 +7,7 @@ for validating spec documents using the AST-based parser.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from wassden.language_types import Language
 
@@ -43,9 +44,9 @@ class ValidationError:
     location: BlockLocation | None = None
     severity: Severity = Severity.ERROR
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format."""
-        result = {"message": self.message, "severity": self.severity.value}
+        result: dict[str, Any] = {"message": self.message, "severity": self.severity.value}
         if self.location:
             result["location"] = {
                 "line_start": self.location.line_start,
@@ -64,7 +65,7 @@ class ValidationResult:
     is_valid: bool
     errors: list[ValidationError] = field(default_factory=list)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format."""
         return {
             "rule_id": self.rule_id,

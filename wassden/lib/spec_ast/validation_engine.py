@@ -1,7 +1,7 @@
 """Validation engine for spec documents.
 
 This module provides a high-level interface for running validation rules
-on spec documents.
+on spec documents using document styles.
 """
 
 from typing import Any
@@ -9,21 +9,7 @@ from typing import Any
 from wassden.language_types import Language
 
 from .blocks import DocumentBlock
-from .consistency_rules import CircularDependencyRule
-from .format_rules import (
-    DuplicateRequirementIDRule,
-    DuplicateTaskIDRule,
-    RequirementIDFormatRule,
-    TaskIDFormatRule,
-)
-from .structure_rules import DesignStructureRule, RequirementsStructureRule, TasksStructureRule
-from .traceability_rules import (
-    DesignReferencesRequirementsRule,
-    RequirementCoverageRule,
-    TasksReferenceDesignRule,
-    TasksReferenceRequirementsRule,
-    TraceabilitySectionRule,
-)
+from .document_styles import DESIGN_STYLE, REQUIREMENTS_STYLE, TASKS_STYLE, DocumentStyle, get_document_style
 from .validation_rules import ValidationContext, ValidationResult, ValidationRule
 
 
@@ -38,40 +24,6 @@ class ValidationEngine:
         """
         self.language = language
         self.context = ValidationContext(language)
-
-        # Initialize rule sets
-        self._init_requirements_rules()
-        self._init_design_rules()
-        self._init_tasks_rules()
-
-    def _init_requirements_rules(self) -> None:
-        """Initialize requirements document validation rules."""
-        self.requirements_rules: list[ValidationRule] = [
-            RequirementsStructureRule(self.language),
-            RequirementIDFormatRule(self.language),
-            DuplicateRequirementIDRule(self.language),
-        ]
-
-    def _init_design_rules(self) -> None:
-        """Initialize design document validation rules."""
-        self.design_rules: list[ValidationRule] = [
-            DesignStructureRule(self.language),
-            TraceabilitySectionRule(self.language),
-            DesignReferencesRequirementsRule(self.language),
-            RequirementCoverageRule(self.language),
-        ]
-
-    def _init_tasks_rules(self) -> None:
-        """Initialize tasks document validation rules."""
-        self.tasks_rules: list[ValidationRule] = [
-            TasksStructureRule(self.language),
-            TaskIDFormatRule(self.language),
-            DuplicateTaskIDRule(self.language),
-            CircularDependencyRule(self.language),
-            TasksReferenceRequirementsRule(self.language),
-            TasksReferenceDesignRule(self.language),
-            RequirementCoverageRule(self.language),
-        ]
 
     def set_requirements_document(self, document: DocumentBlock) -> None:
         """Set requirements document for cross-reference validation.
@@ -98,7 +50,7 @@ class ValidationEngine:
         self.context.set_tasks(document)
 
     def validate_requirements(self, document: DocumentBlock) -> list[ValidationResult]:
-        """Validate requirements document.
+        """Validate requirements document using predefined requirements style.
 
         Args:
             document: Requirements document to validate
@@ -106,10 +58,10 @@ class ValidationEngine:
         Returns:
             List of validation results
         """
-        return self._run_rules(document, self.requirements_rules)
+        return self.validate_document(document, REQUIREMENTS_STYLE)
 
     def validate_design(self, document: DocumentBlock) -> list[ValidationResult]:
-        """Validate design document.
+        """Validate design document using predefined design style.
 
         Args:
             document: Design document to validate
@@ -117,10 +69,10 @@ class ValidationEngine:
         Returns:
             List of validation results
         """
-        return self._run_rules(document, self.design_rules)
+        return self.validate_document(document, DESIGN_STYLE)
 
     def validate_tasks(self, document: DocumentBlock) -> list[ValidationResult]:
-        """Validate tasks document.
+        """Validate tasks document using predefined tasks style.
 
         Args:
             document: Tasks document to validate
@@ -128,7 +80,40 @@ class ValidationEngine:
         Returns:
             List of validation results
         """
-        return self._run_rules(document, self.tasks_rules)
+        return self.validate_document(document, TASKS_STYLE)
+
+    def validate_with_style(self, document: DocumentBlock, style_name: str) -> list[ValidationResult]:
+        """Validate document using a named document style.
+
+        Args:
+            document: Document to validate
+            style_name: Name of the style to use (requirements, design, tasks)
+
+        Returns:
+            List of validation results
+
+        Raises:
+            ValueError: If style_name is not found
+        """
+        style = get_document_style(style_name)
+        if style is None:
+            msg = f"Unknown document style: {style_name}"
+            raise ValueError(msg)
+        return self.validate_document(document, style)
+
+    def validate_document(self, document: DocumentBlock, style: DocumentStyle) -> list[ValidationResult]:
+        """Validate document using a DocumentStyle.
+
+        Args:
+            document: Document to validate
+            style: Document style defining structure and rules
+
+        Returns:
+            List of validation results
+        """
+        # Create validation rules from style
+        rules = style.create_validation_rules(self.language)
+        return self._run_rules(document, rules)
 
     def _run_rules(self, document: DocumentBlock, rules: list[ValidationRule]) -> list[ValidationResult]:
         """Run validation rules on a document.
