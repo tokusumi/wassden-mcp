@@ -33,5 +33,8 @@ jobs:
     - name: Install core dependencies only
       run: uv sync
 
+    - name: Run AST validation tests
+      run: make test-ast
+
     - name: Run core functionality tests
       run: make ci-core

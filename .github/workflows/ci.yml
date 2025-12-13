@@ -33,5 +33,8 @@ jobs:
     - name: Install dev dependencies
       run: uv sync --extra dev
 
+    - name: Run AST validation tests
+      run: make test-ast
+
     - name: Run all checks (dev mode)
       run: make ci
