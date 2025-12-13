@@ -1,5 +1,13 @@
 """Pytest configuration and fixtures."""
 
+import os
+
+# Set USE_AST_VALIDATION before any other imports
+# This ensures the feature flag is read correctly when validate.py is imported
+if os.environ.get("USE_AST_VALIDATION") == "1":
+    # Already set by test runner (e.g., make test-ast)
+    pass
+
 import shutil
 import tempfile
 from pathlib import Path

@@ -217,7 +217,16 @@ class SpecMarkdownParser:
 
                     # Extract references and dependencies
                     req_refs = list(IDExtractor.extract_all_req_ids(task_text))
+
+                    # Extract design component references (DC-XX format)
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
+
+                    # Also extract test scenario references (test-xxx format)
+                    import re
+                    test_pattern = r"(test-[a-z0-9]+(?:-[a-z0-9]+)*)"
+                    test_scenarios = re.findall(test_pattern, task_text)
+                    design_refs.extend(test_scenarios)
+
                     dependencies = IDExtractor.extract_task_dependencies(task_text)
 
                     task_block = TaskBlock(
@@ -245,11 +254,12 @@ class SpecMarkdownParser:
 
         return items
 
-    def _extract_text_from_children(self, children: list[Any]) -> str:
+    def _extract_text_from_children(self, children: list[Any], skip_acceptance_criteria: bool = True) -> str:
         """Recursively extract text from token children.
 
         Args:
             children: List of child tokens
+            skip_acceptance_criteria: Whether to skip acceptance criteria lists
 
         Returns:
             Extracted text content
@@ -262,12 +272,17 @@ class SpecMarkdownParser:
                     text_parts.append(child.get("raw", ""))
                 elif child_type == "block_text":
                     # mistune v3 wraps list item content in block_text
-                    text_parts.append(self._extract_text_from_children(child.get("children", [])))
+                    text_parts.append(self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria))
                 elif child_type == "list":
-                    # Skip nested lists to avoid including acceptance criteria in parent item text
-                    continue
+                    # Extract list content to check if it's acceptance criteria
+                    list_text = self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria=False)
+                    # Skip only if it contains acceptance criteria keywords
+                    if skip_acceptance_criteria and IDExtractor.is_acceptance_criteria(list_text):
+                        continue
+                    # Include nested lists (for REQ/DC/dependencies)
+                    text_parts.append(" " + list_text)
                 elif "children" in child:
-                    text_parts.append(self._extract_text_from_children(child["children"]))
+                    text_parts.append(self._extract_text_from_children(child["children"], skip_acceptance_criteria))
             elif isinstance(child, str):
                 text_parts.append(child)
 

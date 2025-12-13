@@ -126,7 +126,7 @@ class TestScenarioCoverageRule(TraceabilityValidationRule):
                 # Also scan raw content for test scenario references (test-xxx format)
                 # This handles cases where test scenarios are referenced in task content
                 if block.raw_content:
-                    test_pattern = r"\b(test-[a-z0-9]+(?:-[a-z0-9]+)*)\b"
+                    test_pattern = r"(test-[a-z0-9]+(?:-[a-z0-9]+)*)"
                     matches = re.findall(test_pattern, block.raw_content)
                     referenced.update(matches)
 
