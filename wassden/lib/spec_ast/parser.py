@@ -197,6 +197,9 @@ class SpecMarkdownParser:
                 if IDExtractor.is_acceptance_criteria(item_text):
                     continue
 
+                # Try to detect task ID first (for cases where section type is unknown)
+                potential_task_id, potential_task_text = IDExtractor.extract_task_id_from_text(item_text)
+
                 # Classify into RequirementBlock, TaskBlock, or ListItemBlock
                 if section_pattern and section_pattern.contains_requirements:
                     # This section contains requirements
@@ -211,7 +214,8 @@ class SpecMarkdownParser:
                     )
                     items.append(req_block)
 
-                elif section_pattern and section_pattern.contains_tasks:
+                elif potential_task_id:
+                    # Found a task ID, treat as TaskBlock even if section type is unknown
                     # This section contains tasks
                     task_id, task_text = IDExtractor.extract_task_id_from_text(item_text)
 
@@ -221,11 +225,54 @@ class SpecMarkdownParser:
                     # Extract design component references (DC-XX format)
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
 
-                    # Also extract test scenario references (test-xxx format)
+                    # Also extract component-style and test scenario references from DC field
                     import re
-                    test_pattern = r"(test-[a-z0-9]+(?:-[a-z0-9]+)*)"
-                    test_scenarios = re.findall(test_pattern, task_text)
-                    design_refs.extend(test_scenarios)
+                    # Pattern: look for components after "DC:"
+                    # Matches: DC: **input-handler**, DC: input-handler, test-input-processing, etc.
+                    # Extract everything after "DC:" until end of line or list item
+                    dc_match = re.search(r"DC:\s*(.+?)(?:\n|$)", task_text, re.IGNORECASE)
+                    if dc_match:
+                        dc_content = dc_match.group(1)
+                        # Extract kebab-case and snake_case identifiers from DC content
+                        component_pattern = r"([a-z][a-z0-9]*(?:[-_][a-z0-9]+)+)"
+                        components = re.findall(component_pattern, dc_content)
+                        design_refs.extend(components)
+
+                    dependencies = IDExtractor.extract_task_dependencies(task_text)
+
+                    task_block = TaskBlock(
+                        line_start=line_num,
+                        line_end=line_num,
+                        raw_content=item_text,
+                        task_id=task_id,
+                        task_text=task_text,
+                        dependencies=dependencies,
+                        req_refs=req_refs,
+                        design_refs=design_refs,
+                    )
+                    items.append(task_block)
+
+                elif section_pattern and section_pattern.contains_tasks:
+                    # Section is explicitly a task list, treat items as tasks even without ID
+                    task_id = None
+                    task_text = item_text
+
+                    # Extract references and dependencies
+                    req_refs = list(IDExtractor.extract_all_req_ids(task_text))
+
+                    # Extract design component references (DC-XX format)
+                    design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
+
+                    # Also extract component-style and test scenario references from DC field
+                    import re
+                    # Pattern: look for components after "DC:"
+                    dc_match = re.search(r"DC:\s*(.+?)(?:\n|$)", task_text, re.IGNORECASE)
+                    if dc_match:
+                        dc_content = dc_match.group(1)
+                        # Extract kebab-case and snake_case identifiers from DC content
+                        component_pattern = r"([a-z][a-z0-9]*(?:[-_][a-z0-9]+)+)"
+                        components = re.findall(component_pattern, dc_content)
+                        design_refs.extend(components)
 
                     dependencies = IDExtractor.extract_task_dependencies(task_text)
 
@@ -274,13 +321,19 @@ class SpecMarkdownParser:
                     # mistune v3 wraps list item content in block_text
                     text_parts.append(self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria))
                 elif child_type == "list":
-                    # Extract list content to check if it's acceptance criteria
-                    list_text = self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria=False)
-                    # Skip only if it contains acceptance criteria keywords
-                    if skip_acceptance_criteria and IDExtractor.is_acceptance_criteria(list_text):
-                        continue
-                    # Include nested lists (for REQ/DC/dependencies)
-                    text_parts.append(" " + list_text)
+                    # Process each list item individually to selectively skip acceptance criteria
+                    list_children = child.get("children", [])
+                    for list_item in list_children:
+                        if isinstance(list_item, dict) and list_item.get("type") == "list_item":
+                            # Extract this specific list item's text
+                            item_text = self._extract_text_from_children(
+                                list_item.get("children", []), skip_acceptance_criteria=skip_acceptance_criteria
+                            )
+                            # Skip only if this specific item is acceptance criteria
+                            if skip_acceptance_criteria and IDExtractor.is_acceptance_criteria(item_text):
+                                continue
+                            # Include this list item
+                            text_parts.append(" " + item_text)
                 elif "children" in child:
                     text_parts.append(self._extract_text_from_children(child["children"], skip_acceptance_criteria))
             elif isinstance(child, str):
