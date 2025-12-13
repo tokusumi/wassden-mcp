@@ -145,10 +145,9 @@ class ValidationEngine:
         failed_rules = total_rules - passed_rules
         total_errors = sum(len(r.errors) for r in results)
 
-        all_errors = []
+        all_errors: list[str] = []
         for result in results:
-            for error in result.errors:
-                all_errors.append(error.message)
+            all_errors.extend(error.message for error in result.errors)
 
         return {
             "isValid": failed_rules == 0,

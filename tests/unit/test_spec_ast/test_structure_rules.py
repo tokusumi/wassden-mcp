@@ -1,6 +1,5 @@
 """Tests for structure validation rules."""
 
-
 from wassden.lib.spec_ast.blocks import DocumentBlock, SectionBlock
 from wassden.lib.spec_ast.section_patterns import SectionType
 from wassden.lib.spec_ast.structure_rules import DesignStructureRule, RequirementsStructureRule, TasksStructureRule

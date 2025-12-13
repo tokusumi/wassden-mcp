@@ -61,11 +61,11 @@ REQUIREMENTS_STYLE = DocumentStyle(
     name="Requirements Document",
     description="Standard requirements specification document with EARS patterns",
     required_sections=[
-        SectionType.SUMMARY,
+        SectionType.OVERVIEW,  # 概要/Overview
         SectionType.GLOSSARY,
         SectionType.SCOPE,
         SectionType.CONSTRAINTS,
-        SectionType.NON_FUNCTIONAL_REQUIREMENTS,
+        SectionType.NON_FUNCTIONAL,  # 非機能要求仕様
         SectionType.KPI,
         SectionType.FUNCTIONAL_REQUIREMENTS,
         SectionType.TESTING_REQUIREMENTS,

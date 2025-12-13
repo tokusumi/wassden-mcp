@@ -1,6 +1,5 @@
 """Tests for format validation rules."""
 
-
 from wassden.lib.spec_ast.blocks import DocumentBlock, RequirementBlock, TaskBlock
 from wassden.lib.spec_ast.format_rules import (
     DuplicateRequirementIDRule,

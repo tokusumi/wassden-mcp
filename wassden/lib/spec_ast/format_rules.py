@@ -212,13 +212,13 @@ class DuplicateRequirementIDRule(FormatValidationRule):
         for req_id, blocks in req_id_locations.items():
             if len(blocks) > 1:
                 # Report all occurrences
-                for block in blocks:
-                    errors.append(
-                        ValidationError(
-                            message=f"Duplicate REQ-ID found: {req_id}",
-                            location=BlockLocation.from_block(block),
-                        )
+                errors.extend(
+                    ValidationError(
+                        message=f"Duplicate REQ-ID found: {req_id}",
+                        location=BlockLocation.from_block(block),
                     )
+                    for block in blocks
+                )
 
         return self._create_result(errors)
 
@@ -275,12 +275,12 @@ class DuplicateTaskIDRule(FormatValidationRule):
         for task_id, blocks in task_id_locations.items():
             if len(blocks) > 1:
                 # Report all occurrences
-                for block in blocks:
-                    errors.append(
-                        ValidationError(
-                            message=f"Duplicate TASK-ID found: {task_id}",
-                            location=BlockLocation.from_block(block),
-                        )
+                errors.extend(
+                    ValidationError(
+                        message=f"Duplicate TASK-ID found: {task_id}",
+                        location=BlockLocation.from_block(block),
                     )
+                    for block in blocks
+                )
 
         return self._create_result(errors)

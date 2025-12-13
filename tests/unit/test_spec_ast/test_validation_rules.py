@@ -1,6 +1,5 @@
 """Tests for validation rule base classes."""
 
-
 from wassden.language_types import Language
 from wassden.lib.spec_ast.blocks import DocumentBlock, SectionBlock
 from wassden.lib.spec_ast.validation_rules import (

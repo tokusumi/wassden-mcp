@@ -53,11 +53,11 @@ class TestRequirementsStyle:
         style = REQUIREMENTS_STYLE
 
         expected_sections = {
-            SectionType.SUMMARY,
+            SectionType.OVERVIEW,  # Changed from SUMMARY to OVERVIEW for Japanese "概要"
             SectionType.GLOSSARY,
             SectionType.SCOPE,
             SectionType.CONSTRAINTS,
-            SectionType.NON_FUNCTIONAL_REQUIREMENTS,
+            SectionType.NON_FUNCTIONAL,  # 非機能要求仕様
             SectionType.KPI,
             SectionType.FUNCTIONAL_REQUIREMENTS,
             SectionType.TESTING_REQUIREMENTS,

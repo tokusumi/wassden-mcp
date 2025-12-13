@@ -94,10 +94,8 @@ class RequirementCoverageRule(TraceabilityValidationRule):
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
 
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id:
-                # Only include REQ-XX IDs, not NFR, KPI, TR
-                if block.req_id.startswith("REQ-"):
-                    req_ids.add(block.req_id)
+            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-"):
+                req_ids.add(block.req_id)
 
         return req_ids
 
@@ -289,8 +287,7 @@ class TasksReferenceDesignRule(TraceabilityValidationRule):
             errors.append(
                 ValidationError(
                     message=(
-                        "Design components not referenced - "
-                        "tasks reference design components but design.md is missing"
+                        "Design components not referenced - tasks reference design components but design.md is missing"
                     ),
                     location=BlockLocation(line_start=1, line_end=1, section_path=[]),
                 )

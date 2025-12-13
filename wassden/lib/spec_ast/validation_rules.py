@@ -161,13 +161,11 @@ class StructureValidationRule(ValidationRule):
     """
 
 
-
 class FormatValidationRule(ValidationRule):
     """Base class for format validation rules.
 
     Format rules check ID formats, naming conventions, etc.
     """
-
 
 
 class ContentValidationRule(ValidationRule):
@@ -178,7 +176,6 @@ class ContentValidationRule(ValidationRule):
     """
 
 
-
 class TraceabilityValidationRule(ValidationRule):
     """Base class for traceability validation rules.
 
@@ -187,10 +184,8 @@ class TraceabilityValidationRule(ValidationRule):
     """
 
 
-
 class ConsistencyValidationRule(ValidationRule):
     """Base class for consistency validation rules.
 
     Consistency rules check for duplicates, conflicts, circular dependencies.
     """
-
