@@ -89,7 +89,7 @@ class BaseSectionPattern(ABC):
 
 
 class SummaryPattern(BaseSectionPattern):
-    """Summary/サマリー section pattern."""
+    """Summary section pattern (deprecated - use OVERVIEW instead)."""
 
     @property
     def section_type(self) -> SectionType:
@@ -97,7 +97,7 @@ class SummaryPattern(BaseSectionPattern):
 
     @property
     def ja_patterns(self) -> list[str]:
-        return ["サマリー"]
+        return []  # Deprecated - "サマリー" now maps to OVERVIEW
 
     @property
     def en_patterns(self) -> list[str]:
@@ -363,7 +363,7 @@ class OverviewPattern(BaseSectionPattern):
 
     @property
     def ja_patterns(self) -> list[str]:
-        return ["概要"]
+        return ["概要", "サマリー"]
 
     @property
     def en_patterns(self) -> list[str]:

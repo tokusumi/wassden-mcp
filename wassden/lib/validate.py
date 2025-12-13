@@ -1,5 +1,6 @@
 """Validation utilities for spec documents."""
 
+import os
 import re
 from typing import Any
 
@@ -20,6 +21,20 @@ from .validation_common import (
     extract_tr_ids,
     find_component_references,
 )
+
+# Feature flag: Use AST-based validation when enabled
+USE_AST_VALIDATION = os.environ.get("USE_AST_VALIDATION", "0") == "1"
+
+# Import AST validation functions only when feature flag is enabled
+if USE_AST_VALIDATION:
+    from .spec_ast.validation_compat import (
+        validate_design_ast,
+        validate_design_structure_ast,
+        validate_requirements_ast,
+        validate_requirements_structure_ast,
+        validate_tasks_ast,
+        validate_tasks_structure_ast,
+    )
 
 # Constants
 DEPENDENCY_SPLIT_PARTS = 2
@@ -303,6 +318,11 @@ def validate_spec_structure(spec_type: str, content: str) -> dict[str, Any]:
 
 def validate_requirements(content: str, language: Language = Language.JAPANESE) -> dict[str, Any]:
     """Validate requirements document."""
+    # Use AST-based validation if feature flag is enabled
+    if USE_AST_VALIDATION:
+        return validate_requirements_ast(content, language)
+
+    # Otherwise, use legacy validation
     errors = validate_requirements_structure(content)
 
     # EARS validation
@@ -377,6 +397,11 @@ def _extract_ids_from_traceability_section(content: str) -> tuple[set[str], set[
 
 def validate_design(content: str, requirements_content: str | None = None) -> dict[str, Any]:
     """Validate design document."""
+    # Use AST-based validation if feature flag is enabled
+    if USE_AST_VALIDATION:
+        return validate_design_ast(content, requirements_content)
+
+    # Otherwise, use legacy validation
     errors = validate_design_structure(content)
 
     # Extract referenced REQ-IDs and TR-IDs only from traceability section for proper validation
@@ -424,6 +449,11 @@ def validate_tasks(
     content: str, requirements_content: str | None = None, design_content: str | None = None
 ) -> dict[str, Any]:
     """Validate tasks document."""
+    # Use AST-based validation if feature flag is enabled
+    if USE_AST_VALIDATION:
+        return validate_tasks_ast(content, requirements_content, design_content)
+
+    # Otherwise, use legacy validation
     errors = validate_tasks_structure(content)
 
     # Extract task IDs using common logic

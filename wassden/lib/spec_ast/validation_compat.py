@@ -152,10 +152,11 @@ def extract_found_sections(document: DocumentBlock) -> list[str]:
         document: Parsed document block
 
     Returns:
-        List of section titles found in document
+        List of section titles found in document (level 2 headings only for backward compatibility)
     """
     section_blocks = document.get_blocks_by_type(BlockType.SECTION)
-    return [block.title for block in section_blocks if isinstance(block, SectionBlock) and block.title]
+    # Only include level 2 sections for backward compatibility with legacy validation
+    return [block.title for block in section_blocks if isinstance(block, SectionBlock) and block.title and block.level == 2]
 
 
 def convert_validation_results_to_errors(results: list[ValidationResult]) -> list[str]:

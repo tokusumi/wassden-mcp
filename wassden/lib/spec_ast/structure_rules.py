@@ -81,11 +81,11 @@ class RequirementsStructureRule(RequiredSectionsRule):
     def __init__(self, language: Language = Language.JAPANESE) -> None:
         """Initialize requirements structure rule."""
         required_sections = [
-            SectionType.OVERVIEW,  # 概要/Overview (not SUMMARY)
+            SectionType.OVERVIEW,  # 概要/サマリー
             SectionType.GLOSSARY,
             SectionType.SCOPE,
             SectionType.CONSTRAINTS,
-            SectionType.NON_FUNCTIONAL,  # 非機能要求仕様
+            SectionType.NON_FUNCTIONAL_REQUIREMENTS,  # 非機能要件
             SectionType.KPI,
             SectionType.FUNCTIONAL_REQUIREMENTS,
             SectionType.TESTING_REQUIREMENTS,

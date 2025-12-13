@@ -263,6 +263,9 @@ class SpecMarkdownParser:
                 elif child_type == "block_text":
                     # mistune v3 wraps list item content in block_text
                     text_parts.append(self._extract_text_from_children(child.get("children", [])))
+                elif child_type == "list":
+                    # Skip nested lists to avoid including acceptance criteria in parent item text
+                    continue
                 elif "children" in child:
                     text_parts.append(self._extract_text_from_children(child["children"]))
             elif isinstance(child, str):

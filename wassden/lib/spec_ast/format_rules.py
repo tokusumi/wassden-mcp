@@ -61,6 +61,10 @@ class RequirementIDFormatRule(FormatValidationRule):
             if not isinstance(block, RequirementBlock):
                 continue
 
+            # Only validate REQ- type requirements, not NFR-, KPI-, or TR-
+            if block.req_type != "REQ":
+                continue
+
             req_id = block.req_id
             if req_id and not self._is_valid_req_id(req_id):
                 errors.append(
