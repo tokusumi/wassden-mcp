@@ -13,6 +13,8 @@ from wassden.lib.spec_ast.blocks import (
     SectionBlock,
     TaskBlock,
 )
+from wassden.lib.spec_ast.id_extractor import IDExtractor
+from wassden.lib.spec_ast.section_patterns import SectionType, classify_section, get_section_pattern
 
 # Constants
 _LINE_SEARCH_LENGTH = 30
@@ -104,6 +106,10 @@ class SpecMarkdownParser:
         # Extract section number if present (e.g., "1. Overview" -> "1")
         section_number, clean_title = self._extract_section_number(heading_text)
 
+        # Classify section
+        section_type = classify_section(clean_title, self.language.value)
+        normalized_title = section_type.value
+
         # Create section block
         return SectionBlock(
             line_start=line_num,
@@ -112,11 +118,11 @@ class SpecMarkdownParser:
             level=level,
             title=clean_title,
             section_number=section_number,
-            normalized_title="",  # Will be set in Phase 2
+            normalized_title=normalized_title,
         )
 
     def _parse_list(
-        self, token: dict[str, Any], lines: list[str], _parent_section: SectionBlock
+        self, token: dict[str, Any], lines: list[str], parent_section: SectionBlock
     ) -> list[RequirementBlock | TaskBlock | ListItemBlock]:
         """Parse list token into list item blocks.
 
@@ -134,6 +140,10 @@ class SpecMarkdownParser:
         attrs = token.get("attrs", {})
         is_ordered = attrs.get("ordered", False)
 
+        # Get section pattern to determine if it contains requirements or tasks
+        section_type = SectionType(parent_section.normalized_title) if parent_section.normalized_title else None
+        section_pattern = get_section_pattern(section_type) if section_type else None
+
         for child in list_children:
             if isinstance(child, dict) and child.get("type") == "list_item":
                 # Extract item text
@@ -142,16 +152,55 @@ class SpecMarkdownParser:
                 # Find line number
                 line_num = self._find_line_number(lines, item_text[:50])
 
-                # Create generic list item for now
-                # In Phase 2, we'll classify into RequirementBlock or TaskBlock
-                item = ListItemBlock(
-                    line_start=line_num,
-                    line_end=line_num,
-                    raw_content=item_text,
-                    content=item_text,
-                    is_numbered=is_ordered,
-                )
-                items.append(item)
+                # Skip acceptance criteria items
+                if IDExtractor.is_acceptance_criteria(item_text):
+                    continue
+
+                # Classify into RequirementBlock, TaskBlock, or ListItemBlock
+                if section_pattern and section_pattern.contains_requirements:
+                    # This section contains requirements
+                    req_id, req_text, req_type = IDExtractor.extract_req_id_from_text(item_text)
+                    item = RequirementBlock(
+                        line_start=line_num,
+                        line_end=line_num,
+                        raw_content=item_text,
+                        req_id=req_id,
+                        req_text=req_text,
+                        req_type=req_type,
+                    )
+                    items.append(item)
+
+                elif section_pattern and section_pattern.contains_tasks:
+                    # This section contains tasks
+                    task_id, task_text = IDExtractor.extract_task_id_from_text(item_text)
+
+                    # Extract references and dependencies
+                    req_refs = list(IDExtractor.extract_all_req_ids(task_text))
+                    design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
+                    dependencies = IDExtractor.extract_task_dependencies(task_text)
+
+                    item = TaskBlock(
+                        line_start=line_num,
+                        line_end=line_num,
+                        raw_content=item_text,
+                        task_id=task_id,
+                        task_text=task_text,
+                        dependencies=dependencies,
+                        req_refs=req_refs,
+                        design_refs=design_refs,
+                    )
+                    items.append(item)
+
+                else:
+                    # Generic list item
+                    item = ListItemBlock(
+                        line_start=line_num,
+                        line_end=line_num,
+                        raw_content=item_text,
+                        content=item_text,
+                        is_numbered=is_ordered,
+                    )
+                    items.append(item)
 
         return items
 
