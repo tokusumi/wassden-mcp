@@ -6,7 +6,8 @@ and coverage requirements.
 
 from wassden.language_types import Language
 
-from .blocks import BlockType, DocumentBlock, RequirementBlock, TaskBlock
+from .blocks import BlockType, DocumentBlock, RequirementBlock, SectionBlock, TaskBlock
+from .id_extractor import IDExtractor
 from .section_patterns import SectionType
 from .validation_rules import (
     BlockLocation,
@@ -162,11 +163,21 @@ class DesignReferencesRequirementsRule(TraceabilityValidationRule):
         # Find all requirement blocks (traceability section contains requirements)
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
 
-        # Check if any REQ-IDs are found
+        # Check if any REQ-IDs are found in RequirementBlocks
         has_req_refs = any(
             isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-")
             for block in req_blocks
         )
+
+        # Also check SectionBlock titles (current parser behavior)
+        if not has_req_refs:
+            section_blocks = document.get_blocks_by_type(BlockType.SECTION)
+            for block in section_blocks:
+                if isinstance(block, SectionBlock) and block.title:
+                    req_id, _, _ = IDExtractor.extract_req_id_from_text(block.title)
+                    if req_id and req_id.startswith("REQ-"):
+                        has_req_refs = True
+                        break
 
         if not has_req_refs:
             errors.append(

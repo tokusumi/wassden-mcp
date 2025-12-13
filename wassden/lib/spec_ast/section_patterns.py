@@ -201,7 +201,7 @@ class FunctionalRequirementsPattern(BaseSectionPattern):
 
     @property
     def ja_patterns(self) -> list[str]:
-        return ["機能要件", "機能要件（EARS）"]
+        return ["機能要件", "機能要件（EARS）", "機能要求仕様"]
 
     @property
     def en_patterns(self) -> list[str]:
@@ -221,7 +221,7 @@ class TestingRequirementsPattern(BaseSectionPattern):
 
     @property
     def ja_patterns(self) -> list[str]:
-        return ["テスト要件", "受入要件"]
+        return ["テスト要件", "テスト要求仕様", "受入要件"]
 
     @property
     def en_patterns(self) -> list[str]:
@@ -310,7 +310,7 @@ class NonFunctionalPattern(BaseSectionPattern):
 
     @property
     def ja_patterns(self) -> list[str]:
-        return ["非機能"]
+        return ["非機能", "非機能要求仕様"]
 
     @property
     def en_patterns(self) -> list[str]:
@@ -493,21 +493,23 @@ REFERENCES_PATTERN = ReferencesPattern()
 APPENDIX_PATTERN = AppendixPattern()
 
 # All section patterns for iteration
+# Note: Order matters! More specific patterns should come before general ones
+# to avoid false matches (e.g., "非機能要求仕様" before "機能要求仕様")
 SECTION_PATTERNS: list[BaseSectionPattern] = [
     SUMMARY_PATTERN,
     GLOSSARY_PATTERN,
     SCOPE_PATTERN,
     CONSTRAINTS_PATTERN,
     NON_FUNCTIONAL_REQUIREMENTS_PATTERN,
+    NON_FUNCTIONAL_PATTERN,  # Must come before FUNCTIONAL_REQUIREMENTS_PATTERN
     KPI_PATTERN,
     FUNCTIONAL_REQUIREMENTS_PATTERN,
     TESTING_REQUIREMENTS_PATTERN,
+    TEST_PATTERN,  # Moved after TESTING_REQUIREMENTS_PATTERN for specificity
     ARCHITECTURE_PATTERN,
     COMPONENT_DESIGN_PATTERN,
     DATA_PATTERN,
     API_PATTERN,
-    NON_FUNCTIONAL_PATTERN,
-    TEST_PATTERN,
     TRACEABILITY_PATTERN,
     OVERVIEW_PATTERN,
     TASK_LIST_PATTERN,

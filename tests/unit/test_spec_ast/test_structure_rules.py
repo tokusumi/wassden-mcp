@@ -22,13 +22,13 @@ class TestRequirementsStructureRule:
         # Create document with all required sections
         document = DocumentBlock(line_start=1, line_end=100, raw_content="# Requirements")
 
-        # Add all required sections
+        # Add all required sections (updated to match current RequirementsStructureRule)
         required_sections = [
-            SectionType.SUMMARY,
+            SectionType.OVERVIEW,  # Changed from SUMMARY
             SectionType.GLOSSARY,
             SectionType.SCOPE,
             SectionType.CONSTRAINTS,
-            SectionType.NON_FUNCTIONAL_REQUIREMENTS,
+            SectionType.NON_FUNCTIONAL,  # Changed from NON_FUNCTIONAL_REQUIREMENTS
             SectionType.KPI,
             SectionType.FUNCTIONAL_REQUIREMENTS,
             SectionType.TESTING_REQUIREMENTS,
@@ -57,13 +57,13 @@ class TestRequirementsStructureRule:
         # Create document with only some sections
         document = DocumentBlock(line_start=1, line_end=100, raw_content="# Requirements")
 
-        # Add only Summary section
+        # Add only Overview section (changed from SUMMARY to OVERVIEW)
         section = SectionBlock(
             line_start=10,
             line_end=20,
-            raw_content="## Summary",
-            section_type=SectionType.SUMMARY,
-            normalized_title="summary",
+            raw_content="## Overview",
+            section_type=SectionType.OVERVIEW,
+            normalized_title="overview",
             level=2,
         )
         document.children.append(section)
@@ -94,7 +94,7 @@ class TestDesignStructureRule:
         # Create document with all required sections
         document = DocumentBlock(line_start=1, line_end=100, raw_content="# Design")
 
-        # Add all required sections
+        # Add all required sections (updated to match current DesignStructureRule)
         required_sections = [
             SectionType.ARCHITECTURE,
             SectionType.COMPONENT_DESIGN,
@@ -102,6 +102,7 @@ class TestDesignStructureRule:
             SectionType.API,
             SectionType.NON_FUNCTIONAL,
             SectionType.TEST,
+            SectionType.TRACEABILITY,  # Added: now required in DesignStructureRule
         ]
 
         for section_type in required_sections:
@@ -131,7 +132,7 @@ class TestDesignStructureRule:
         result = rule.validate(document, context)
 
         assert not result.is_valid
-        assert len(result.errors) == 6  # All 6 required sections missing
+        assert len(result.errors) == 7  # All 7 required sections missing (includes TRACEABILITY)
 
 
 class TestTasksStructureRule:
