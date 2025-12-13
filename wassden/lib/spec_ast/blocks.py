@@ -3,12 +3,17 @@
 This module defines the object hierarchy for representing specification documents as AST.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from wassden.language_types import Language
+
+if TYPE_CHECKING:
+    from .section_patterns import SectionType
 
 # Constants for string representation
 _TEXT_PREVIEW_LENGTH = 50
@@ -44,11 +49,11 @@ class SpecBlock(ABC):
     line_start: int
     line_end: int
     raw_content: str
-    parent: "SpecBlock | None" = None
-    children: list["SpecBlock"] = field(default_factory=list)
+    parent: SpecBlock | None = None
+    children: list[SpecBlock] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def add_child(self, child: "SpecBlock") -> None:
+    def add_child(self, child: SpecBlock) -> None:
         """Add a child block and set its parent reference."""
         child.parent = self
         self.children.append(child)
@@ -71,7 +76,7 @@ class SpecBlock(ABC):
             current = current.parent
         return path
 
-    def get_all_descendants(self) -> list["SpecBlock"]:
+    def get_all_descendants(self) -> list[SpecBlock]:
         """Get all descendant blocks recursively.
 
         Returns:
@@ -83,7 +88,7 @@ class SpecBlock(ABC):
             descendants.extend(child.get_all_descendants())
         return descendants
 
-    def get_blocks_by_type(self, block_type: BlockType) -> list["SpecBlock"]:
+    def get_blocks_by_type(self, block_type: BlockType) -> list[SpecBlock]:
         """Get all descendant blocks of a specific type.
 
         Args:
@@ -127,12 +132,14 @@ class SectionBlock(SpecBlock):
         title: Section title
         section_number: Optional section number (e.g., "1", "6.1")
         normalized_title: Normalized section name (e.g., "functional_requirements")
+        section_type: Section type enum (from SectionType)
     """
 
     level: int = 2
     title: str = ""
     section_number: str | None = None
     normalized_title: str = ""
+    section_type: SectionType | None = None
     block_type: BlockType = field(init=False, default=BlockType.SECTION)
 
     def __str__(self) -> str:

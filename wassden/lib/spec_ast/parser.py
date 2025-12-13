@@ -119,6 +119,7 @@ class SpecMarkdownParser:
             title=clean_title,
             section_number=section_number,
             normalized_title=normalized_title,
+            section_type=section_type,
         )
 
     def _parse_list(
