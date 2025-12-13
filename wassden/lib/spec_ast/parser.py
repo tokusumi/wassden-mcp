@@ -160,7 +160,7 @@ class SpecMarkdownParser:
                 if section_pattern and section_pattern.contains_requirements:
                     # This section contains requirements
                     req_id, req_text, req_type = IDExtractor.extract_req_id_from_text(item_text)
-                    item = RequirementBlock(
+                    req_block = RequirementBlock(
                         line_start=line_num,
                         line_end=line_num,
                         raw_content=item_text,
@@ -168,7 +168,7 @@ class SpecMarkdownParser:
                         req_text=req_text,
                         req_type=req_type,
                     )
-                    items.append(item)
+                    items.append(req_block)
 
                 elif section_pattern and section_pattern.contains_tasks:
                     # This section contains tasks
@@ -179,7 +179,7 @@ class SpecMarkdownParser:
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
                     dependencies = IDExtractor.extract_task_dependencies(task_text)
 
-                    item = TaskBlock(
+                    task_block = TaskBlock(
                         line_start=line_num,
                         line_end=line_num,
                         raw_content=item_text,
@@ -189,18 +189,18 @@ class SpecMarkdownParser:
                         req_refs=req_refs,
                         design_refs=design_refs,
                     )
-                    items.append(item)
+                    items.append(task_block)
 
                 else:
                     # Generic list item
-                    item = ListItemBlock(
+                    list_item = ListItemBlock(
                         line_start=line_num,
                         line_end=line_num,
                         raw_content=item_text,
                         content=item_text,
                         is_numbered=is_ordered,
                     )
-                    items.append(item)
+                    items.append(list_item)
 
         return items
 

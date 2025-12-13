@@ -178,8 +178,4 @@ class IDExtractor:
             r"Test criteria",
         ]
 
-        for pattern in skip_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return True
-
-        return False
+        return any(re.search(pattern, text, re.IGNORECASE) for pattern in skip_patterns)

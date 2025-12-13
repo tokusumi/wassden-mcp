@@ -48,7 +48,7 @@ class SectionPattern:
 
     Attributes:
         section_type: Normalized section type
-        ja_patterns: Japanese section title patterns (e.g., ["機能要件", "機能要件（EARS）"])
+        ja_patterns: Japanese section title patterns (e.g., ["機能要件", "機能要件(EARS)"])
         en_patterns: English section title patterns (e.g., ["Functional Requirements"])
         contains_requirements: Whether this section typically contains requirement items
         contains_tasks: Whether this section typically contains task items
@@ -61,122 +61,165 @@ class SectionPattern:
     contains_tasks: bool = False
 
 
-# Section pattern definitions
+# Section pattern definitions - each as individual object
+# Requirements document sections
+SUMMARY_PATTERN = SectionPattern(
+    section_type=SectionType.SUMMARY,
+    ja_patterns=["サマリー"],
+    en_patterns=["Summary"],
+)
+
+GLOSSARY_PATTERN = SectionPattern(
+    section_type=SectionType.GLOSSARY,
+    ja_patterns=["用語集"],
+    en_patterns=["Glossary"],
+)
+
+SCOPE_PATTERN = SectionPattern(
+    section_type=SectionType.SCOPE,
+    ja_patterns=["スコープ", "適用範囲"],
+    en_patterns=["Scope"],
+)
+
+CONSTRAINTS_PATTERN = SectionPattern(
+    section_type=SectionType.CONSTRAINTS,
+    ja_patterns=["制約事項", "制約"],
+    en_patterns=["Constraints"],
+)
+
+NON_FUNCTIONAL_REQUIREMENTS_PATTERN = SectionPattern(
+    section_type=SectionType.NON_FUNCTIONAL_REQUIREMENTS,
+    ja_patterns=["非機能要件"],
+    en_patterns=["Non-Functional Requirements"],
+    contains_requirements=True,
+)
+
+KPI_PATTERN = SectionPattern(
+    section_type=SectionType.KPI,
+    ja_patterns=["KPI"],
+    en_patterns=["KPI", "Key Performance Indicators"],
+    contains_requirements=True,
+)
+
+FUNCTIONAL_REQUIREMENTS_PATTERN = SectionPattern(
+    section_type=SectionType.FUNCTIONAL_REQUIREMENTS,
+    ja_patterns=["機能要件", "機能要件（EARS）"],
+    en_patterns=["Functional Requirements"],
+    contains_requirements=True,
+)
+
+TESTING_REQUIREMENTS_PATTERN = SectionPattern(
+    section_type=SectionType.TESTING_REQUIREMENTS,
+    ja_patterns=["テスト要件", "受入要件"],
+    en_patterns=["Testing Requirements", "Test Requirements"],
+    contains_requirements=True,
+)
+
+# Design document sections
+ARCHITECTURE_PATTERN = SectionPattern(
+    section_type=SectionType.ARCHITECTURE,
+    ja_patterns=["アーキテクチャ", "システム構成"],
+    en_patterns=["Architecture", "System Architecture"],
+)
+
+COMPONENT_DESIGN_PATTERN = SectionPattern(
+    section_type=SectionType.COMPONENT_DESIGN,
+    ja_patterns=["コンポーネント設計", "詳細設計"],
+    en_patterns=["Component Design", "Detailed Design"],
+)
+
+DATA_PATTERN = SectionPattern(
+    section_type=SectionType.DATA,
+    ja_patterns=["データ", "データモデル"],
+    en_patterns=["Data", "Data Model"],
+)
+
+API_PATTERN = SectionPattern(
+    section_type=SectionType.API,
+    ja_patterns=["API"],
+    en_patterns=["API", "APIs"],
+)
+
+NON_FUNCTIONAL_PATTERN = SectionPattern(
+    section_type=SectionType.NON_FUNCTIONAL,
+    ja_patterns=["非機能"],
+    en_patterns=["Non-Functional"],
+)
+
+TEST_PATTERN = SectionPattern(
+    section_type=SectionType.TEST,
+    ja_patterns=["テスト"],
+    en_patterns=["Test", "Testing"],
+)
+
+TRACEABILITY_PATTERN = SectionPattern(
+    section_type=SectionType.TRACEABILITY,
+    ja_patterns=["トレーサビリティ", "要件追跡"],
+    en_patterns=["Traceability"],
+)
+
+# Tasks document sections
+OVERVIEW_PATTERN = SectionPattern(
+    section_type=SectionType.OVERVIEW,
+    ja_patterns=["概要"],
+    en_patterns=["Overview"],
+)
+
+TASK_LIST_PATTERN = SectionPattern(
+    section_type=SectionType.TASK_LIST,
+    ja_patterns=["タスク一覧", "タスクリスト"],
+    en_patterns=["Task List", "Tasks"],
+    contains_tasks=True,
+)
+
+DEPENDENCIES_PATTERN = SectionPattern(
+    section_type=SectionType.DEPENDENCIES,
+    ja_patterns=["依存関係"],
+    en_patterns=["Dependencies"],
+)
+
+MILESTONES_PATTERN = SectionPattern(
+    section_type=SectionType.MILESTONES,
+    ja_patterns=["マイルストーン"],
+    en_patterns=["Milestones"],
+)
+
+# Common sections
+REFERENCES_PATTERN = SectionPattern(
+    section_type=SectionType.REFERENCES,
+    ja_patterns=["参考資料", "参照"],
+    en_patterns=["References"],
+)
+
+APPENDIX_PATTERN = SectionPattern(
+    section_type=SectionType.APPENDIX,
+    ja_patterns=["付録"],
+    en_patterns=["Appendix"],
+)
+
+# All section patterns for iteration
 SECTION_PATTERNS: list[SectionPattern] = [
-    # Requirements document sections
-    SectionPattern(
-        section_type=SectionType.SUMMARY,
-        ja_patterns=["サマリー", "概要"],
-        en_patterns=["Summary", "Overview"],
-    ),
-    SectionPattern(
-        section_type=SectionType.GLOSSARY,
-        ja_patterns=["用語集"],
-        en_patterns=["Glossary"],
-    ),
-    SectionPattern(
-        section_type=SectionType.SCOPE,
-        ja_patterns=["スコープ", "適用範囲"],
-        en_patterns=["Scope"],
-    ),
-    SectionPattern(
-        section_type=SectionType.CONSTRAINTS,
-        ja_patterns=["制約事項", "制約"],
-        en_patterns=["Constraints"],
-    ),
-    SectionPattern(
-        section_type=SectionType.NON_FUNCTIONAL_REQUIREMENTS,
-        ja_patterns=["非機能要件"],
-        en_patterns=["Non-Functional Requirements"],
-        contains_requirements=True,
-    ),
-    SectionPattern(
-        section_type=SectionType.KPI,
-        ja_patterns=["KPI"],
-        en_patterns=["KPI", "Key Performance Indicators"],
-        contains_requirements=True,
-    ),
-    SectionPattern(
-        section_type=SectionType.FUNCTIONAL_REQUIREMENTS,
-        ja_patterns=["機能要件", "機能要件（EARS）"],
-        en_patterns=["Functional Requirements"],
-        contains_requirements=True,
-    ),
-    SectionPattern(
-        section_type=SectionType.TESTING_REQUIREMENTS,
-        ja_patterns=["テスト要件", "受入要件"],
-        en_patterns=["Testing Requirements", "Test Requirements"],
-        contains_requirements=True,
-    ),
-    # Design document sections
-    SectionPattern(
-        section_type=SectionType.ARCHITECTURE,
-        ja_patterns=["アーキテクチャ", "システム構成"],
-        en_patterns=["Architecture", "System Architecture"],
-    ),
-    SectionPattern(
-        section_type=SectionType.COMPONENT_DESIGN,
-        ja_patterns=["コンポーネント設計", "詳細設計"],
-        en_patterns=["Component Design", "Detailed Design"],
-    ),
-    SectionPattern(
-        section_type=SectionType.DATA,
-        ja_patterns=["データ", "データモデル"],
-        en_patterns=["Data", "Data Model"],
-    ),
-    SectionPattern(
-        section_type=SectionType.API,
-        ja_patterns=["API"],
-        en_patterns=["API", "APIs"],
-    ),
-    SectionPattern(
-        section_type=SectionType.NON_FUNCTIONAL,
-        ja_patterns=["非機能"],
-        en_patterns=["Non-Functional"],
-    ),
-    SectionPattern(
-        section_type=SectionType.TEST,
-        ja_patterns=["テスト"],
-        en_patterns=["Test", "Testing"],
-    ),
-    SectionPattern(
-        section_type=SectionType.TRACEABILITY,
-        ja_patterns=["トレーサビリティ", "要件追跡"],
-        en_patterns=["Traceability"],
-    ),
-    # Tasks document sections
-    SectionPattern(
-        section_type=SectionType.OVERVIEW,
-        ja_patterns=["概要"],
-        en_patterns=["Overview"],
-    ),
-    SectionPattern(
-        section_type=SectionType.TASK_LIST,
-        ja_patterns=["タスク一覧", "タスクリスト"],
-        en_patterns=["Task List", "Tasks"],
-        contains_tasks=True,
-    ),
-    SectionPattern(
-        section_type=SectionType.DEPENDENCIES,
-        ja_patterns=["依存関係"],
-        en_patterns=["Dependencies"],
-    ),
-    SectionPattern(
-        section_type=SectionType.MILESTONES,
-        ja_patterns=["マイルストーン"],
-        en_patterns=["Milestones"],
-    ),
-    # Common sections
-    SectionPattern(
-        section_type=SectionType.REFERENCES,
-        ja_patterns=["参考資料", "参照"],
-        en_patterns=["References"],
-    ),
-    SectionPattern(
-        section_type=SectionType.APPENDIX,
-        ja_patterns=["付録"],
-        en_patterns=["Appendix"],
-    ),
+    SUMMARY_PATTERN,
+    GLOSSARY_PATTERN,
+    SCOPE_PATTERN,
+    CONSTRAINTS_PATTERN,
+    NON_FUNCTIONAL_REQUIREMENTS_PATTERN,
+    KPI_PATTERN,
+    FUNCTIONAL_REQUIREMENTS_PATTERN,
+    TESTING_REQUIREMENTS_PATTERN,
+    ARCHITECTURE_PATTERN,
+    COMPONENT_DESIGN_PATTERN,
+    DATA_PATTERN,
+    API_PATTERN,
+    NON_FUNCTIONAL_PATTERN,
+    TEST_PATTERN,
+    TRACEABILITY_PATTERN,
+    OVERVIEW_PATTERN,
+    TASK_LIST_PATTERN,
+    DEPENDENCIES_PATTERN,
+    MILESTONES_PATTERN,
+    REFERENCES_PATTERN,
+    APPENDIX_PATTERN,
 ]
 
 
