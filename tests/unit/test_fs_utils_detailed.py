@@ -492,6 +492,9 @@ class TestErrorHandlingInFileOperations:
         if os.name == "nt":  # Windows
             pytest.skip("Permission tests not reliable on Windows")
 
+        if os.geteuid() == 0:  # Running as root
+            pytest.skip("Permission tests not reliable when running as root")
+
         restricted_file = self.temp_dir / "restricted.txt"
         restricted_file.write_text("Restricted content")
         restricted_file.chmod(0o000)  # Remove all permissions
