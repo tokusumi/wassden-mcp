@@ -158,6 +158,7 @@ uv run wassden experiment run language    # Language detection testing
 - **[Tool Reference](docs/tools.md)** - Complete tool documentation
 - **[Spec Format Guide](docs/spec-format.md)** - Requirements, design, and tasks format
 - **[Validation Rules](docs/validation/)** - EARS format and traceability requirements
+- **[AST Validation](docs/ast-validation.md)** - AST-based validation system and feature flag
 - **[Development](docs/development.md)** - Development setup and contributing
 - **[Experiment Framework](docs/experiment-framework.md)** - Experimental validation features (dev only)
 - **[Examples](docs/ja/spec-example/)** - Sample specifications (Japanese/English)

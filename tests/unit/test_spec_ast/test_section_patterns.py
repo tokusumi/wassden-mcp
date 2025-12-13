@@ -33,12 +33,20 @@ class TestSectionPatterns:
         assert TASK_LIST_PATTERN.contains_tasks is True
 
     def test_summary_pattern(self) -> None:
-        """Test summary pattern object."""
+        """Test summary pattern object (deprecated)."""
         assert SUMMARY_PATTERN.section_type == SectionType.SUMMARY
-        assert "サマリー" in SUMMARY_PATTERN.ja_patterns
+        # SUMMARY pattern is deprecated - "サマリー" moved to OVERVIEW
+        assert len(SUMMARY_PATTERN.ja_patterns) == 0
         assert "Summary" in SUMMARY_PATTERN.en_patterns
         assert SUMMARY_PATTERN.contains_requirements is False
         assert SUMMARY_PATTERN.contains_tasks is False
+
+    def test_overview_pattern(self) -> None:
+        """Test overview pattern object."""
+        assert OVERVIEW_PATTERN.section_type == SectionType.OVERVIEW
+        assert "概要" in OVERVIEW_PATTERN.ja_patterns
+        assert "サマリー" in OVERVIEW_PATTERN.ja_patterns  # Moved from SUMMARY
+        assert "Overview" in OVERVIEW_PATTERN.en_patterns
 
     def test_glossary_pattern(self) -> None:
         """Test glossary pattern object."""
@@ -51,12 +59,6 @@ class TestSectionPatterns:
         assert API_PATTERN.section_type == SectionType.API
         assert "API" in API_PATTERN.ja_patterns
         assert "API" in API_PATTERN.en_patterns
-
-    def test_overview_pattern(self) -> None:
-        """Test overview pattern object."""
-        assert OVERVIEW_PATTERN.section_type == SectionType.OVERVIEW
-        assert "概要" in OVERVIEW_PATTERN.ja_patterns
-        assert "Overview" in OVERVIEW_PATTERN.en_patterns
 
 
 class TestClassifySection:

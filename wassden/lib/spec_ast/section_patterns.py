@@ -161,7 +161,7 @@ class NonFunctionalRequirementsPattern(BaseSectionPattern):
 
     @property
     def ja_patterns(self) -> list[str]:
-        return ["非機能要件"]
+        return ["非機能要件", "非機能要求仕様"]
 
     @property
     def en_patterns(self) -> list[str]:

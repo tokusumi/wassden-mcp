@@ -17,6 +17,7 @@ from .format_rules import (
 )
 from .section_patterns import SectionType
 from .structure_rules import DesignStructureRule, RequirementsStructureRule, TasksStructureRule
+from .test_scenario_rules import TestScenarioCoverageRule
 from .traceability_rules import (
     DesignReferencesRequirementsRule,
     RequirementCoverageRule,
@@ -61,11 +62,11 @@ REQUIREMENTS_STYLE = DocumentStyle(
     name="Requirements Document",
     description="Standard requirements specification document with EARS patterns",
     required_sections=[
-        SectionType.OVERVIEW,  # 概要/Overview
+        SectionType.OVERVIEW,  # 概要/サマリー
         SectionType.GLOSSARY,
         SectionType.SCOPE,
         SectionType.CONSTRAINTS,
-        SectionType.NON_FUNCTIONAL,  # 非機能要求仕様
+        SectionType.NON_FUNCTIONAL_REQUIREMENTS,  # 非機能要件/非機能要求仕様
         SectionType.KPI,
         SectionType.FUNCTIONAL_REQUIREMENTS,
         SectionType.TESTING_REQUIREMENTS,
@@ -123,6 +124,7 @@ TASKS_STYLE = DocumentStyle(
         TasksReferenceRequirementsRule,
         TasksReferenceDesignRule,
         RequirementCoverageRule,
+        TestScenarioCoverageRule,
     ],
     optional_sections=[
         SectionType.REFERENCES,

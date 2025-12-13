@@ -301,8 +301,8 @@ Data design.
 ## API設計
 API design.
 
-## 非機能要求仕様
-Non-functional requirements.
+## 非機能
+Non-functional design.
 
 ## テスト設計
 Test design.

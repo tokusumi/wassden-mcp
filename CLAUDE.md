@@ -20,6 +20,7 @@
 - **Run all tests**: `make test` - Run all tests with coverage using pytest
 - **Run core tests**: `make test-core` - Run core tests only (excludes dev-marked tests)
 - **Run dev tests**: `make test-dev` - Run dev tests only (requires dev dependencies)
+- **Run AST tests**: `make test-ast` - Run AST validation tests only (172 tests)
 - **Validate examples**: `make validate-examples` - Run integration tests for spec examples in both Japanese and English
 - **Help**: `make help` - Show all available make commands
 

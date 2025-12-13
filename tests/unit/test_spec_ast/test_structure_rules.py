@@ -28,7 +28,7 @@ class TestRequirementsStructureRule:
             SectionType.GLOSSARY,
             SectionType.SCOPE,
             SectionType.CONSTRAINTS,
-            SectionType.NON_FUNCTIONAL,  # Changed from NON_FUNCTIONAL_REQUIREMENTS
+            SectionType.NON_FUNCTIONAL_REQUIREMENTS,  # 非機能要件
             SectionType.KPI,
             SectionType.FUNCTIONAL_REQUIREMENTS,
             SectionType.TESTING_REQUIREMENTS,

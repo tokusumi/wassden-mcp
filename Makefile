@@ -1,4 +1,4 @@
-.PHONY: format lint typecheck test test-core test-dev check ci ci-core validate-examples help
+.PHONY: format lint typecheck test test-core test-dev test-ast check ci ci-core validate-examples help
 
 # Individual commands
 format:
@@ -18,6 +18,9 @@ test-core:
 
 test-dev:
 	uv run --active pytest --cov=wassden -m "dev"
+
+test-ast:
+	uv run --active pytest tests/unit/test_spec_ast/ -v
 
 validate-examples:
 	uv run --active pytest tests/integration/test_spec_examples.py -v
@@ -51,6 +54,7 @@ help:
 	@echo "  test            - Run all tests with coverage"
 	@echo "  test-core       - Run core tests only (no dev dependencies)"
 	@echo "  test-dev        - Run dev tests only (requires dev dependencies)"
+	@echo "  test-ast        - Run AST validation tests only"
 	@echo "  check           - Run all checks with dev CLI verification (local dev)"
 	@echo "  ci              - Run CI checks for dev mode"
 	@echo "  ci-core         - Run CI checks for core functionality"
