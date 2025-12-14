@@ -7,7 +7,7 @@ of spec documents, including required sections.
 from wassden.language_types import Language
 
 from .blocks import BlockType, DocumentBlock, SectionBlock
-from .section_patterns import SectionType
+from .section_patterns import SectionType, get_section_pattern
 from .validation_rules import (
     BlockLocation,
     StructureValidationRule,
@@ -69,9 +69,17 @@ class RequiredSectionsRule(StructureValidationRule):
         Returns:
             Display name in appropriate language
         """
-        # Map section types to display names
-        # For now, use the enum value as display name
-        # TODO: Use i18n for localized names
+        # Get pattern for section type
+        pattern = get_section_pattern(section_type)
+        if pattern:
+            # Return localized name based on language
+            if self.language == Language.JAPANESE:
+                if pattern.ja_patterns:
+                    return pattern.ja_patterns[0]
+            elif pattern.en_patterns:  # English
+                return pattern.en_patterns[0]
+
+        # Fallback to enum value if no pattern found
         return section_type.value
 
 

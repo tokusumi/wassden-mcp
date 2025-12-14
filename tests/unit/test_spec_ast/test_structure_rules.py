@@ -1,5 +1,6 @@
 """Tests for structure validation rules."""
 
+from wassden.language_types import Language
 from wassden.lib.spec_ast.blocks import DocumentBlock, SectionBlock
 from wassden.lib.spec_ast.section_patterns import SectionType
 from wassden.lib.spec_ast.structure_rules import DesignStructureRule, RequirementsStructureRule, TasksStructureRule
@@ -68,7 +69,8 @@ class TestRequirementsStructureRule:
         )
         document.children.append(section)
 
-        rule = RequirementsStructureRule()
+        # Use English language for consistent error messages
+        rule = RequirementsStructureRule(language=Language.ENGLISH)
         context = ValidationContext()
         result = rule.validate(document, context)
 

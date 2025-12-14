@@ -1,11 +1,15 @@
 """Validation utilities for spec documents."""
 
-import os
 import re
 from typing import Any
 
 from wassden.language_types import Language
 
+from .spec_ast.validation_compat import (
+    validate_design_ast,
+    validate_requirements_ast,
+    validate_tasks_ast,
+)
 from .validate_ears import validate_ears_in_content
 from .validation_common import (
     check_circular_dependencies,
@@ -21,17 +25,6 @@ from .validation_common import (
     extract_tr_ids,
     find_component_references,
 )
-
-# Feature flag: Use AST-based validation when enabled
-USE_AST_VALIDATION = os.environ.get("USE_AST_VALIDATION", "0") == "1"
-
-# Import AST validation functions only when feature flag is enabled
-if USE_AST_VALIDATION:
-    from .spec_ast.validation_compat import (
-        validate_design_ast,
-        validate_requirements_ast,
-        validate_tasks_ast,
-    )
 
 # Constants
 DEPENDENCY_SPLIT_PARTS = 2
@@ -314,12 +307,16 @@ def validate_spec_structure(spec_type: str, content: str) -> dict[str, Any]:
 
 
 def validate_requirements(content: str, language: Language = Language.JAPANESE) -> dict[str, Any]:
-    """Validate requirements document."""
-    # Use AST-based validation if feature flag is enabled
-    if USE_AST_VALIDATION:
-        return validate_requirements_ast(content, language)
+    """Validate requirements document using AST validation."""
+    return validate_requirements_ast(content, language)
 
-    # Otherwise, use legacy validation
+
+def validate_requirements_legacy(content: str, language: Language = Language.JAPANESE) -> dict[str, Any]:
+    """Validate requirements document using legacy validation (deprecated).
+
+    This function is deprecated and kept for backward compatibility only.
+    Use validate_requirements() instead which uses AST-based validation.
+    """
     errors = validate_requirements_structure(content)
 
     # EARS validation
@@ -393,12 +390,16 @@ def _extract_ids_from_traceability_section(content: str) -> tuple[set[str], set[
 
 
 def validate_design(content: str, requirements_content: str | None = None) -> dict[str, Any]:
-    """Validate design document."""
-    # Use AST-based validation if feature flag is enabled
-    if USE_AST_VALIDATION:
-        return validate_design_ast(content, requirements_content)
+    """Validate design document using AST validation."""
+    return validate_design_ast(content, requirements_content)
 
-    # Otherwise, use legacy validation
+
+def validate_design_legacy(content: str, requirements_content: str | None = None) -> dict[str, Any]:
+    """Validate design document using legacy validation (deprecated).
+
+    This function is deprecated and kept for backward compatibility only.
+    Use validate_design() instead which uses AST-based validation.
+    """
     errors = validate_design_structure(content)
 
     # Extract referenced REQ-IDs and TR-IDs only from traceability section for proper validation
@@ -445,12 +446,18 @@ def validate_design(content: str, requirements_content: str | None = None) -> di
 def validate_tasks(
     content: str, requirements_content: str | None = None, design_content: str | None = None
 ) -> dict[str, Any]:
-    """Validate tasks document."""
-    # Use AST-based validation if feature flag is enabled
-    if USE_AST_VALIDATION:
-        return validate_tasks_ast(content, requirements_content, design_content)
+    """Validate tasks document using AST validation."""
+    return validate_tasks_ast(content, requirements_content, design_content)
 
-    # Otherwise, use legacy validation
+
+def validate_tasks_legacy(
+    content: str, requirements_content: str | None = None, design_content: str | None = None
+) -> dict[str, Any]:
+    """Validate tasks document using legacy validation (deprecated).
+
+    This function is deprecated and kept for backward compatibility only.
+    Use validate_tasks() instead which uses AST-based validation.
+    """
     errors = validate_tasks_structure(content)
 
     # Extract task IDs using common logic
