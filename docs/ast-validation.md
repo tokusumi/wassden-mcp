@@ -17,12 +17,14 @@ wassden includes a new AST (Abstract Syntax Tree) based validation system that p
 The AST validation system is controlled via an environment variable feature flag:
 
 ```bash
-# Enable AST validation (default in Phase 6+)
+# Enable AST validation
 export USE_AST_VALIDATION=1
 
-# Disable AST validation (use legacy text-based validation)
+# Disable AST validation (use legacy text-based validation) - current default
 export USE_AST_VALIDATION=0
 ```
+
+**Current Status**: AST validation is available but disabled by default (`USE_AST_VALIDATION=0`). The feature flag must be explicitly enabled to use AST validation.
 
 ### When to Enable
 
@@ -46,12 +48,18 @@ The AST parser creates typed block objects:
 ```python
 from wassden.lib.spec_ast.blocks import (
     DocumentBlock,      # Root document
-    SectionBlock,       # Document sections
+    SectionBlock,       # Document sections (## headings)
     RequirementBlock,   # Requirements (REQ-XX, NFR-XX, etc.)
     TaskBlock,          # Tasks (TASK-XX-XX)
     ListItemBlock,      # Generic list items
 )
+
+# Additional BlockType enum values:
+# BlockType.PARAGRAPH  # Paragraph blocks (internal use)
+# BlockType.HEADING    # Heading blocks (internal use)
 ```
+
+Note: `BlockType.PARAGRAPH` and `BlockType.HEADING` exist in the enum but don't have dedicated block classes. They are used internally during parsing for lower-level document structure representation.
 
 ### Section Classification
 
@@ -154,12 +162,15 @@ Test scenario not referenced in tasks: test-error-handling
 - Maintain backward compatibility with legacy validation
 - All tests passing with feature flag
 
-### Phase 6 (Current)
-🔄 **AST Validation by Default**
-- Enable `USE_AST_VALIDATION=1` in CI
-- Update documentation and examples
-- Migration guide for existing projects
-- Monitor for issues
+### Phase 6 (In Progress)
+🔄 **AST Validation Adoption**
+- **Current Status**: Feature flag available but disabled by default
+- **Next Steps**:
+  - Enable `USE_AST_VALIDATION=1` in CI environments
+  - Update documentation and examples
+  - Encourage adoption through migration guide
+  - Monitor for issues and gather feedback
+- **Goal**: Make AST validation the default choice for new projects
 
 ### Phase 7 (Future)
 📋 **Legacy Deprecation**
@@ -211,15 +222,13 @@ Existing projects can migrate gradually:
 
 ### Common Migration Issues
 
-#### Issue 1: Section Name Changes
-**Problem**: "サマリー" section not recognized
+#### Issue 1: Section Name Compatibility
+**Note**: Both "サマリー" and "概要" are recognized and map to `SectionType.OVERVIEW` in AST validation. No changes needed for these section names.
 
-**Solution**: Use "概要" instead (both map to OVERVIEW in AST validation)
-
-```diff
-- ## サマリー
-+ ## 概要
-```
+If you encounter section recognition issues, verify that:
+- Section headers use proper markdown format (`## SectionName`)
+- Section names match the supported patterns (see `wassden/lib/spec_ast/section_patterns.py`)
+- No extra whitespace or special characters in section headers
 
 #### Issue 2: Test Scenario Coverage
 **Problem**: Test scenarios defined in design but not referenced in tasks
@@ -234,11 +243,11 @@ Existing projects can migrate gradually:
 ```
 
 #### Issue 3: Non-Functional Section Naming
-**Problem**: Inconsistent use of "非機能" vs "非機能要求仕様"
+**Note**: Both "非機能" and "非機能要求仕様" are recognized by AST validation:
+- "非機能要求仕様" maps to `SectionType.NON_FUNCTIONAL_REQUIREMENTS` (for requirements documents)
+- "非機能" maps to `SectionType.NON_FUNCTIONAL` (for design documents)
 
-**Solution**:
-- Requirements docs: Use "非機能要求仕様" (NON_FUNCTIONAL_REQUIREMENTS)
-- Design docs: Use "非機能" (NON_FUNCTIONAL)
+Both patterns are supported, so no migration is needed unless you want to standardize naming conventions within your project.
 
 ## Testing
 
