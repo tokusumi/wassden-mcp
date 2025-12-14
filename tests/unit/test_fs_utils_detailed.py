@@ -491,6 +491,8 @@ class TestErrorHandlingInFileOperations:
         """Test reading file with permission error."""
         if os.name == "nt":  # Windows
             pytest.skip("Permission tests not reliable on Windows")
+        if os.geteuid() == 0:  # Running as root
+            pytest.skip("Permission tests not reliable when running as root")
 
         if os.geteuid() == 0:  # Running as root
             pytest.skip("Permission tests not reliable when running as root")
