@@ -489,10 +489,10 @@ class TestErrorHandlingInFileOperations:
     @pytest.mark.asyncio
     async def test_read_file_permission_error(self):
         """Test reading file with permission error."""
-        # Skip permission testing on Windows or when running as root (but don't use pytest.skip)
-        if os.name == "nt" or os.geteuid() == 0:
-            # Test passes without checking permissions in these environments
-            return
+        if os.name == "nt":  # Windows
+            pytest.skip("Permission tests not reliable on Windows")
+        if os.geteuid() == 0:  # Running as root
+            pytest.skip("Permission tests not reliable when running as root")
 
         restricted_file = self.temp_dir / "restricted.txt"
         restricted_file.write_text("Restricted content")

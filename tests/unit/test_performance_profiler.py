@@ -26,7 +26,7 @@ class TestPerformanceProfiler:
     @pytest.fixture
     def profiler(self):
         """Create PerformanceProfiler instance."""
-        return PerformanceProfiler(memory_limit_mb=1000, timeout_seconds=10)
+        return PerformanceProfiler(memory_limit_mb=500, timeout_seconds=10)
 
     @pytest.fixture
     def sample_sync_function(self):
