@@ -5,6 +5,7 @@ for both Japanese and English specification documents.
 Each section pattern is defined as an individual class inheriting from BaseSectionPattern.
 """
 
+import re
 from abc import ABC, abstractmethod
 from enum import Enum
 
@@ -89,15 +90,15 @@ class BaseSectionPattern(ABC):
 
 
 class SummaryPattern(BaseSectionPattern):
-    """Summary section pattern (deprecated - use OVERVIEW instead)."""
+    """Summary section pattern (maps to OVERVIEW for compatibility)."""
 
     @property
     def section_type(self) -> SectionType:
-        return SectionType.SUMMARY
+        return SectionType.OVERVIEW  # Map to OVERVIEW for compatibility
 
     @property
     def ja_patterns(self) -> list[str]:
-        return []  # Deprecated - "サマリー" now maps to OVERVIEW
+        return []  # "サマリー" now handled by OverviewPattern
 
     @property
     def en_patterns(self) -> list[str]:
@@ -367,7 +368,7 @@ class OverviewPattern(BaseSectionPattern):
 
     @property
     def en_patterns(self) -> list[str]:
-        return ["Overview"]
+        return ["Overview", "Summary"]
 
 
 class TaskListPattern(BaseSectionPattern):
@@ -533,11 +534,19 @@ def classify_section(title: str, language: str = "ja") -> SectionType:
     # Clean title: remove section numbers, extra whitespace
     clean_title = title.strip()
 
-    # Try to match against patterns
+    # Remove leading numbers and dots (e.g., "1. ", "1.1 ", "10. ")
+    clean_title = re.sub(r"^\d+\.?\s*", "", clean_title)
+
+    # Try to match against patterns (case-insensitive for English)
+    clean_title_lower = clean_title.lower()
     for pattern in SECTION_PATTERNS:
         patterns = pattern.ja_patterns if language == "ja" else pattern.en_patterns
         for pattern_text in patterns:
-            if pattern_text in clean_title:
+            # Case-insensitive match for English, case-sensitive for Japanese
+            if language == "en":
+                if pattern_text.lower() in clean_title_lower:
+                    return pattern.section_type
+            elif pattern_text in clean_title:
                 return pattern.section_type
 
     return SectionType.UNKNOWN
@@ -552,6 +561,10 @@ def get_section_pattern(section_type: SectionType) -> BaseSectionPattern | None:
     Returns:
         BaseSectionPattern instance or None if not found
     """
+    # Special handling for SUMMARY which maps to OVERVIEW
+    if section_type == SectionType.SUMMARY:
+        return SUMMARY_PATTERN
+
     for pattern in SECTION_PATTERNS:
         if pattern.section_type == section_type:
             return pattern

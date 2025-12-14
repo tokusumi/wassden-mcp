@@ -113,7 +113,7 @@ class TestScenarioCoverageRule(TraceabilityValidationRule):
         Returns:
             Set of referenced component identifiers
         """
-        referenced = set()
+        referenced: set[str] = set()
 
         # Extract from TaskBlocks
         task_blocks = tasks_doc.get_blocks_by_type(BlockType.TASK)
@@ -183,9 +183,9 @@ class DesignComponentCoverageRule(TraceabilityValidationRule):
         if unreferenced:
             # Format as single message with all missing components (legacy compatibility)
             sorted_unreferenced = sorted(unreferenced)
-            MAX_DISPLAY = 10
-            display_refs = sorted_unreferenced[:MAX_DISPLAY]
-            suffix = "..." if len(sorted_unreferenced) > MAX_DISPLAY else ""
+            max_display = 10
+            display_refs = sorted_unreferenced[:max_display]
+            suffix = "..." if len(sorted_unreferenced) > max_display else ""
             components_str = ", ".join(display_refs) + suffix
             errors.append(
                 ValidationError(
@@ -205,7 +205,7 @@ class DesignComponentCoverageRule(TraceabilityValidationRule):
         Returns:
             Set of component identifiers
         """
-        components = set()
+        components: set[str] = set()
 
         # Extract from ListItemBlocks
         list_item_blocks = design_doc.get_blocks_by_type(BlockType.LIST_ITEM)
@@ -224,9 +224,7 @@ class DesignComponentCoverageRule(TraceabilityValidationRule):
 
         return components
 
-    def _extract_referenced_components(
-        self, tasks_doc: DocumentBlock, design_components: set[str]
-    ) -> set[str]:
+    def _extract_referenced_components(self, tasks_doc: DocumentBlock, design_components: set[str]) -> set[str]:
         """Extract referenced design components from tasks document.
 
         Args:
@@ -236,7 +234,7 @@ class DesignComponentCoverageRule(TraceabilityValidationRule):
         Returns:
             Set of referenced component identifiers
         """
-        referenced = set()
+        referenced: set[str] = set()
 
         # Extract from TaskBlocks
         task_blocks = tasks_doc.get_blocks_by_type(BlockType.TASK)

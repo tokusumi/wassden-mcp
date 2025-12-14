@@ -4,6 +4,8 @@ This module contains rules that validate cross-document references
 and coverage requirements.
 """
 
+import re
+
 from wassden.language_types import Language
 
 from .blocks import BlockType, DocumentBlock, ListItemBlock, RequirementBlock, SectionBlock, TaskBlock
@@ -72,9 +74,13 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             # Display first few missing references
             display_refs = missing_refs[:MAX_DISPLAY_REQUIREMENTS]
             suffix = "..." if len(missing_refs) > MAX_DISPLAY_REQUIREMENTS else ""
-            # Determine context based on document type (legacy compatibility)
-            context = "tasks"  # Default to tasks for RequirementCoverageRule in tasks validation
-            message = f"Requirements not referenced in {context}: {', '.join(display_refs)}{suffix}"
+
+            # Generate message based on document type
+            if context.document_type == "tasks":
+                message = f"Requirements not referenced in tasks: {', '.join(display_refs)}{suffix}"
+            else:
+                message = f"Missing references to requirements: {', '.join(display_refs)}{suffix}"
+
             errors.append(
                 ValidationError(
                     message=message,
@@ -91,13 +97,15 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             document: Requirements document
 
         Returns:
-            Set of requirement IDs
+            Set of requirement IDs (REQ-, TR- only - NFR/KPI not required for traceability)
         """
         req_ids = set()
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
 
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-"):
+            # Only REQ- and TR- require explicit traceability
+            # NFR and KPI are system-wide and don't need component mapping
+            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith(("REQ-", "TR-")):
                 req_ids.add(block.req_id)
 
         return req_ids
@@ -122,17 +130,23 @@ class RequirementCoverageRule(TraceabilityValidationRule):
         # Also check requirement blocks (for design traceability section)
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
         for block in req_blocks:
-            if isinstance(block, RequirementBlock) and block.req_id and block.req_id.startswith("REQ-"):
+            # Include all requirement types
+            if (
+                isinstance(block, RequirementBlock)
+                and block.req_id
+                and block.req_id.startswith(("REQ-", "NFR-", "KPI-", "TR-"))
+            ):
                 referenced_ids.add(block.req_id)
 
         # Also check list item blocks (for traceability section list items)
         list_item_blocks = document.get_blocks_by_type(BlockType.LIST_ITEM)
         for block in list_item_blocks:
             if isinstance(block, ListItemBlock) and block.content:
-                # Extract all REQ-IDs from the list item content
+                # Extract all requirement IDs (REQ-, NFR-, KPI-, TR-)
                 req_ids = list(IDExtractor.extract_all_req_ids(block.content))
                 for req_id in req_ids:
-                    if req_id.startswith("REQ-"):
+                    # Include all requirement types
+                    if req_id.startswith(("REQ-", "NFR-", "KPI-", "TR-")):
                         referenced_ids.add(req_id)
 
         return referenced_ids
@@ -322,12 +336,8 @@ class TasksReferenceDesignRule(TraceabilityValidationRule):
         has_design_refs_content = False
         if not has_design_refs_field:
             # Extract design components from design document
-            from .blocks import BlockType as BT
-            from .blocks import ListItemBlock
-            import re
-
             design_components = set()
-            list_item_blocks = context.design_doc.get_blocks_by_type(BT.LIST_ITEM)
+            list_item_blocks = context.design_doc.get_blocks_by_type(BlockType.LIST_ITEM)
             for block in list_item_blocks:
                 if isinstance(block, ListItemBlock) and block.content:
                     # Pattern 1: **component-name** (with bold markers)

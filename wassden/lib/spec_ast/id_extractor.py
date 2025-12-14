@@ -28,6 +28,10 @@ class IDExtractor:
     LOOSE_REQ_PATTERN = r"^(REQ[-A-Za-z0-9]*|TR[-A-Za-z0-9]*|NFR[-A-Za-z0-9]*|KPI[-A-Za-z0-9]*):\s*(.+)$"
     LOOSE_TASK_PATTERN = r"^(TASK[-A-Za-z0-9]*):\s*(.+)$"
 
+    # Catch-all pattern for completely invalid requirement IDs (e.g., INVALID-01)
+    # This matches any uppercase prefix followed by hyphen and digits
+    INVALID_REQ_PATTERN = r"^([A-Z]+[-]\d+):\s*(.+)$"
+
     @staticmethod
     def extract_req_id_from_text(text: str) -> tuple[str | None, str, str]:
         """Extract requirement ID from text.
@@ -53,6 +57,14 @@ class IDExtractor:
 
         # Try loose pattern for malformed IDs
         match = re.match(IDExtractor.LOOSE_REQ_PATTERN, text)
+        if match:
+            req_id = match.group(1)
+            req_text = match.group(2).strip()
+            req_type = req_id.split("-")[0] if "-" in req_id else "REQ"
+            return req_id, req_text, req_type
+
+        # Try catch-all pattern for completely invalid IDs (e.g., INVALID-01)
+        match = re.match(IDExtractor.INVALID_REQ_PATTERN, text)
         if match:
             req_id = match.group(1)
             req_text = match.group(2).strip()

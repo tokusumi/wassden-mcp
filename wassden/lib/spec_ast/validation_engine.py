@@ -58,6 +58,7 @@ class ValidationEngine:
         Returns:
             List of validation results
         """
+        self.context.document_type = "requirements"
         return self.validate_document(document, REQUIREMENTS_STYLE)
 
     def validate_design(self, document: DocumentBlock) -> list[ValidationResult]:
@@ -69,6 +70,7 @@ class ValidationEngine:
         Returns:
             List of validation results
         """
+        self.context.document_type = "design"
         return self.validate_document(document, DESIGN_STYLE)
 
     def validate_tasks(self, document: DocumentBlock) -> list[ValidationResult]:
@@ -80,6 +82,7 @@ class ValidationEngine:
         Returns:
             List of validation results
         """
+        self.context.document_type = "tasks"
         return self.validate_document(document, TASKS_STYLE)
 
     def validate_with_style(self, document: DocumentBlock, style_name: str) -> list[ValidationResult]:

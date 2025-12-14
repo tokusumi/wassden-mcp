@@ -7,6 +7,7 @@ import mistune
 
 from wassden.language_types import Language
 from wassden.lib.spec_ast.blocks import (
+    BlockType,
     DocumentBlock,
     ListItemBlock,
     RequirementBlock,
@@ -35,7 +36,7 @@ class SpecMarkdownParser:
         self.language = language
         self._markdown = mistune.create_markdown(renderer="ast")
 
-    def parse(self, markdown_text: str) -> DocumentBlock:
+    def parse(self, markdown_text: str) -> DocumentBlock:  # noqa: C901
         """Parse markdown text into structured block tree.
 
         Args:
@@ -78,6 +79,18 @@ class SpecMarkdownParser:
                     list_items = self._parse_list(token, lines, current_section)
                     for item in list_items:
                         current_section.add_child(item)
+
+                elif token_type == "paragraph" and current_section:
+                    # Extract paragraph text and add to section
+                    paragraph_text = self._extract_text_from_children(token.get("children", []))
+                    if paragraph_text:
+                        # Store paragraph text in section for later processing
+                        if not hasattr(current_section, "_paragraph_content"):
+                            current_section._paragraph_content = []  # type: ignore
+                        current_section._paragraph_content.append(paragraph_text)  # type: ignore
+
+        # Post-process: Extract dependencies from Dependencies section
+        self._process_dependencies_section(doc)
 
         return doc
 
@@ -226,7 +239,6 @@ class SpecMarkdownParser:
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
 
                     # Also extract component-style and test scenario references from DC field
-                    import re
                     # Pattern: look for components after "DC:"
                     # Matches: DC: **input-handler**, DC: input-handler, test-input-processing, etc.
                     # Extract everything after "DC:" until end of line or list item
@@ -264,7 +276,6 @@ class SpecMarkdownParser:
                     design_refs = list(IDExtractor.extract_all_dc_refs(task_text))
 
                     # Also extract component-style and test scenario references from DC field
-                    import re
                     # Pattern: look for components after "DC:"
                     dc_match = re.search(r"DC:\s*(.+?)(?:\n|$)", task_text, re.IGNORECASE)
                     if dc_match:
@@ -301,7 +312,7 @@ class SpecMarkdownParser:
 
         return items
 
-    def _extract_text_from_children(self, children: list[Any], skip_acceptance_criteria: bool = True) -> str:
+    def _extract_text_from_children(self, children: list[Any], skip_acceptance_criteria: bool = True) -> str:  # noqa: C901
         """Recursively extract text from token children.
 
         Args:
@@ -317,9 +328,14 @@ class SpecMarkdownParser:
                 child_type = child.get("type", "")
                 if child_type in ("text", "codespan"):
                     text_parts.append(child.get("raw", ""))
+                elif child_type == "softbreak":
+                    # Preserve line breaks
+                    text_parts.append("\n")
                 elif child_type == "block_text":
                     # mistune v3 wraps list item content in block_text
-                    text_parts.append(self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria))
+                    text_parts.append(
+                        self._extract_text_from_children(child.get("children", []), skip_acceptance_criteria)
+                    )
                 elif child_type == "list":
                     # Process each list item individually to selectively skip acceptance criteria
                     list_children = child.get("children", [])
@@ -377,3 +393,60 @@ class SpecMarkdownParser:
             return section_number, clean_title
 
         return None, heading_text.strip()
+
+    def _process_dependencies_section(self, document: DocumentBlock) -> None:  # noqa: C901
+        """Process dependencies section and update TaskBlock dependencies.
+
+        Looks for Dependencies section and extracts task dependencies
+        to update TaskBlock.dependencies fields.
+
+        Args:
+            document: Document block to process
+        """
+        # Find dependencies section
+        dependencies_section = None
+        for child in document.children:
+            # Check if this is the dependencies section
+            if isinstance(child, SectionBlock) and child.section_type == SectionType.DEPENDENCIES:
+                dependencies_section = child
+                break
+
+        if not dependencies_section:
+            return
+
+        # Extract task dependencies from section content
+        # Pattern: "TASK-XX 依存: TASK-YY" or "TASK-XX depends on: TASK-YY"
+        task_deps: dict[str, list[str]] = {}
+
+        # Get all text content from the section
+        content = dependencies_section.raw_content or ""
+        # Check for paragraph content stored during parsing
+        if hasattr(dependencies_section, "_paragraph_content"):
+            content += "\n" + "\n".join(dependencies_section._paragraph_content)
+        for child in dependencies_section.children:
+            if hasattr(child, "raw_content"):
+                content += "\n" + (child.raw_content or "")
+            if hasattr(child, "content"):
+                content += "\n" + (child.content or "")
+
+        # Parse dependency lines
+        dep_pattern = r"(TASK-[A-Z0-9-]+)\s*(?:依存|depends on|→):\s*((?:TASK-[A-Z0-9-]+(?:,\s*)?)+)"
+        matches = re.finditer(dep_pattern, content, re.IGNORECASE)
+
+        for match in matches:
+            task_id = match.group(1)
+            deps_str = match.group(2)
+            # Split by comma for multiple dependencies
+            deps = [d.strip() for d in re.findall(r"TASK-[A-Z0-9-]+", deps_str)]
+            if task_id not in task_deps:
+                task_deps[task_id] = []
+            task_deps[task_id].extend(deps)
+
+        # Update TaskBlocks with extracted dependencies
+        task_blocks = document.get_blocks_by_type(BlockType.TASK)
+        for block in task_blocks:
+            if isinstance(block, TaskBlock) and block.task_id and block.task_id in task_deps:
+                # Merge with existing dependencies
+                existing = set(block.dependencies) if block.dependencies else set()
+                new_deps = set(task_deps[block.task_id])
+                block.dependencies = sorted(existing | new_deps)

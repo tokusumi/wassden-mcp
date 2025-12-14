@@ -33,8 +33,8 @@ class TestSectionPatterns:
         assert TASK_LIST_PATTERN.contains_tasks is True
 
     def test_summary_pattern(self) -> None:
-        """Test summary pattern object (deprecated)."""
-        assert SUMMARY_PATTERN.section_type == SectionType.SUMMARY
+        """Test summary pattern object (maps to OVERVIEW)."""
+        assert SUMMARY_PATTERN.section_type == SectionType.OVERVIEW
         # SUMMARY pattern is deprecated - "サマリー" moved to OVERVIEW
         assert len(SUMMARY_PATTERN.ja_patterns) == 0
         assert "Summary" in SUMMARY_PATTERN.en_patterns
@@ -144,10 +144,12 @@ class TestGetSectionPattern:
         assert pattern.contains_tasks is True
 
     def test_get_summary_pattern(self) -> None:
-        """Test getting summary pattern."""
+        """Test getting summary pattern (now maps to OVERVIEW)."""
         pattern = get_section_pattern(SectionType.SUMMARY)
         assert pattern is not None
+        # Pattern object is still SUMMARY_PATTERN but it returns OVERVIEW type
         assert pattern == SUMMARY_PATTERN
+        assert pattern.section_type == SectionType.OVERVIEW
 
     def test_get_unknown_pattern(self) -> None:
         """Test getting unknown pattern returns None."""

@@ -78,13 +78,15 @@ class ValidationResult:
 class ValidationContext:
     """Context for validation including cross-document references."""
 
-    def __init__(self, language: Language = Language.JAPANESE) -> None:
+    def __init__(self, language: Language = Language.JAPANESE, document_type: str = "requirements") -> None:
         """Initialize validation context.
 
         Args:
             language: Language for validation messages
+            document_type: Type of document being validated ("requirements", "design", "tasks")
         """
         self.language = language
+        self.document_type = document_type
         self.requirements_doc: DocumentBlock | None = None
         self.design_doc: DocumentBlock | None = None
         self.tasks_doc: DocumentBlock | None = None

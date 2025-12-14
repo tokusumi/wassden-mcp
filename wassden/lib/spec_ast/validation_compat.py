@@ -5,9 +5,11 @@ validation system, maintaining the existing function interfaces while using
 the new validation engine internally.
 """
 
+import re
 from typing import Any
 
 from wassden.language_types import Language
+from wassden.lib.language_detection import detect_language_from_spec_content
 
 from .blocks import BlockType, DocumentBlock, ListItemBlock, RequirementBlock, SectionBlock, TaskBlock
 from .id_extractor import IDExtractor
@@ -218,7 +220,7 @@ def convert_validation_results_to_dict(results: list[ValidationResult]) -> dict[
     }
 
 
-def extract_missing_references_from_results(results: list[ValidationResult]) -> dict[str, list[str]]:
+def extract_missing_references_from_results(results: list[ValidationResult]) -> dict[str, list[str]]:  # noqa: C901
     """Extract missing references from validation results.
 
     Args:
@@ -233,26 +235,34 @@ def extract_missing_references_from_results(results: list[ValidationResult]) -> 
         "design": [],
     }
 
-    import re
-
     for result in results:
         for error in result.errors:
             message = error.message
 
-            # Extract missing requirements (REQ-XX, NFR-XX, KPI-XX)
-            if "Requirements not referenced" in message or "Requirement not referenced" in message:
-                # Parse: "Requirements not referenced: REQ-01, REQ-02..."
-                match = re.search(r"(?:Requirements?|REQ-\d+)[^:]*:\s*(.+)", message)
+            # Extract missing requirements (REQ-XX, NFR-XX, KPI-XX, TR-XX)
+            if (
+                "Requirements not referenced" in message
+                or "Requirement not referenced" in message
+                or "Missing references to requirements" in message
+            ):
+                # Parse: "Requirements not referenced: REQ-01, REQ-02, TR-01, TR-02..."
+                # or "Missing references to requirements: REQ-01, REQ-02..."
+                match = re.search(r"(?:requirements|Requirements?|REQ-\d+)[^:]*:\s*(.+)", message)
                 if match:
                     refs_str = match.group(1).replace("...", "")
-                    refs = [r.strip() for r in refs_str.split(",") if r.strip().startswith(("REQ-", "NFR-", "KPI-"))]
-                    missing_refs["requirements"].extend(refs)
+                    refs = [r.strip() for r in refs_str.split(",") if r.strip()]
+                    # Separate REQ/NFR/KPI from TR
+                    for ref in refs:
+                        if ref.startswith(("REQ-", "NFR-", "KPI-")):
+                            missing_refs["requirements"].append(ref)
+                        elif ref.startswith("TR-"):
+                            missing_refs["test_requirements"].append(ref)
 
-            # Extract missing test requirements (TR-XX)
-            if "Test requirement not referenced" in message or "TR-" in message:
-                match = re.search(r"(TR-\d+)", message)
-                if match:
-                    missing_refs["test_requirements"].append(match.group(1))
+            # Extract missing test requirements (TR-XX) - alternative pattern
+            elif "Test requirement not referenced" in message:
+                # Extract all TR-IDs from message
+                tr_ids = re.findall(r"TR-\d+", message)
+                missing_refs["test_requirements"].extend(tr_ids)
 
             # Extract missing design components
             if "not referenced in tasks:" in message:
@@ -264,16 +274,12 @@ def extract_missing_references_from_results(results: list[ValidationResult]) -> 
                     # Split by comma and extract component names
                     components = [c.strip() for c in components_str.split(",") if c.strip()]
                     # Filter to only valid component/scenario names
-                    valid_comps = [
-                        c
-                        for c in components
-                        if re.match(r"^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+$", c)
-                    ]
+                    valid_comps = [c for c in components if re.match(r"^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+$", c)]
                     missing_refs["design"].extend(valid_comps)
 
     # Remove duplicates and sort
-    for key in missing_refs:
-        missing_refs[key] = sorted(set(missing_refs[key]))
+    for key, values in missing_refs.items():
+        missing_refs[key] = sorted(set(values))
 
     return missing_refs
 
@@ -353,7 +359,7 @@ def validate_tasks_structure_ast(tasks_content: str, language: Language = Langua
     return convert_validation_results_to_errors(results)
 
 
-def validate_requirements_ast(content: str, language: Language = Language.JAPANESE) -> dict[str, Any]:
+def validate_requirements_ast(content: str, language: Language | None = None) -> dict[str, Any]:
     """Validate requirements document using AST validation.
 
     This is a compatibility wrapper that uses the new AST-based validation
@@ -361,11 +367,15 @@ def validate_requirements_ast(content: str, language: Language = Language.JAPANE
 
     Args:
         content: Requirements document content
-        language: Language for validation
+        language: Language for validation (auto-detected if None)
 
     Returns:
         Dictionary with validation results
     """
+    # Auto-detect language if not specified
+    if language is None:
+        language = detect_language_from_spec_content(content)
+
     # Parse document
     parser = SpecMarkdownParser(language)
     document = parser.parse(content)
@@ -386,7 +396,7 @@ def validate_requirements_ast(content: str, language: Language = Language.JAPANE
 
 
 def validate_design_ast(
-    content: str, requirements_content: str | None = None, language: Language = Language.JAPANESE
+    content: str, requirements_content: str | None = None, language: Language | None = None
 ) -> dict[str, Any]:
     """Validate design document using AST validation.
 
@@ -396,11 +406,15 @@ def validate_design_ast(
     Args:
         content: Design document content
         requirements_content: Optional requirements document for traceability
-        language: Language for validation
+        language: Language for validation (auto-detected if None)
 
     Returns:
         Dictionary with validation results
     """
+    # Auto-detect language if not specified
+    if language is None:
+        language = detect_language_from_spec_content(content)
+
     # Parse documents
     parser = SpecMarkdownParser(language)
     document = parser.parse(content)
@@ -421,6 +435,12 @@ def validate_design_ast(
     result_dict["stats"] = extract_stats_from_document(document, "design")
     result_dict["foundSections"] = extract_found_sections(document)
 
+    # Extract missing references from validation results
+    missing_refs = extract_missing_references_from_results(results)
+    # Flatten to simple list format for backward compatibility
+    all_missing = missing_refs["requirements"] + missing_refs["test_requirements"] + missing_refs["design"]
+    result_dict["stats"]["missingReferences"] = all_missing
+
     return result_dict
 
 
@@ -428,7 +448,7 @@ def validate_tasks_ast(
     content: str,
     requirements_content: str | None = None,
     design_content: str | None = None,
-    language: Language = Language.JAPANESE,
+    language: Language | None = None,
 ) -> dict[str, Any]:
     """Validate tasks document using AST validation.
 
@@ -439,11 +459,15 @@ def validate_tasks_ast(
         content: Tasks document content
         requirements_content: Optional requirements document for traceability
         design_content: Optional design document for traceability
-        language: Language for validation
+        language: Language for validation (auto-detected if None)
 
     Returns:
         Dictionary with validation results
     """
+    # Auto-detect language if not specified
+    if language is None:
+        language = detect_language_from_spec_content(content)
+
     # Parse documents
     parser = SpecMarkdownParser(language)
     document = parser.parse(content)
@@ -472,5 +496,29 @@ def validate_tasks_ast(
     result_dict["stats"]["missingRequirementReferences"] = missing_refs.get("requirements", [])
     result_dict["stats"]["missingTRReferences"] = missing_refs.get("test_requirements", [])
     result_dict["stats"]["missingDesignReferences"] = missing_refs.get("design", [])
+
+    # Additional validation: Check if tasks reference requirements but no requirements content exists
+    # This matches legacy validation behavior
+    task_blocks = document.get_blocks_by_type(BlockType.TASK)
+    tasks_reference_reqs = any(
+        isinstance(block, TaskBlock) and block.req_refs and any(ref.startswith("REQ-") for ref in block.req_refs)
+        for block in task_blocks
+    )
+    tasks_reference_trs = any(
+        isinstance(block, TaskBlock) and block.req_refs and any(ref.startswith("TR-") for ref in block.req_refs)
+        for block in task_blocks
+    )
+
+    if tasks_reference_reqs and not requirements_content:
+        result_dict["issues"].append(
+            "Requirements not referenced - tasks reference REQ-IDs but requirements.md is missing"
+        )
+        result_dict["isValid"] = False
+
+    if tasks_reference_trs and not requirements_content:
+        result_dict["issues"].append(
+            "Test requirements not referenced - tasks reference TR-IDs but requirements.md is missing"
+        )
+        result_dict["isValid"] = False
 
     return result_dict

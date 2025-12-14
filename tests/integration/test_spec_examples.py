@@ -1,5 +1,6 @@
 """Integration tests for spec examples validation."""
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -18,8 +19,17 @@ class TestSpecExamples:
     def run_wassden_command(self, base_dir: Path, cmd: list[str]) -> tuple[bool, str]:
         """Run a wassden command and return success status and output."""
         try:
+            # Pass USE_AST_VALIDATION environment variable to subprocess
+            env = os.environ.copy()
+            env["USE_AST_VALIDATION"] = "1"
             result = subprocess.run(
-                ["uv", "run", "wassden", *cmd], cwd=base_dir, capture_output=True, text=True, timeout=30, check=False
+                ["uv", "run", "wassden", *cmd],
+                cwd=base_dir,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                env=env,
             )
             return result.returncode == 0, result.stdout if result.returncode == 0 else result.stderr
         except subprocess.TimeoutExpired:
@@ -110,8 +120,17 @@ class TestSpecExamplesIntegration:
     def run_wassden_command(self, base_dir: Path, cmd: list[str]) -> tuple[bool, str]:
         """Run a wassden command and return success status and output."""
         try:
+            # Pass USE_AST_VALIDATION environment variable to subprocess
+            env = os.environ.copy()
+            env["USE_AST_VALIDATION"] = "1"
             result = subprocess.run(
-                ["uv", "run", "wassden", *cmd], cwd=base_dir, capture_output=True, text=True, timeout=30, check=False
+                ["uv", "run", "wassden", *cmd],
+                cwd=base_dir,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                env=env,
             )
             return result.returncode == 0, result.stdout if result.returncode == 0 else result.stderr
         except subprocess.TimeoutExpired:
