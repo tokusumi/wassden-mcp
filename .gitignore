@@ -11,4 +11,5 @@ db.sqlite3
 .mypy_cache
 .coverage
 .serena
+specs
 specs.coverage.*
