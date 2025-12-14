@@ -196,11 +196,14 @@ def convert_validation_results_to_errors(results: list[ValidationResult]) -> lis
     return errors
 
 
-def convert_validation_results_to_dict(results: list[ValidationResult]) -> dict[str, Any]:
+def convert_validation_results_to_dict(
+    results: list[ValidationResult], doc_type: str = "requirements"
+) -> dict[str, Any]:
     """Convert AST validation results to legacy dict format.
 
     Args:
         results: List of validation results from AST validation
+        doc_type: Type of document being validated ("requirements", "design", "tasks")
 
     Returns:
         Dictionary with validation results in legacy format
@@ -209,7 +212,26 @@ def convert_validation_results_to_dict(results: list[ValidationResult]) -> dict[
     all_errors: list[str] = []
     for result in results:
         if not result.is_valid:
-            all_errors.extend(error.message for error in result.errors)
+            for error in result.errors:
+                # Convert AST validation messages to legacy format for backward compatibility
+                message = error.message
+
+                # Traceability message format conversions (only for tasks)
+                if doc_type == "tasks":
+                    if message.startswith("Missing references to requirements:"):
+                        message = message.replace(
+                            "Missing references to requirements:", "Requirements not referenced in tasks:"
+                        )
+                    elif message.startswith("Missing references to test requirements:"):
+                        message = message.replace(
+                            "Missing references to test requirements:", "Test requirements not referenced in tasks:"
+                        )
+                    elif message.startswith("Missing references to design components:"):
+                        message = message.replace(
+                            "Missing references to design components:", "Design components not referenced in tasks:"
+                        )
+
+                all_errors.append(message)
 
     # Determine if valid
     is_valid = len(all_errors) == 0
@@ -385,7 +407,7 @@ def validate_requirements_ast(content: str, language: Language | None = None) ->
     results = engine.validate_requirements(document)
 
     # Convert to legacy format
-    result_dict = convert_validation_results_to_dict(results)
+    result_dict = convert_validation_results_to_dict(results, doc_type="requirements")
 
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "requirements")
@@ -429,7 +451,7 @@ def validate_design_ast(
     results = engine.validate_design(document)
 
     # Convert to legacy format
-    result_dict = convert_validation_results_to_dict(results)
+    result_dict = convert_validation_results_to_dict(results, doc_type="design")
 
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "design")
@@ -485,7 +507,7 @@ def validate_tasks_ast(
     results = engine.validate_tasks(document)
 
     # Convert to legacy format
-    result_dict = convert_validation_results_to_dict(results)
+    result_dict = convert_validation_results_to_dict(results, doc_type="tasks")
 
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "tasks")
@@ -496,5 +518,29 @@ def validate_tasks_ast(
     result_dict["stats"]["missingRequirementReferences"] = missing_refs.get("requirements", [])
     result_dict["stats"]["missingTRReferences"] = missing_refs.get("test_requirements", [])
     result_dict["stats"]["missingDesignReferences"] = missing_refs.get("design", [])
+
+    # Additional validation: Check if tasks reference requirements but no requirements content exists
+    # This matches legacy validation behavior
+    task_blocks = document.get_blocks_by_type(BlockType.TASK)
+    tasks_reference_reqs = any(
+        isinstance(block, TaskBlock) and block.req_refs and any(ref.startswith("REQ-") for ref in block.req_refs)
+        for block in task_blocks
+    )
+    tasks_reference_trs = any(
+        isinstance(block, TaskBlock) and block.req_refs and any(ref.startswith("TR-") for ref in block.req_refs)
+        for block in task_blocks
+    )
+
+    if tasks_reference_reqs and not requirements_content:
+        result_dict["issues"].append(
+            "Requirements not referenced - tasks reference REQ-IDs but requirements.md is missing"
+        )
+        result_dict["isValid"] = False
+
+    if tasks_reference_trs and not requirements_content:
+        result_dict["issues"].append(
+            "Test requirements not referenced - tasks reference TR-IDs but requirements.md is missing"
+        )
+        result_dict["isValid"] = False
 
     return result_dict

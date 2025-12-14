@@ -54,6 +54,9 @@ class RequirementIDFormatRule(FormatValidationRule):
         """
         errors: list[ValidationError] = []
 
+        # Valid requirement type prefixes
+        valid_req_types = {"REQ", "NFR", "KPI", "TR"}
+
         # Get all requirement blocks
         req_blocks = document.get_blocks_by_type(BlockType.REQUIREMENT)
 
@@ -61,12 +64,22 @@ class RequirementIDFormatRule(FormatValidationRule):
             if not isinstance(block, RequirementBlock):
                 continue
 
-            # Only validate REQ- type requirements, not NFR-, KPI-, or TR-
-            if block.req_type != "REQ":
+            req_id = block.req_id
+            if not req_id:
                 continue
 
-            req_id = block.req_id
-            if req_id and not self._is_valid_req_id(req_id):
+            # Check if the requirement type prefix is valid
+            if block.req_type not in valid_req_types:
+                errors.append(
+                    ValidationError(
+                        message=f"Invalid REQ-ID format: {req_id}",
+                        location=BlockLocation.from_block(block),
+                    )
+                )
+                continue
+
+            # Only validate REQ- type requirements format, not NFR-, KPI-, or TR-
+            if block.req_type == "REQ" and not self._is_valid_req_id(req_id):
                 errors.append(
                     ValidationError(
                         message=f"Invalid REQ-ID format: {req_id}",
