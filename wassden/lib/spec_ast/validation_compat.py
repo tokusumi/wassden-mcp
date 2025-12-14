@@ -196,14 +196,11 @@ def convert_validation_results_to_errors(results: list[ValidationResult]) -> lis
     return errors
 
 
-def convert_validation_results_to_dict(
-    results: list[ValidationResult], doc_type: str = "requirements"
-) -> dict[str, Any]:
+def convert_validation_results_to_dict(results: list[ValidationResult]) -> dict[str, Any]:
     """Convert AST validation results to legacy dict format.
 
     Args:
         results: List of validation results from AST validation
-        doc_type: Type of document being validated ("requirements", "design", "tasks")
 
     Returns:
         Dictionary with validation results in legacy format
@@ -212,26 +209,7 @@ def convert_validation_results_to_dict(
     all_errors: list[str] = []
     for result in results:
         if not result.is_valid:
-            for error in result.errors:
-                # Convert AST validation messages to legacy format for backward compatibility
-                message = error.message
-
-                # Traceability message format conversions (only for tasks)
-                if doc_type == "tasks":
-                    if message.startswith("Missing references to requirements:"):
-                        message = message.replace(
-                            "Missing references to requirements:", "Requirements not referenced in tasks:"
-                        )
-                    elif message.startswith("Missing references to test requirements:"):
-                        message = message.replace(
-                            "Missing references to test requirements:", "Test requirements not referenced in tasks:"
-                        )
-                    elif message.startswith("Missing references to design components:"):
-                        message = message.replace(
-                            "Missing references to design components:", "Design components not referenced in tasks:"
-                        )
-
-                all_errors.append(message)
+            all_errors.extend(error.message for error in result.errors)
 
     # Determine if valid
     is_valid = len(all_errors) == 0
@@ -407,7 +385,7 @@ def validate_requirements_ast(content: str, language: Language | None = None) ->
     results = engine.validate_requirements(document)
 
     # Convert to legacy format
-    result_dict = convert_validation_results_to_dict(results, doc_type="requirements")
+    result_dict = convert_validation_results_to_dict(results)
 
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "requirements")
@@ -451,7 +429,7 @@ def validate_design_ast(
     results = engine.validate_design(document)
 
     # Convert to legacy format
-    result_dict = convert_validation_results_to_dict(results, doc_type="design")
+    result_dict = convert_validation_results_to_dict(results)
 
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "design")
@@ -507,7 +485,7 @@ def validate_tasks_ast(
     results = engine.validate_tasks(document)
 
     # Convert to legacy format
-    result_dict = convert_validation_results_to_dict(results, doc_type="tasks")
+    result_dict = convert_validation_results_to_dict(results)
 
     # Extract stats from parsed document
     result_dict["stats"] = extract_stats_from_document(document, "tasks")

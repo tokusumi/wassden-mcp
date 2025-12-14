@@ -75,7 +75,12 @@ class RequirementCoverageRule(TraceabilityValidationRule):
             display_refs = missing_refs[:MAX_DISPLAY_REQUIREMENTS]
             suffix = "..." if len(missing_refs) > MAX_DISPLAY_REQUIREMENTS else ""
 
-            message = f"Missing references to requirements: {', '.join(display_refs)}{suffix}"
+            # Generate message based on document type
+            if context.document_type == "tasks":
+                message = f"Requirements not referenced in tasks: {', '.join(display_refs)}{suffix}"
+            else:
+                message = f"Missing references to requirements: {', '.join(display_refs)}{suffix}"
+
             errors.append(
                 ValidationError(
                     message=message,
