@@ -264,4 +264,4 @@ TASK-01-01 → TASK-01-02
 """
 
     result = validate.validate_tasks(tasks_content, requirements_content, design_content)
-    assert result["isValid"] is True
+    assert result["isValid"] is True, f"Validation failed with issues: {result.get('issues', [])}"

@@ -6,7 +6,7 @@ This demonstrates proper async testing without mocking asyncio.run().
 
 import asyncio
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -34,7 +34,7 @@ class TestExperimentAsyncImplementations:
     """Test async implementations directly using proper async testing patterns."""
 
     @pytest.mark.asyncio
-    @patch("wassden.clis.experiment.run_experiment")
+    @patch("wassden.clis.experiment.run_experiment", new_callable=AsyncMock)
     async def test_run_experiment_async_implementation(self, mock_run_experiment, tmp_path):
         """Test _run_experiment_async directly with real async behavior."""
         # Setup mock result
@@ -97,7 +97,7 @@ class TestExperimentAsyncImplementations:
         assert call_kwargs["config_path"] == tmp_path / "test_config"
 
     @pytest.mark.asyncio
-    @patch("wassden.clis.experiment.run_experiment")
+    @patch("wassden.clis.experiment.run_experiment", new_callable=AsyncMock)
     async def test_run_experiment_cmd_async_implementation(self, mock_run_experiment, tmp_path):
         """Test _run_experiment_cmd_async directly with real async behavior."""
         # Setup mock result
@@ -145,7 +145,7 @@ class TestExperimentAsyncImplementations:
         assert call_kwargs["config_path"] == tmp_path / "test_config"
 
     @pytest.mark.asyncio
-    @patch("wassden.clis.experiment.measure_ears_coverage")
+    @patch("wassden.clis.experiment.measure_ears_coverage", new_callable=AsyncMock)
     async def test_measure_ears_coverage_async_implementation(self, mock_measure_ears, tmp_path):
         """Test _measure_ears_coverage_async directly with real async behavior."""
 
@@ -185,7 +185,7 @@ class TestExperimentAsyncImplementations:
         assert call_kwargs["_output_detail_level"] == detail_level
 
     @pytest.mark.asyncio
-    @patch("wassden.clis.experiment.measure_performance")
+    @patch("wassden.clis.experiment.measure_performance", new_callable=AsyncMock)
     async def test_measure_performance_async_implementation(self, mock_measure_perf):
         """Test _measure_performance_async directly with real async behavior."""
         # Setup mock report
@@ -232,7 +232,7 @@ class TestExperimentAsyncImplementations:
         assert call_kwargs["memory_profiling"] == memory_profiling
 
     @pytest.mark.asyncio
-    @patch("wassden.clis.experiment.run_experiment")
+    @patch("wassden.clis.experiment.run_experiment", new_callable=AsyncMock)
     async def test_compare_experiments_async_implementation(self, mock_run_experiment, tmp_path):
         """Test _compare_experiments_async directly with real async behavior."""
         # Setup mock result

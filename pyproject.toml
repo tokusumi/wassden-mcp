@@ -28,7 +28,8 @@ dependencies = [
     "typing-extensions>=4.14.1",
     "pydantic>=2.11.7",
     "pycld2>=0.42",
-    "markdown>=3.5.0",
+    "markdown>=3.5.0",  # Still needed for backward compatibility during migration
+    "mistune>=3.0.2",
 ]
 
 [project.optional-dependencies]
@@ -51,7 +52,7 @@ wassden = "wassden.cli:app"
 dev-dependencies = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
-    "types-Markdown>=3.5.0",
+    "types-Markdown>=3.5.0",  # Still needed during migration
     "pytest-asyncio>=1.1.0",
     "ruff>=0.12.9",
     "mypy>=1.17.1",

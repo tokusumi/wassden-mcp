@@ -136,8 +136,10 @@ class TestPerformanceProfiler:
         assert result.result_data is None
 
     @pytest.mark.asyncio
-    async def test_measure_performance_memory_limit_exceeded(self, profiler):
+    async def test_measure_performance_memory_limit_exceeded(self):
         """Test memory limit exceeded handling."""
+        # Create profiler with low memory limit for this test
+        profiler = PerformanceProfiler(memory_limit_mb=200, timeout_seconds=10)
 
         def memory_intensive_function():
             return "result"
