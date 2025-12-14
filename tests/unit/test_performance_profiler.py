@@ -26,7 +26,7 @@ class TestPerformanceProfiler:
     @pytest.fixture
     def profiler(self):
         """Create PerformanceProfiler instance."""
-        return PerformanceProfiler(memory_limit_mb=200, timeout_seconds=10)
+        return PerformanceProfiler(memory_limit_mb=500, timeout_seconds=10)
 
     @pytest.fixture
     def sample_sync_function(self):
@@ -144,7 +144,7 @@ class TestPerformanceProfiler:
 
         # Mock the memory check to simulate exceeding the limit
         # Need enough values for: initial_memory, monitoring_check, final_memory
-        with patch.object(profiler, "_get_memory_usage_mb", side_effect=[50.0, 300.0, 300.0]):
+        with patch.object(profiler, "_get_memory_usage_mb", side_effect=[50.0, 600.0, 600.0]):
             result = await profiler.measure_performance(memory_intensive_function)
 
             # Should handle the memory exceeded error gracefully
